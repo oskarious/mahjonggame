@@ -275,7 +275,9 @@
 </section>
 
 <style>
+  /* A size container, so hand tiles fit the game column (not the whole window) on wide screens. */
   .me {
+    container-type: inline-size;
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -340,7 +342,7 @@
 
   /* The strip is taller than the tiles: anywhere in it picks the nearest tile. */
   .hand {
-    --tw: min(calc((100vw - 10px) / 14.4), 52px);
+    --tw: min(calc((100cqw - 10px) / 14.4), 52px);
     position: relative;
     display: flex;
     justify-content: center;
@@ -381,7 +383,9 @@
   .magnifier.blocked {
     opacity: 0.75;
   }
+  /* Separates the drawn tile from the hand; never squeezed away. */
   .gap {
+    flex: none;
     width: calc(var(--tw) * 0.35);
   }
 </style>
