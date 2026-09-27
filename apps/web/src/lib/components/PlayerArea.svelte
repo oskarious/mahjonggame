@@ -306,8 +306,8 @@
   }
   .waits {
     display: inline-flex;
-    gap: 4px;
-    --tw: 16px;
+    gap: 5px;
+    --tw: 24px;
   }
   .wait {
     display: inline-flex;

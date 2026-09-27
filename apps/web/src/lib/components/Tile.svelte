@@ -206,6 +206,10 @@
   .index {
     z-index: 2;
   }
+  /* Keep the corner label upright on sideways tiles (claimed tiles, riichi discards). */
+  .sideways .index {
+    rotate: -90deg;
+  }
 
   /* Last discard and winning tile: raised off the row, colour-neutral so it never clashes with a glow. */
   .last,
