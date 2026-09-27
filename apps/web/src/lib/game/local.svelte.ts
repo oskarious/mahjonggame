@@ -1,0 +1,140 @@
+import {
+  type Action,
+  type GameState,
+  type HintLevel,
+  type RuleSet,
+  type Seat,
+  applyAction,
+  botAction,
+  createGame,
+  legalActions,
+  pendingSeats,
+  skillForElo,
+  viewFor,
+} from '@mahjong/engine';
+import { DEFAULT_BOT_ELO } from '$lib/bots';
+
+export interface LocalSettings {
+  hints: HintLevel;
+  /** Target strength of the bots, in Elo. */
+  botElo: number;
+  /** Milliseconds a bot "thinks" before acting. */
+  botDelay: number;
+  /** In riichi, discard the drawn tile automatically when nothing else is possible. */
+  autoRiichiDiscard: boolean;
+  /** Pass on pon/chii/kan automatically (still asked for ron). */
+  skipCalls: boolean;
+  /** Debug: show the bots' hands. */
+  reveal: boolean;
+  /** Debug: a bot plays for the human too (still stops at the end of each hand). */
+  autoplay: boolean;
+}
+
+export const DEFAULT_SETTINGS: LocalSettings = {
+  hints: 'waits',
+  botElo: DEFAULT_BOT_ELO,
+  botDelay: 450,
+  autoRiichiDiscard: true,
+  skipCalls: false,
+  reveal: false,
+  autoplay: false,
+};
+
+/**
+ * A game played entirely in the browser against bots. Exposes the same shape the online client
+ * will: a player view plus `act()`, so the table UI does not care where the game runs.
+ */
+export class LocalGame {
+  readonly human: Seat;
+  readonly seed: string;
+  readonly rules: RuleSet;
+  readonly names: string[];
+  state: GameState = $state.raw() as GameState;
+  settings: LocalSettings = $state({ ...DEFAULT_SETTINGS });
+  error: string | null = $state(null);
+  /** Every action applied, for replays and bug reports. */
+  readonly log: Action[] = [];
+  view = $derived.by(() => viewFor(this.state, this.human, { hints: this.settings.hints }));
+  #timer: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(rules: RuleSet, seed: string, human: Seat, settings: Partial<LocalSettings> = {}) {
+    this.rules = rules;
+    this.seed = seed;
+    this.human = human;
+    this.names = [0, 1, 2, 3].map((s) => (s === human ? 'You' : `Bot ${'ABC'[(s - human + 3) % 4]}`));
+    Object.assign(this.settings, settings);
+    this.state = createGame(rules, seed).state;
+    this.#schedule();
+  }
+
+  act(action: Action): void {
+    this.#apply(action);
+    this.#schedule();
+  }
+
+  destroy(): void {
+    if (this.#timer) clearTimeout(this.#timer);
+  }
+
+  /** Re-evaluates automation, e.g. after settings change. */
+  poke(): void {
+    this.#schedule();
+  }
+
+  exportLog(): string {
+    return JSON.stringify({ rules: this.rules, seed: this.seed, human: this.human, actions: this.log });
+  }
+
+  #apply(action: Action): boolean {
+    try {
+      this.state = applyAction(this.state, action).state;
+      this.log.push(action);
+      this.error = null;
+      return true;
+    } catch (e) {
+      this.error = e instanceof Error ? e.message : String(e);
+      return false;
+    }
+  }
+
+  #schedule(): void {
+    if (this.#timer) clearTimeout(this.#timer);
+    this.#timer = null;
+    if (this.state.phase !== 'playing') return;
+    const pending = pendingSeats(this.state);
+
+    if (pending.includes(this.human)) {
+      const auto = this.#autoHuman();
+      if (auto) {
+        this.#timer = setTimeout(() => this.act(auto), Math.min(this.settings.botDelay, 350));
+        return;
+      }
+    }
+    const bots = this.settings.autoplay ? pending : pending.filter((s) => s !== this.human);
+    if (!bots.length) return;
+    const onTurn = this.state.hand.step.type === 'turn';
+    this.#timer = setTimeout(
+      () => {
+        for (const s of bots) {
+          if (!pendingSeats(this.state).includes(s)) continue;
+          const a = botAction(this.state, s, { skill: skillForElo(this.settings.botElo) });
+          if (a) this.#apply(a);
+        }
+        this.#schedule();
+      },
+      onTurn ? this.settings.botDelay : this.settings.botDelay / 2,
+    );
+  }
+
+  #autoHuman(): Action | null {
+    const legal = legalActions(this.state, this.human);
+    const p = this.state.hand.players[this.human];
+    if (this.settings.autoRiichiDiscard && p.riichi && legal.every((a) => a.type === 'discard')) {
+      return legal[0];
+    }
+    if (this.settings.skipCalls && legal.some((a) => a.type === 'pass') && !legal.some((a) => a.type === 'ron')) {
+      return legal.find((a) => a.type === 'pass')!;
+    }
+    return null;
+  }
+}

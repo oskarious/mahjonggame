@@ -1,0 +1,134 @@
+:root {
+  --bg: #0e0f12;
+  --line: rgba(255, 255, 255, 0.08);
+  --ink: #ecebe6;
+  --ink-dim: rgba(236, 235, 230, 0.6);
+  /* Seat rows and bars on the board. */
+  --surface: #17191e;
+  --surface-me: #1f2228;
+  /* Sheets, dialogs and buttons. */
+  --panel: #16181d;
+  --panel-2: #262a31;
+  --accent: #f2c14e;
+  --accent-ink: #2b2104;
+  --danger: #e76f51;
+  --ok: #7bd389;
+  --tile-face: #fbfaf4;
+  --tile-edge: #d8d0b8;
+  --tile-back: #2c6e8f;
+  --radius: 12px;
+  color-scheme: dark;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--bg);
+  min-height: 100dvh;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.btn {
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn.danger {
+  background: var(--danger);
+  color: #1f0c05;
+}
+
+.btn.ghost {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.25);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+select,
+input {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-height: 40px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--panel-2);
+  white-space: nowrap;
+}
+
+.chip.good {
+  background: var(--ok);
+  color: #0d2a14;
+}
+
+.chip.bad {
+  background: var(--danger);
+  color: #1f0c05;
+}
+
+.chip.gold {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
