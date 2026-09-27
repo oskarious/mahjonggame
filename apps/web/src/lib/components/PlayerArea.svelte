@@ -71,6 +71,8 @@
   const LOCK_PX = 12;
   let handEl: HTMLDivElement | undefined = $state();
   let press: { tile: TileId; x: number; startY: number; flick: boolean } | null = $state(null);
+  /** Where the selected tile sits in the strip, so its magnifier stays up after release. */
+  let selectedX = $state(0);
 
   function tileAt(clientX: number): { tile: TileId; x: number } | null {
     if (!handEl) return null;
@@ -114,15 +116,27 @@
 
   function pointerUp() {
     if (!press) return;
-    const { tile, flick } = press;
+    const { tile, flick, x } = press;
     press = null;
+    selectedX = x;
     tap(tile, flick);
   }
 
   /** Keyboard activation only; pointer input is handled by the strip above. */
   function keyTap(e: MouseEvent, t: TileId) {
-    if (e.detail === 0) tap(t);
+    if (e.detail !== 0) return;
+    const hit = handEl?.querySelector<HTMLElement>(`[data-tile="${t}"]`);
+    if (hit && handEl) {
+      const r = hit.getBoundingClientRect();
+      selectedX = r.left + r.width / 2 - handEl.getBoundingClientRect().left;
+    }
+    tap(t);
   }
+
+  /** Magnifier: the tile under the finger, or else the selected tile. */
+  const magnified = $derived(
+    press ?? (selected !== null ? { tile: selected, x: selectedX, flick: false } : null),
+  );
 
   const focus = $derived.by(() => {
     const pressed = press as { tile: TileId } | null;
@@ -247,9 +261,14 @@
       </span>
     {/if}
 
-    {#if press}
-      <div class="magnifier" class:flick={press.flick} class:blocked={onTurn && !canDiscard(press.tile)} style:--x="{press.x}px">
-        <Tile tile={press.tile} {red} plain />
+    {#if magnified}
+      <div
+        class="magnifier"
+        class:flick={magnified.flick}
+        class:blocked={onTurn && !canDiscard(magnified.tile)}
+        style:--x="{magnified.x}px"
+      >
+        <Tile tile={magnified.tile} {red} plain />
       </div>
     {/if}
   </div>
