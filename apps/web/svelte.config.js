@@ -6,5 +6,9 @@ export default {
   preprocess: vitePreprocess(),
   kit: {
     adapter: adapter(),
+    typescript: {
+      // Also typecheck DB migrations and Node scripts.
+      config: (c) => ({ ...c, include: [...c.include, '../migrations/**/*.ts', '../scripts/**/*.ts'] }),
+    },
   },
 };

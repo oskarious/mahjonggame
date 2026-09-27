@@ -132,3 +132,78 @@ input {
   background: var(--accent);
   color: var(--accent-ink);
 }
+
+/* Narrow single-column pages (login, account). */
+.page {
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 24px 18px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.page h1 {
+  margin: 8px 0 4px;
+  font-size: 1.6rem;
+}
+
+.page form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.field input {
+  min-height: 48px;
+  font-size: 1rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.form-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.form-ok {
+  margin: 0;
+  color: var(--ok);
+  font-size: 0.9rem;
+}
+
+/* Segmented control: radio labels in a grid. */
+.seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.seg label {
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+  background: var(--panel-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+.seg label.on {
+  background: var(--ink);
+  color: var(--panel);
+}
+.seg input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}

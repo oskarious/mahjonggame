@@ -1,0 +1,24 @@
+# Local development database. Start with `docker compose up -d`.
+# Credentials come from a `.env` next to this file (Compose loads it automatically), defaulting to mahjong/mahjong.
+# Keep them in sync with DATABASE_URL in apps/web/.env. Postgres only applies them when the volume is first created:
+# after changing them, `docker compose down -v` (wipes the data) and start again.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mahjong}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mahjong}
+      POSTGRES_DB: ${POSTGRES_DB:-mahjong}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # $$ = variable expanded inside the container, not by Compose.
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

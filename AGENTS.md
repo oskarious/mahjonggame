@@ -7,8 +7,9 @@ Guidance for coding agents (and humans) working in this repo. Keep it current wh
 A lightweight, chess.com-style **riichi mahjong** site. Mobile **portrait, one-handed** play first; no gacha, no
 anime characters, no fluff. Rules source: **EMA Riichi Rules 2025** (European Mahjong Association).
 
-Current state: the rules engine, rule-based bots with measured Elo, and a SvelteKit client where you play against
-bots **in the browser**. No server-side games, accounts, matchmaking or persistence yet (see "Where this is going").
+Current state: the rules engine, rule-based bots with measured Elo, a SvelteKit client where you play against
+bots **in the browser**, and user accounts (Better Auth on Postgres). No server-side games, ratings or matchmaking yet
+(see "Where this is going").
 
 ## Layout
 
@@ -30,6 +31,10 @@ packages/engine/        @mahjong/engine: pure TS, no I/O. Rules, scoring, game s
   test/                 vitest; helpers.ts has score() and rig()/play() for scripted games
 apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjong/engine
   src/lib/game/local.svelte.ts   LocalGame: runs engine + bots in the browser (same shape a WS client will have)
+  src/lib/server/       db.ts (Kysely + pg pool), schema.ts (Kysely table types), auth.ts (Better Auth), migrate.ts
+  src/hooks.server.ts   init: run migrations, then load auth; handle: session → locals.user/session, /api/auth/*
+  src/routes/login, account   sign in/up, change password, sign out, delete account (guests can still play)
+  migrations/           Kysely migrations (NNNN_name.ts, import only from kysely); bundled and run on server start
   src/lib/components/   Board (4 seat rows), Pond, PlayerArea (hand/actions/magnifier), Tile, sheets, DevPanel
   static/tiles/         FluffyStuff tile SVGs (CC0)
 openspec/               OpenSpec (spec-driven changes/specs); use it for larger features
@@ -39,12 +44,15 @@ openspec/               OpenSpec (spec-driven changes/specs); use it for larger 
 
 ```bash
 npm install
-npm run dev                  # web dev server on :5173 (also on the LAN)
+docker compose up -d         # local Postgres on :5432 (copy apps/web/.env.example to apps/web/.env first;
+                             # optional root .env overrides the DB credentials, see .env.example)
+npm run dev                  # web dev server on :5173 (also on the LAN); migrates the DB on start
+npm run db:migrate --workspace @mahjong/web   # run migrations without starting the server
 npm test                     # engine tests (~300, ~10-50 s)
 npm run typecheck            # engine + scripts + svelte-check
 npm run build --workspace @mahjong/web
 npm run calibrate --workspace @mahjong/engine -- --games 15000 --write   # re-measure bot Elo (~8 min, all cores)
-docker build -t riichi-web .  # production image; runs `node build` on port 3000, GET /healthz
+docker build -t riichi-web .  # production image; runs `node apps/web/build` on port 3000, GET /healthz
 ```
 
 ## Engine principles
@@ -112,19 +120,32 @@ docker build -t riichi-web .  # production image; runs `node build` on port 3000
 - Svelte 5: `let x: T | null = $state(null)` makes TS narrow `x` to `null` inside `$derived` closures — read it through
   an explicit type (`const p = x as T | null`).
 - Screenshots in the browser pane can render as 2× crops; use a `scale` < 1 or measure via JS.
+- **Better Auth caches a schema mismatch** found when `betterAuth()` is created and never rechecks after our own
+  migrations. That is why hooks.server.ts imports `$lib/server/auth` only after migrating in `init`; don't import it
+  statically from modules loaded at startup. After a Better Auth upgrade, a startup "schema mismatch" log means: add a
+  migration.
+- Auth in dev: no `BETTER_AUTH_URL`/`ORIGIN` → base URL is derived per request, limited to localhost and private LAN
+  hosts, over HTTP (non-Secure cookies), so phone testing works. Production requires `ORIGIN`.
+- Kysely 0.29: `Migrator`/`Migration` come from `kysely/migration`, not `kysely`.
 
 ## Deployment
 
 - Hosted on a VPS with **Dokploy** (builds on push to GitHub `master`). App type: Dockerfile, build path `/`, context
-  `.`, container port **3000**, HTTPS via Dokploy/Traefik. Optional env: `ORIGIN=https://<domain>` (needed once there
-  are form actions); later `ADDRESS_HEADER=X-Forwarded-For`, `XFF_DEPTH=1`.
-- The runtime image contains only `apps/web/build` (engine is bundled); health check `GET /healthz`.
+  `.`, container port **3000**, HTTPS via Dokploy/Traefik.
+- **Postgres** runs as a Dokploy database service on the same network. Web app env (required):
+  `DATABASE_URL` (internal URL of that service), `BETTER_AUTH_SECRET` (≥ 32 random chars), `ORIGIN=https://<domain>`;
+  also `ADDRESS_HEADER=X-Forwarded-For`, `XFF_DEPTH=1`. Migrations run on container start (fail → container exits).
+- The runtime image contains `apps/web/build` (engine bundled) plus production `node_modules` (better-auth, pg,
+  kysely); health check `GET /healthz` (does not touch the DB).
+- No email server: no verification, password reset or email change. A forgotten password needs a manual DB fix.
 
 ## Where this is going (keep designs compatible)
 
 - `apps/game-server`: Node + WebSocket rooms running the engine authoritatively (timers + time bank, bots fill empty
   seats at a target Elo via `skillForElo`, disconnect → bot takes over, reconnect resumes). Routed at `/ws` on the same
   domain; separate Dokploy app with its own Dockerfile and watch paths.
-- Identity: pick a display name (no auth) first; Elo rating (plain Elo). Postgres for players, ratings and game logs
-  (seed + actions). The web client swaps `LocalGame` for a WS client with the same view/act shape.
+- Identity: accounts exist (user id is the key for everything). The game server authenticates the WS upgrade with
+  `auth.api.getSession({ headers })` from the same cookie. Elo rating (plain Elo, new players start at 1000) comes
+  with the game server: bot games in the browser can't produce trustworthy results. Postgres (Kysely) for ratings and
+  game logs (seed + actions). The web client swaps `LocalGame` for a WS client with the same view/act shape.
 - Debug features (show bots' hands, autoplay) should be hidden behind a flag in production.

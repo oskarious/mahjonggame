@@ -2,6 +2,8 @@
   import { goto } from '$app/navigation';
   import { BOT_PRESETS, DEFAULT_BOT_ELO } from '$lib/bots';
 
+  let { data } = $props();
+
   let preset = $state('default');
   let length = $state('east');
   let bots = $state(DEFAULT_BOT_ELO);
@@ -16,6 +18,14 @@
 <svelte:head><title>Riichi</title></svelte:head>
 
 <main>
+  <nav class="account">
+    {#if data.user}
+      <a class="chip" href="/account">{data.user.name}</a>
+    {:else}
+      <a class="chip" href="/login">Sign in</a>
+    {/if}
+  </nav>
+
   <div class="logo" aria-hidden="true">
     <img src="/tiles/Chun.svg" alt="" />
   </div>
@@ -77,6 +87,18 @@
     align-items: stretch;
     gap: 8px;
   }
+  .account {
+    display: flex;
+    justify-content: flex-end;
+    margin: -16px -4px 0;
+  }
+  .account .chip {
+    min-height: 36px;
+    padding: 0 14px;
+    font-size: 0.9rem;
+    color: var(--ink);
+    text-decoration: none;
+  }
   .logo {
     align-self: center;
     width: 64px;
@@ -122,32 +144,9 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
   }
-  .seg {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
   .seg.elo {
     grid-template-columns: repeat(5, 1fr);
     font-variant-numeric: tabular-nums;
-  }
-  .seg label {
-    min-height: 44px;
-    display: grid;
-    place-items: center;
-    border-radius: var(--radius);
-    background: var(--panel-2);
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .seg label.on {
-    background: var(--ink);
-    color: var(--panel);
-  }
-  .seg input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
   }
   .big {
     min-height: 56px;
