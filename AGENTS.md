@@ -152,9 +152,10 @@ DATABASE_URL=... BETTER_AUTH_SECRET=... ORIGIN=http://localhost:8080 docker comp
   need more room. The play screen has no header and no round bar: leaving the game is a button in the settings sheet.
 - **Hand input:** the whole hand strip is one touch target (nearest tile wins). Press shows a magnifier (and the
   discard preview at hint level "full"). **Touch: flick up is the only way to discard**; a tap neither selects nor
-  discards (no double tap, the one-tap setting is mouse-only). Once the finger rises past 12 px the tile is locked
-  (sideways drift can't switch tiles); 36 px arms the discard (magnifier turns gold). Mouse: click selects (magnifier
-  stays up), click again discards, or one click with the one-tap setting. Off-turn presses only inspect.
+  discards (no double tap). Once the finger rises past 12 px the tile is locked (sideways drift can't switch tiles);
+  36 px arms the discard (magnifier turns gold). **Mouse: hover inspects** (magnifier, blue glow, discard preview) and
+  **one left click discards** (press and release on the same tile; never selects). Decided per pointer event, so
+  touchscreen laptops get both. Off-turn presses/clicks only inspect.
 - **Hand sizing:** the strip splits the column width by the number of concealed tiles (`--n`), so open hands get
   bigger tiles; the size never changes between on- and off-turn. The **drawn tile is not in the strip**: it sits big
   (44 px) in the panel's middle slot with the same gestures and magnifier, but no sideways slide. The magnifier is

@@ -56,13 +56,17 @@ different tile (or off the strip) before release SHALL cancel the click.
 - **THEN** no action is sent
 
 ### Requirement: Touch and pen input unchanged
-For touch and pen pointers the system SHALL keep the existing behaviour: press shows the magnifier, tap selects and
-tapping the selected tile discards (or one tap discards when the one-tap setting is on), flicking up discards, and
-off-turn presses only inspect. Input handling SHALL be decided per pointer event type, so one device can use both.
+For touch and pen pointers the system SHALL keep the existing behaviour: press shows the magnifier, flicking up is the
+only way to discard, a tap neither selects nor discards, and off-turn presses only inspect. Input handling SHALL be
+decided per pointer event type, so one device can use both.
 
-#### Scenario: Touch tap still selects
-- **WHEN** one-tap discard is off and the player taps a discardable tile with a finger
-- **THEN** the tile becomes selected and no action is sent
+#### Scenario: Touch tap only inspects
+- **WHEN** the player taps a discardable tile with a finger without flicking
+- **THEN** no action is sent and no selection is made
+
+#### Scenario: Touch flick discards
+- **WHEN** on the player's turn they press a discardable tile and flick upward past the discard threshold
+- **THEN** a discard action for that tile is sent
 
 #### Scenario: Mixed input on one device
 - **WHEN** a player on a touchscreen laptop hovers and clicks with the mouse, then taps with a finger

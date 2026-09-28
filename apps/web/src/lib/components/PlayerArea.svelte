@@ -33,6 +33,7 @@
   $effect(() => {
     void view.seq;
     selected = null;
+    hovered = null;
     riichiMode = false;
     picking = null;
   });
@@ -64,9 +65,9 @@
     const top = opts[0];
     return new Set(opts.filter((o) => o.shanten === top.shanten && o.total === top.total).map((o) => o.kind));
   });
-  /** Discard preview for the tile being looked at: under the finger, or else the selected one. */
+  /** Discard preview for the tile being looked at: pressed, hovered, or else the selected one. */
   const preview = $derived.by(() => {
-    const p = press as { tile: TileId } | null;
+    const p = (press ?? hovered) as { tile: TileId } | null;
     const t = p ? p.tile : selected;
     return t !== null ? (hints?.discards?.find((o) => o.kind === kindOf(t)) ?? null) : null;
   });
@@ -105,6 +106,8 @@
     | null = $state(null);
   /** Where the selected tile sits, so its magnifier stays up after release. */
   let selectedAt: Anchor = $state({ x: 0, b: 0 });
+  /** Mouse only: the tile under the cursor. Hover inspects; a click discards. */
+  let hovered: ({ tile: TileId } & Anchor) | null = $state(null);
 
   /** Magnifier anchor for a tile centred at clientX, floating above `above`. */
   function anchor(clientX: number, above: Element): Anchor {
@@ -170,8 +173,29 @@
     }
   }
 
+  /** Mouse: the tile under the cursor in the strip or drawn slot, or null when off both. */
+  function mouseTile(e: PointerEvent): ({ tile: TileId } & Anchor) | null {
+    const inside = (el: Element | undefined) => {
+      const r = el?.getBoundingClientRect();
+      return !!r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    };
+    if (inside(drawnEl) && view.drawn !== null) {
+      const r = drawnEl!.getBoundingClientRect();
+      return { tile: view.drawn, ...anchor(r.left + r.width / 2, drawnEl!) };
+    }
+    if (!inside(handEl)) return null;
+    const hit = tileAt(e.clientX);
+    return hit ? { ...hit, b: anchor(0, handEl!).b } : null;
+  }
+
   function pointerMove(e: PointerEvent) {
+    if (e.pointerType === 'mouse' && !press) {
+      hovered = e.buttons ? null : mouseTile(e);
+      return;
+    }
     if (!press) return;
+    // Mouse presses stay on their tile; the release decides (see pointerUp).
+    if (!press.touch) return;
     const rise = press.startY - e.clientY;
     // Sliding sideways picks tiles only while the finger stays level; once it heads up for a
     // flick the tile is locked, so the thumb's sideways drift can't discard a neighbour.
@@ -179,9 +203,9 @@
     press = { ...press, ...(hit ?? {}), flick: rise > FLICK_PX };
   }
 
-  function pointerUp() {
+  function pointerUp(e: PointerEvent) {
     if (!press) return;
-    const { tile, flick, x, b, touch } = press;
+    const { tile, flick, touch } = press;
     press = null;
     // Touch: the flick is the only way to discard. A tap neither selects nor discards, so there is
     // no double-tap and the one-tap setting does not apply.
@@ -189,8 +213,14 @@
       if (flick) tap(tile, true);
       return;
     }
-    selectedAt = { x, b };
-    tap(tile, flick);
+    // Mouse: one click discards, if pressed and released on the same tile. Never selects.
+    const over = mouseTile(e);
+    hovered = over;
+    if (over?.tile === tile && canDiscard(tile)) discard(tile);
+  }
+
+  function pointerLeave(e: PointerEvent) {
+    if (e.pointerType === 'mouse' && !press) hovered = null;
   }
 
   /** Keyboard activation only; pointer input is handled by the strip / drawn slot above. */
@@ -204,13 +234,18 @@
     tap(t);
   }
 
-  /** Magnifier: the tile under the finger, or else the selected tile (strip or drawn). */
-  const magnified = $derived(
-    press ?? (selected !== null ? { tile: selected, ...selectedAt, flick: false } : null),
-  );
+  /** Magnifier: the tile under the finger or cursor, or else the selected tile (strip or drawn). */
+  const magnified = $derived.by(() => {
+    const h = hovered as ({ tile: TileId } & Anchor) | null;
+    return (
+      press ??
+      (h ? { ...h, flick: false } : null) ??
+      (selected !== null ? { tile: selected, ...selectedAt, flick: false } : null)
+    );
+  });
 
   const focus = $derived.by(() => {
-    const pressed = press as { tile: TileId } | null;
+    const pressed = (press ?? hovered) as { tile: TileId } | null;
     if (pressed) return kindOf(pressed.tile);
     return selected !== null ? kindOf(selected) : null;
   });
@@ -326,6 +361,7 @@
           onpointerdown={drawnDown}
           onpointermove={pointerMove}
           onpointerup={pointerUp}
+          onpointerleave={pointerLeave}
           onpointercancel={() => (press = null)}
         >
           <Tile tile={d} {red} compact selected={selected === d} dim={s.dim} mark={s.mark} onclick={(e) => keyTap(e, d)} />
@@ -376,6 +412,7 @@
     onpointerdown={pointerDown}
     onpointermove={pointerMove}
     onpointerup={pointerUp}
+    onpointerleave={pointerLeave}
     onpointercancel={() => (press = null)}
   >
     {#each concealed as t (t)}
