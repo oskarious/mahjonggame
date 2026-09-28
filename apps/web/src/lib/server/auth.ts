@@ -32,6 +32,10 @@ export const auth = betterAuth({
   },
   user: {
     deleteUser: { enabled: true },
+    additionalFields: {
+      // 'user' or 'admin'. Never accepted from clients (input: false); admins are made by hand in the database.
+      role: { type: 'string', required: false, defaultValue: 'user', input: false },
+    },
   },
   session: {
     expiresIn: 60 * 60 * 24 * 7,

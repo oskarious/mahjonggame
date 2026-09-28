@@ -2,13 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type Action, type GameState, type Tile, DEFAULT_RULES, applyAction, kindOf, pendingSeats } from '@mahjong/engine';
 import { rig } from '../../../packages/engine/test/helpers.ts';
 import type { Config } from '../src/config.ts';
-import type { SeatInit } from '../src/matchmaking.ts';
+import { anonymousBot, type SeatInit } from '../src/matchmaking.ts';
+import { thinkDelay } from '../src/pacing.ts';
 import { Room } from '../src/room.ts';
 import { MemoryStore, type RatingUpdate } from '../src/store.ts';
-import { FakeClient, TEST_CONFIG } from './helpers.ts';
+import { FakeClient, TEST_CONFIG, botSeat, seeded } from './helpers.ts';
 
 const human = (id: string, rating = 1000): SeatInit => ({ kind: 'human', userId: id, name: id, rating, games: 0 });
-const bot: SeatInit = { kind: 'bot', skill: 0.5 };
+/** Most tests use the old anonymous bots (unrated), which exercise the same room paths; see "Room bot players". */
+const bot: SeatInit = anonymousBot(0.5);
 
 interface Built {
   room: Room;
@@ -17,7 +19,13 @@ interface Built {
   ended: RatingUpdate[][];
 }
 
-async function build(seats: SeatInit[], state?: GameState, config: Partial<Config> = {}, attach = true): Promise<Built> {
+async function build(
+  seats: SeatInit[],
+  state?: GameState,
+  config: Partial<Config> = {},
+  attach = true,
+  opts: { random?: () => number; fast?: boolean } = {},
+): Promise<Built> {
   const store = new MemoryStore();
   const cfg = { ...TEST_CONFIG, ...config };
   const rules = DEFAULT_RULES;
@@ -25,8 +33,8 @@ async function build(seats: SeatInit[], state?: GameState, config: Partial<Confi
   await store.createGame({ id: 'g1', format: 'east', rules, seed, seats });
   const ended: RatingUpdate[][] = [];
   const room = new Room(
-    { store, config: cfg, random: () => 0, onEnd: (_r, ratings) => ended.push(ratings), log: (m, e) => console.error(m, e) },
-    { id: 'g1', format: 'east', rules, seed, seats, state },
+    { store, config: cfg, random: opts.random ?? (() => 0), onEnd: (_r, ratings) => ended.push(ratings), log: (m, e) => console.error(m, e) },
+    { id: 'g1', format: 'east', rules, seed, seats, state, fast: opts.fast },
   );
   const clients = seats.map((s) => (s.kind === 'human' ? new FakeClient(s.userId) : null));
   if (attach) clients.forEach((c, i) => c && room.attach(i, c, 'full', true));
@@ -104,14 +112,16 @@ describe('Room timers', () => {
     expect(room.humanAt(0).bank).toBe(0);
   });
 
-  it('bots act after a natural delay and never use a bank', async () => {
+  it('bots act after a human-like think time', async () => {
     const { room, clients } = await build([human('a'), bot, bot, bot], turnState());
     const c = clients[0]!;
     room.act(0, 0, discardOf(c), c);
     await room.idle();
     expect(room.state.seq).toBe(1); // discard → (no calls) → seat 1's turn
     expect(pendingSeats(room.state)).toEqual([1]);
-    await vi.advanceTimersByTimeAsync(399);
+    const delay = thinkDelay(room.state, 1, { turnMs: 8_000, callMs: 5_000, bank: 15_000, scale: 1 }, () => 0);
+    expect(delay).toBeGreaterThan(200);
+    await vi.advanceTimersByTimeAsync(delay - 1);
     expect(room.state.seq).toBe(1);
     await vi.advanceTimersByTimeAsync(1);
     await room.idle();
@@ -129,7 +139,7 @@ describe('Room timers', () => {
     await room.idle();
     expect(room.state.phase).toBe('handOver');
     expect(c.last('update')!.view.result?.type).toBe('exhaustive');
-    // The hand ended between 0 and 900 ms after the discard (bots may have had to pass); the 12 s wait runs from there.
+    // The hand ended within a second of the discard (bots may have had to pass); the 12 s wait runs from there.
     await vi.advanceTimersByTimeAsync(10_900);
     expect(room.state.phase).toBe('handOver');
     await vi.advanceTimersByTimeAsync(1_100);
@@ -154,10 +164,11 @@ describe('Room disconnects', () => {
     const { room, clients } = await build([human('a'), bot, bot, bot], turnState());
     const c = clients[0]!;
     room.detach(c);
+    const think = thinkDelay(room.state, 0, { turnMs: 8_000, callMs: 5_000, bank: 15_000, scale: 1 }, () => 0);
     await vi.advanceTimersByTimeAsync(9_999);
     expect(room.state.seq).toBe(0);
-    // Grace over: a bot decides for seat 0 after its delay.
-    await vi.advanceTimersByTimeAsync(1 + 400);
+    // Grace over: a bot decides for seat 0 after its think time.
+    await vi.advanceTimersByTimeAsync(1 + think);
     await room.idle();
     expect(room.state.seq).toBe(1);
     expect(room.humanAt(0).botControlled).toBe(true);
@@ -320,6 +331,64 @@ describe('Room authority', () => {
     expect(store.log).toHaveLength(1);
     expect(room.state.seq).toBe(1);
     expect(c.last('update')!.seq).toBe(1);
+  });
+});
+
+describe('Room bot players', () => {
+  it('shows bot players like humans and rates every seat with an account', async () => {
+    const seats = [human('a'), botSeat('x', 1100), botSeat('y', 1050), botSeat('z', 1200)];
+    const { room, store, ended } = await build(seats, undefined, {}, false);
+    const info = room.info(0);
+    expect(info.players).toEqual([
+      { seat: 0, name: 'a', rating: 1000 },
+      { seat: 1, name: 'x', rating: 1100 },
+      { seat: 2, name: 'y', rating: 1050 },
+      { seat: 3, name: 'z', rating: 1200 },
+    ]);
+    await vi.advanceTimersByTimeAsync(5 * 60_000);
+    await vi.runAllTimersAsync();
+    await room.idle();
+    expect(room.finished).toBe(true);
+    expect(ended[0].map((r) => r.userId).sort()).toEqual(['a', 'x', 'y', 'z']);
+    expect(store.ratings.get('x')!.games).toBe(31);
+    expect(store.games.get('g1')!.results.every((r) => r.ratingAfter !== null)).toBe(true);
+  });
+
+  it('plays a game of four bot players at human pace, without the abandon fast-forward, and rates all four', async () => {
+    const seats = [botSeat('w', 1150), botSeat('x', 1100), botSeat('y', 1050), botSeat('z', 1200)];
+    const { room, store, ended } = await build(seats, undefined, {}, false, { random: seeded('bot-room') });
+    expect(room.hasHumans).toBe(false);
+    await vi.advanceTimersByTimeAsync(5 * 60_000 + 1_000);
+    await room.idle();
+    expect(room.finished).toBe(false);
+    const seqAt5min = room.state.seq;
+    expect(seqAt5min).toBeGreaterThan(40);
+    // Still human pace after the abandon period: about a decision a second or slower.
+    await vi.advanceTimersByTimeAsync(60_000);
+    await room.idle();
+    expect(room.state.seq - seqAt5min).toBeLessThan(90);
+    await vi.runAllTimersAsync();
+    await room.idle();
+    expect(room.finished).toBe(true);
+    const updates = ended[0];
+    expect(updates).toHaveLength(4);
+    const before = new Map(seats.map((x) => [x.userId, x.rating]));
+    const sum = updates.reduce((a, u) => a + u.rating - before.get(u.userId)!, 0);
+    expect(Math.abs(sum)).toBeLessThanOrEqual(2);
+    expect(store.games.get('g1')!.actions.length).toBe(room.state.seq);
+  });
+
+  it('a warm-up (fast) room plays without delays', async () => {
+    const seats = [botSeat('w'), botSeat('x'), botSeat('y'), botSeat('z')];
+    const start = Date.now();
+    const { room } = await build(seats, undefined, {}, false, { random: seeded('fast'), fast: true });
+    // Fake timers run a 0 ms timeout set inside a tick 1 ms later: a whole game in a few fake seconds, not minutes.
+    for (let i = 0; i < 20_000 && !room.finished; i++) {
+      await vi.advanceTimersByTimeAsync(1);
+      await room.idle();
+    }
+    expect(room.finished).toBe(true);
+    expect(Date.now() - start).toBeLessThan(5_000);
   });
 });
 

@@ -1,5 +1,6 @@
 // One running game. Every input (client action, timeout, bot move, ready, next hand) goes through one serialized
 // queue: validate → persist → apply → schedule the next decisions → send each connected human their view.
+// Seats are humans or bot players; games of four bot players (background games) run the same way.
 import {
   type Action,
   type GameEvent,
@@ -10,7 +11,6 @@ import {
   actionKey,
   applyAction,
   botAction,
-  botElo,
   createGame,
   legalActions,
   pendingSeats,
@@ -22,6 +22,7 @@ import {
 import type { ErrorCode, Format, GameInfo, RatingChange, ServerMessage } from '@mahjong/protocol';
 import type { Config } from './config.ts';
 import type { SeatInit } from './matchmaking.ts';
+import { thinkDelay } from './pacing.ts';
 import { clampHints, hintLevelForRating, ratingChanges } from './rating.ts';
 import type { RatingUpdate, SeatResult, Store } from './store.ts';
 
@@ -53,6 +54,13 @@ export interface HumanSeat {
 export interface BotSeat {
   kind: 'bot';
   skill: number;
+  /** The bot player's account; null for the anonymous bots of games from before bot players (not rated). */
+  userId: string | null;
+  name: string;
+  rating: number;
+  games: number;
+  /** Time bank left this hand, ms (bots dip into it like humans do). */
+  bank: number;
 }
 
 export type RoomSeat = HumanSeat | BotSeat;
@@ -78,6 +86,8 @@ export interface RoomInit {
   seats: SeatInit[];
   /** Recovered state (already replayed). New games start from `createGame`. */
   state?: GameState;
+  /** Play without delays from the start (warm-up games of bot players). */
+  fast?: boolean;
 }
 
 export interface RoomDeps {
@@ -86,11 +96,13 @@ export interface RoomDeps {
   onEnd: (room: Room, ratings: RatingUpdate[]) => void;
   random?: () => number;
   log?: (msg: string, err?: unknown) => void;
+  /** Current multiplier for bot think times (a runtime setting). Default 1. */
+  thinkScale?: () => number;
 }
 
 type RoomConfig = Pick<
   Config,
-  'turnMs' | 'callMs' | 'bankMs' | 'botDelayMs' | 'readyMs' | 'graceMs' | 'abandonMs' | 'hintThresholds' | 'k' | 'kNew' | 'newGames'
+  'turnMs' | 'callMs' | 'bankMs' | 'botHandPauseMs' | 'readyMs' | 'graceMs' | 'abandonMs' | 'hintThresholds' | 'k' | 'kNew' | 'newGames'
 >;
 
 function decisionKey(g: GameState): string {
@@ -120,6 +132,7 @@ export class Room {
   #onEnd: RoomDeps['onEnd'];
   #random: () => number;
   #log: (msg: string, err?: unknown) => void;
+  #thinkScale: () => number;
   #chain: Promise<void> = Promise.resolve();
   #pending = new Map<Seat, Pending>();
   #graceTimers = new Map<Seat, Timer>();
@@ -141,9 +154,11 @@ export class Room {
     this.#onEnd = deps.onEnd;
     this.#random = deps.random ?? Math.random;
     this.#log = deps.log ?? ((msg, err) => console.error(`[room ${init.id}] ${msg}`, err ?? ''));
+    this.#thinkScale = deps.thinkScale ?? (() => 1);
+    this.#fast = init.fast ?? false;
     this.seats = init.seats.map((s) =>
       s.kind === 'bot'
-        ? { kind: 'bot', skill: s.skill }
+        ? { kind: 'bot', skill: s.skill, userId: s.userId, name: s.name, rating: s.rating, games: s.games, bank: this.#config.bankMs }
         : {
             kind: 'human',
             userId: s.userId,
@@ -173,6 +188,11 @@ export class Room {
     return this.#finished;
   }
 
+  /** Whether any seat belongs to a human (false for background games of bot players). */
+  get hasHumans(): boolean {
+    return this.seats.some((s) => s.kind === 'human');
+  }
+
   /** Seat of a user, or -1. */
   seatOf(userId: string): Seat {
     return this.seats.findIndex((s) => s.kind === 'human' && s.userId === userId);
@@ -189,11 +209,8 @@ export class Room {
       gameId: this.id,
       seat,
       format: this.format,
-      players: this.seats.map((s, i) =>
-        s.kind === 'human'
-          ? { seat: i, name: s.name, rating: s.rating, bot: false }
-          : { seat: i, name: 'Bot', rating: Math.round(botElo(s.skill)), bot: true },
-      ),
+      // Bot players look exactly like humans here.
+      players: this.seats.map((s, i) => ({ seat: i, name: s.name, rating: s.rating })),
     };
   }
 
@@ -326,10 +343,8 @@ export class Room {
     this.state = t.state;
     if (t.events.some((e) => e.type === 'handStart')) {
       for (const s of this.seats) {
-        if (s.kind === 'human') {
-          s.bank = this.#config.bankMs;
-          s.ready = false;
-        }
+        s.bank = this.#config.bankMs;
+        if (s.kind === 'human') s.ready = false;
       }
     }
     this.#schedule(actor);
@@ -361,7 +376,13 @@ export class Room {
     }
     if (g.phase === 'handOver') {
       if (!this.#readyTimer) {
-        const wait = this.#fast || !this.#anyConnected() ? 0 : this.#config.readyMs;
+        const wait = this.#fast
+          ? 0
+          : !this.hasHumans
+            ? this.#between(this.#config.botHandPauseMs)
+            : !this.#anyConnected()
+              ? 0
+              : this.#config.readyMs;
         this.#readyTimer = setTimeout(() => this.#nextHand(), wait);
       }
       return;
@@ -371,8 +392,7 @@ export class Room {
     for (const seat of pending) {
       if (this.#pending.has(seat)) continue;
       if (this.#botPlays(seat)) {
-        const [lo, hi] = this.#config.botDelayMs;
-        const delay = this.#fast ? 0 : lo + Math.floor(this.#random() * (hi - lo));
+        const delay = this.#fast ? 0 : this.#think(seat);
         const timer = setTimeout(() => this.#botMove(seat, key), delay);
         this.#pending.set(seat, { mode: 'bot', key, startedAt: now, base: delay, deadlineAt: now + delay, timer });
       } else {
@@ -382,6 +402,21 @@ export class Room {
         this.#pending.set(seat, { mode: 'human', key, startedAt: now, base, deadlineAt: now + total, timer });
       }
     }
+  }
+
+  /** A human-like delay for the bot deciding at `seat`; time beyond the base comes out of the seat's bank. */
+  #think(seat: Seat): number {
+    const g = this.state;
+    const s = this.seats[seat];
+    const { turnMs, callMs } = this.#config;
+    const delay = thinkDelay(g, seat, { turnMs, callMs, bank: s.bank, scale: this.#thinkScale() }, this.#random);
+    const base = g.hand.step.type === 'turn' ? turnMs : callMs;
+    s.bank = Math.max(0, s.bank - Math.max(0, delay - base));
+    return delay;
+  }
+
+  #between([lo, hi]: [number, number]): number {
+    return lo + Math.floor(this.#random() * (hi - lo));
   }
 
   #botPlays(seat: Seat): boolean {
@@ -445,7 +480,8 @@ export class Room {
 
   /** With nobody connected, bots finish the game after the abandon period. */
   #checkAbandoned(): void {
-    if (this.#anyConnected() || this.#abandonTimer || this.#fast) return;
+    // Background games of bot players have nobody to wait for; they play at their normal pace.
+    if (!this.hasHumans || this.#anyConnected() || this.#abandonTimer || this.#fast) return;
     this.#abandonTimer = setTimeout(() => {
       this.#abandonTimer = null;
       if (this.#anyConnected()) return;
@@ -497,12 +533,7 @@ export class Room {
     const final = this.state.final!;
     const bySeat = new Map(final.map((f) => [f.seat, f]));
     const deltas = ratingChanges(
-      this.seats.map((s, i) => ({
-        rating: s.kind === 'human' ? s.rating : botElo(s.skill),
-        games: s.kind === 'human' ? s.games : 0,
-        bot: s.kind === 'bot',
-        points: bySeat.get(i)!.points,
-      })),
+      this.seats.map((s, i) => ({ rating: s.rating, games: s.games, fixed: s.userId === null, points: bySeat.get(i)!.points })),
       this.#config,
     );
     const changes: RatingChange[] = [];
@@ -510,7 +541,7 @@ export class Room {
     const results: SeatResult[] = this.seats.map((s, i) => {
       const f = bySeat.get(i)!;
       let ratingAfter: number | null = null;
-      if (s.kind === 'human') {
+      if (s.userId !== null) {
         ratingAfter = s.rating + deltas[i];
         changes.push({ seat: i, before: s.rating, after: ratingAfter });
         ratings.push({ userId: s.userId, rating: ratingAfter, games: s.games + 1 });

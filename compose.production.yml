@@ -19,8 +19,9 @@ services:
       ORIGIN: ${ORIGIN}
       ADDRESS_HEADER: ${ADDRESS_HEADER:-X-Forwarded-For}
       XFF_DEPTH: ${XFF_DEPTH:-1}
-      # Home page shows "Play online" only while this answers /healthz.
+      # Home page shows "Play online" only while this answers /healthz; /admin calls its internal API.
       GAME_SERVER_URL: http://game-server:3001
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
     expose:
       - '3000'
     ports:
@@ -45,6 +46,8 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       ORIGIN: ${ORIGIN}
       WEB_INTERNAL_URL: http://web:3000
+      # Bearer token of the /internal admin API (the web app sends it); not routed publicly.
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN}
     expose:
       - '3001'
     ports:

@@ -1,9 +1,51 @@
-import type { HintLevel } from '@mahjong/engine';
+import { vi } from 'vitest';
+import { type HintLevel, nextUint32, seedRng } from '@mahjong/engine';
 import type { RatingInfo, ServerMessage } from '@mahjong/protocol';
 import { DEFAULT_CONFIG, type Config } from '../src/config.ts';
-import type { HubClient } from '../src/hub.ts';
+import type { Hub, HubClient } from '../src/hub.ts';
+import type { SeatInit } from '../src/matchmaking.ts';
+import type { BotRow, MemoryStore } from '../src/store.ts';
 
-export const TEST_CONFIG: Config = { ...DEFAULT_CONFIG, databaseUrl: 'memory' };
+/** Background games off unless a test turns them on. */
+export const TEST_CONFIG: Config = { ...DEFAULT_CONFIG, databaseUrl: 'memory', botsBackground: false };
+
+/** Deterministic `random` for tests. */
+export function seeded(seed: string): () => number {
+  const s = seedRng(seed);
+  return () => nextUint32(s) / 0x100000000;
+}
+
+/** Bot players in the store, named mockbot1, mockbot2, … with the given ratings. */
+export async function addBots(store: MemoryStore, ratings: number[], games = 30): Promise<BotRow[]> {
+  const out: BotRow[] = [];
+  for (const rating of ratings) {
+    const row = (await store.createBot({ name: `mockbot${store.bots.size + 1}`, skill: 0.3, rating }))!;
+    store.ratings.set(row.id, { rating, games });
+    out.push({ ...row, games });
+  }
+  return out;
+}
+
+/** A bot-player seat for rooms built directly in tests. */
+export const botSeat = (id: string, rating = 1100, games = 30, skill = 0.5): SeatInit => ({
+  kind: 'bot',
+  skill,
+  userId: id,
+  name: id,
+  rating,
+  games,
+});
+
+/** Advances fake time a second at a time, ticking the hub, until `done()` or `maxSeconds` pass. Returns seconds used. */
+export async function tickUntil(hub: Hub, done: () => boolean, maxSeconds = 120): Promise<number> {
+  for (let s = 0; s < maxSeconds; s++) {
+    if (done()) return s;
+    await vi.advanceTimersByTimeAsync(1_000);
+    await hub.tick();
+  }
+  if (done()) return maxSeconds;
+  throw new Error(`condition not met within ${maxSeconds} s`);
+}
 
 /** A connection that records what it is sent. */
 export class FakeClient implements HubClient {

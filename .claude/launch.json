@@ -71,6 +71,39 @@
         "--strictPort"
       ],
       "port": 5179
+    },
+    {
+      "name": "web-5177-g3004",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "@mahjong/web",
+        "--",
+        "--port",
+        "5177",
+        "--strictPort"
+      ],
+      "port": 5177,
+      "env": {
+        "GAME_SERVER_URL": "http://localhost:3004"
+      }
+    },
+    {
+      "name": "game-3004",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "@mahjong/game-server"
+      ],
+      "port": 3004,
+      "env": {
+        "PORT": "3004",
+        "WEB_INTERNAL_URL": "http://localhost:5177"
+      }
     }
   ]
 }

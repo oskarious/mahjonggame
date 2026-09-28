@@ -7,7 +7,7 @@
     final: FinalStanding[];
     names: string[];
     me: number;
-    /** Online: rating changes of the human players. */
+    /** Online: rating changes of every rated seat. */
     ratings?: RatingChange[] | null;
     onagain: () => void;
     onhome: () => void;

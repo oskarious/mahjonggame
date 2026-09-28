@@ -10,8 +10,13 @@ type Timestamp = ColumnType<Date, Date | string | undefined, Date | string>;
 export interface UserTable {
   id: string;
   name: string;
+  email: string;
+  emailVerified: boolean;
   username: string | null;
   displayUsername: string | null;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  role: ColumnType<string, string | undefined, string>;
 }
 
 export interface RatingTable {
@@ -50,6 +55,19 @@ export interface GameActionTable {
   at: Timestamp;
 }
 
+export interface BotTable {
+  userId: string;
+  skill: number;
+  active: ColumnType<boolean, boolean | undefined, boolean>;
+  createdAt: Timestamp;
+}
+
+export interface SettingTable {
+  key: string;
+  value: JSONColumnType<object>;
+  updatedAt: Timestamp;
+}
+
 export interface MigrationTable {
   name: string;
   timestamp: string;
@@ -61,11 +79,13 @@ export interface DB {
   game: GameTable;
   game_seat: GameSeatTable;
   game_action: GameActionTable;
+  bot: BotTable;
+  setting: SettingTable;
   kysely_migration: MigrationTable;
 }
 
-/** The migration (in apps/web/migrations) that creates the tables above. */
-export const REQUIRED_MIGRATION = '0002_game_server';
+/** The latest migration (in apps/web/migrations) this server needs: it creates the last of the tables above. */
+export const REQUIRED_MIGRATION = '0003_bot_players';
 
 export function createDb(connectionString: string): Kysely<DB> {
   const pool = new pg.Pool({ connectionString, max: 10 });

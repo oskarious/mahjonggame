@@ -1,4 +1,5 @@
-// Elo from placements: every game is three pairwise results per player. Pure; the bots' ratings are fixed anchors.
+// Elo from placements: every game is three pairwise results per player. Pure. Bot players are rated like humans;
+// only the anonymous bots of old records are fixed.
 import type { HintLevel } from '@mahjong/engine';
 import type { Config } from './config.ts';
 
@@ -7,7 +8,8 @@ export interface RatedSeat {
   rating: number;
   /** Rated games played before this one (decides K). */
   games: number;
-  bot: boolean;
+  /** Rating does not change (anonymous bots of games from before bot players). */
+  fixed: boolean;
   /** Final points; placements are compared on these (equal = tie). */
   points: number;
 }
@@ -18,10 +20,10 @@ export function expectedScore(mine: number, theirs: number): number {
   return 1 / (1 + 10 ** ((theirs - mine) / 400));
 }
 
-/** Rating change per seat (0 for bots), rounded to integers. */
+/** Rating change per seat (0 for fixed seats), rounded to integers. */
 export function ratingChanges(seats: RatedSeat[], config: RatingConfig): number[] {
   return seats.map((me, i) => {
-    if (me.bot) return 0;
+    if (me.fixed) return 0;
     const k = me.games < config.newGames ? config.kNew : config.k;
     let sum = 0;
     seats.forEach((other, j) => {

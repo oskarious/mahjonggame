@@ -1,5 +1,5 @@
-// Entry point: config → database check → recover unfinished games → listen. SIGTERM stops matchmaking, tells
-// clients to reconnect and exits; the next instance resumes the games from the database.
+// Entry point: config → database check → load bot players → recover unfinished games → top up the bot pool → listen.
+// SIGTERM stops matchmaking, tells clients to reconnect and exits; the next instance resumes the games from the database.
 import { configFromEnv } from './config.ts';
 import { checkMigration, createDb } from './db.ts';
 import { Hub } from './hub.ts';
@@ -12,8 +12,11 @@ const db = createDb(config.databaseUrl);
 await checkMigration(db);
 
 const hub = new Hub({ store: new PgStore(db, config.startRating), config });
+await hub.bots.load();
 const recovered = await hub.recover((g) => replayGame(g.rules, g.seed, g.actions));
 if (recovered) console.log(`Resumed ${recovered} unfinished game(s)`);
+const created = await hub.bots.ensurePool();
+console.log(`Bot players: ${hub.bots.bots.size}${created ? ` (${created} new)` : ''}${config.botsBackground ? '' : ', background games off'}`);
 
 const server = createGameServer(hub, config);
 const tick = setInterval(() => hub.tick().catch((e) => console.error('[hub] tick failed', e)), 1000);

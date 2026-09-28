@@ -16,6 +16,8 @@ export interface UserTable {
   username: string | null;
   /** As the user typed it; show this one. */
   displayUsername: string | null;
+  /** `user` or `admin`; only ever set directly in the database. */
+  role: ColumnType<string, string | undefined, string>;
 }
 
 export interface SessionTable {
@@ -79,8 +81,9 @@ export interface GameTable {
 export interface GameSeatTable {
   gameId: string;
   seat: number;
-  /** Null for bots and deleted accounts. */
+  /** Null for deleted accounts and anonymous bots of games from before bot players. */
   userId: string | null;
+  /** Set for bot seats (bot players and anonymous bots). */
   botSkill: number | null;
   ratingBefore: number | null;
   ratingAfter: number | null;
@@ -96,6 +99,21 @@ export interface GameActionTable {
   at: Timestamp;
 }
 
+// --- Bot players and settings (migration 0003_bot_players). Bot users are `user` rows without an account.
+
+export interface BotTable {
+  userId: string;
+  skill: number;
+  active: ColumnType<boolean, boolean | undefined, boolean>;
+  createdAt: Timestamp;
+}
+
+export interface SettingTable {
+  key: string;
+  value: JSONColumnType<object>;
+  updatedAt: Timestamp;
+}
+
 export interface DB {
   user: UserTable;
   session: SessionTable;
@@ -105,6 +123,8 @@ export interface DB {
   game: GameTable;
   game_seat: GameSeatTable;
   game_action: GameActionTable;
+  bot: BotTable;
+  setting: SettingTable;
 }
 
 export type User = Selectable<UserTable>;

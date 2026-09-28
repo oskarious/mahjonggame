@@ -3,11 +3,11 @@ import { botElo } from '@mahjong/engine';
 import { clampHints, hintLevelForRating, ratingChanges } from '../src/rating.ts';
 import { TEST_CONFIG } from './helpers.ts';
 
-const seat = (rating: number, points: number, o: { games?: number; bot?: boolean } = {}) => ({
+const seat = (rating: number, points: number, o: { games?: number; fixed?: boolean } = {}) => ({
   rating,
   points,
   games: o.games ?? 50,
-  bot: o.bot ?? false,
+  fixed: o.fixed ?? false,
 });
 
 describe('ratingChanges', () => {
@@ -42,9 +42,16 @@ describe('ratingChanges', () => {
     expect(fresh).toBe(20);
   });
 
-  it('leaves bots unchanged and rates humans against the bots', () => {
+  it('rates bot players like anyone: zero-sum among established seats', () => {
+    // Seats are just ratings: a human and three established bot players.
+    const d = ratingChanges([seat(1000, 40000), seat(1150, 30000), seat(1100, 20000), seat(1200, 10000)], TEST_CONFIG);
+    expect(d.every((x) => x !== 0)).toBe(true);
+    expect(Math.abs(d.reduce((a, b) => a + b, 0))).toBeLessThanOrEqual(2);
+  });
+
+  it('leaves fixed (anonymous, pre-bot-player) bots unchanged and rates the others against them', () => {
     const bot = botElo(0.3);
-    const d = ratingChanges([seat(1000, 40000), seat(bot, 20000, { bot: true }), seat(bot, 20000, { bot: true }), seat(bot, 20000, { bot: true })], TEST_CONFIG);
+    const d = ratingChanges([seat(1000, 40000), seat(bot, 20000, { fixed: true }), seat(bot, 20000, { fixed: true }), seat(bot, 20000, { fixed: true })], TEST_CONFIG);
     expect(d[1]).toBe(0);
     expect(d[2]).toBe(0);
     expect(d[3]).toBe(0);

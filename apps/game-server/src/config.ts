@@ -1,4 +1,5 @@
-// Runtime configuration from the environment, with the defaults from the design.
+// Configuration from the environment, with the defaults from the design. Bot pool knobs that admins tune at runtime
+// are not here: see settings.ts.
 
 export interface Config {
   port: number;
@@ -12,16 +13,12 @@ export interface Config {
   callMs: number;
   /** Time bank per player, reset at the start of every hand, ms. */
   bankMs: number;
-  /** Bots act after a random delay in this range, ms. */
-  botDelayMs: [number, number];
   /** Wait for `ready` between hands at most this long, ms. */
   readyMs: number;
   /** A disconnected seat is played by a bot after this, ms. */
   graceMs: number;
   /** A game with no human connected for this long is finished by bots, ms. */
   abandonMs: number;
-  /** Matchmaking: fill with bots after this, ms. */
-  fillDelayMs: number;
   /** Matchmaking: acceptable rating gap = windowBase + windowPerSecond × seconds waited, up to windowMax. */
   windowBase: number;
   windowPerSecond: number;
@@ -35,6 +32,12 @@ export interface Config {
   k: number;
   newGames: number;
   startRating: number;
+  /** Games without humans pause this long between hands, ms. */
+  botHandPauseMs: [number, number];
+  /** Background games of bot players (env BOTS=off disables them; summoning for humans always runs). */
+  botsBackground: boolean;
+  /** Bearer token for the /internal admin API; null disables the API. */
+  internalToken: string | null;
 }
 
 export const DEFAULT_CONFIG: Config = {
@@ -45,11 +48,9 @@ export const DEFAULT_CONFIG: Config = {
   turnMs: 8_000,
   callMs: 5_000,
   bankMs: 15_000,
-  botDelayMs: [400, 900],
   readyMs: 12_000,
   graceMs: 10_000,
   abandonMs: 5 * 60_000,
-  fillDelayMs: 15_000,
   windowBase: 150,
   windowPerSecond: 20,
   windowMax: 800,
@@ -59,6 +60,9 @@ export const DEFAULT_CONFIG: Config = {
   k: 20,
   newGames: 20,
   startRating: 1000,
+  botHandPauseMs: [3_000, 9_000],
+  botsBackground: true,
+  internalToken: null,
 };
 
 export function configFromEnv(env: Record<string, string | undefined> = process.env): Config {
@@ -72,6 +76,7 @@ export function configFromEnv(env: Record<string, string | undefined> = process.
   const d = DEFAULT_CONFIG;
   if (!env.DATABASE_URL) throw new Error('Set DATABASE_URL');
   if (env.NODE_ENV === 'production' && !env.ORIGIN) throw new Error('Set ORIGIN in production');
+  if (env.INTERNAL_TOKEN && env.INTERNAL_TOKEN.length < 32) throw new Error('INTERNAL_TOKEN must be at least 32 characters');
   return {
     ...d,
     port: num('PORT', d.port),
@@ -84,6 +89,7 @@ export function configFromEnv(env: Record<string, string | undefined> = process.
     readyMs: num('READY_MS', d.readyMs),
     graceMs: num('GRACE_MS', d.graceMs),
     abandonMs: num('ABANDON_MS', d.abandonMs),
-    fillDelayMs: num('FILL_DELAY_MS', d.fillDelayMs),
+    botsBackground: env.BOTS !== 'off',
+    internalToken: env.INTERNAL_TOKEN || null,
   };
 }

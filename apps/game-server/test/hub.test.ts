@@ -1,20 +1,29 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hub } from '../src/hub.ts';
 import { MemoryStore } from '../src/store.ts';
-import { FakeClient, TEST_CONFIG } from './helpers.ts';
+import { FakeClient, TEST_CONFIG, addBots, seeded, tickUntil } from './helpers.ts';
 
 let store: MemoryStore;
 let hub: Hub;
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers();
   store = new MemoryStore();
-  hub = new Hub({ store, config: TEST_CONFIG, random: () => 0, log: (m, e) => console.error(m, e) });
+  await addBots(store, [940, 980, 1000, 1010, 1040, 1080, 1120, 1300]);
+  hub = new Hub({ store, config: TEST_CONFIG, random: seeded('hub'), log: (m, e) => console.error(m, e) });
+  await hub.bots.load();
 });
+
+/** Queue `c` and tick until bot players have joined and the game started. */
+async function startSolo(c: FakeClient, format: 'east' | 'south' = 'east') {
+  hub.handle(c, { type: 'queue.join', format });
+  await tickUntil(hub, () => !!hub.roomOf(c.user.id));
+  return hub.roomOf(c.user.id)!;
+}
 afterEach(() => vi.useRealTimers());
 
 describe('Hub', () => {
-  it('queues a player, starts a game with bots after the fill delay and resumes it on reconnect', async () => {
+  it('queues a player, starts a game with bot players who look like humans, and resumes it on reconnect', async () => {
     const a = new FakeClient('a');
     await hub.attach(a);
     expect(a.last('welcome')).toMatchObject({ activeGame: null, queued: null });
@@ -23,11 +32,16 @@ describe('Hub', () => {
     await vi.advanceTimersByTimeAsync(1_000);
     await hub.tick();
     expect(a.last('queue.status')!.waitedMs).toBe(1_000);
-    await vi.advanceTimersByTimeAsync(14_000);
-    await hub.tick();
+    await tickUntil(hub, () => !!a.last('game.start'));
     const start = a.last('game.start')!;
-    expect(start.game.players.filter((p) => p.bot)).toHaveLength(3);
-    expect(start.game.players[start.game.seat]).toMatchObject({ name: 'a', rating: 1000, bot: false });
+    expect(start.game.players[start.game.seat]).toEqual({ seat: start.game.seat, name: 'a', rating: 1000 });
+    const names = new Map([...hub.bots.bots.values()].map((b) => [b.name, b]));
+    const others = start.game.players.filter((p) => p.seat !== start.game.seat);
+    for (const p of others) {
+      expect(Object.keys(p).sort()).toEqual(['name', 'rating', 'seat']);
+      expect(names.get(p.name)!.rating).toBe(p.rating);
+      expect(names.get(p.name)!.state).toBe('busy');
+    }
     const room = hub.roomOf('a')!.room;
     await room.idle();
     expect(a.last('update')!.gameId).toBe(start.game.gameId);
@@ -71,7 +85,7 @@ describe('Hub', () => {
     expect(room.format).toBe('south');
     expect(room.rules.length).toBe('south');
     for (const c of [clients[0], b2, clients[2], clients[3]]) {
-      expect(c.last('game.start')!.game.players.every((p) => !p.bot)).toBe(true);
+      expect(c.last('game.start')!.game.players.map((p) => p.name).sort()).toEqual(['a', 'b', 'c', 'd']);
       expect(c.last('update')).toBeDefined();
     }
   });
@@ -82,10 +96,7 @@ describe('Hub', () => {
     a.clear();
     hub.handle(a, { type: 'act', gameId: 'x', seq: 0, action: { type: 'pass', seat: 0 } });
     expect(a.sent).toEqual([{ type: 'error', code: 'notInGame', requestSeq: 0 }]);
-    hub.handle(a, { type: 'queue.join', format: 'east' });
-    await vi.advanceTimersByTimeAsync(15_000);
-    await hub.tick();
-    const { room, seat } = hub.roomOf('a')!;
+    const { room, seat } = await startSolo(a);
     await room.idle();
     a.clear();
     hub.handle(a, { type: 'act', gameId: 'other', seq: room.state.seq, action: { type: 'pass', seat } });
@@ -98,10 +109,8 @@ describe('Hub', () => {
   it('finishes a game, updates ratings and frees the players', async () => {
     const a = new FakeClient('a');
     await hub.attach(a);
-    hub.handle(a, { type: 'queue.join', format: 'east' });
-    await vi.advanceTimersByTimeAsync(15_000);
-    await hub.tick();
-    const { room } = hub.roomOf('a')!;
+    const { room } = await startSolo(a);
+    const botIds = room.seats.flatMap((s) => (s.kind === 'bot' ? [s.userId!] : []));
     hub.detach(a); // leave: bots finish the game once abandoned
     await vi.advanceTimersByTimeAsync(5 * 60_000);
     await vi.runAllTimersAsync();
@@ -111,6 +120,14 @@ describe('Hub', () => {
     expect(hub.roomOf('a')).toBeUndefined();
     const r = store.ratings.get('a')!;
     expect(r.games).toBe(1);
+    // The bot players were rated too, and the pool knows their new ratings; they rest before playing again.
+    for (const id of botIds) {
+      expect(store.ratings.get(id)!.games).toBe(31);
+      const b = hub.bots.bots.get(id)!;
+      expect(b.rating).toBe(store.ratings.get(id)!.rating);
+      expect(b.state).toBe('idle');
+      expect(b.lastOpponents.has('a')).toBe(true);
+    }
     const a2 = new FakeClient('a');
     await hub.attach(a2);
     expect(a2.last('welcome')!.rating).toEqual(r);
@@ -120,9 +137,7 @@ describe('Hub', () => {
   it('shutdown tells clients to reconnect later and stops the rooms', async () => {
     const a = new FakeClient('a');
     await hub.attach(a);
-    hub.handle(a, { type: 'queue.join', format: 'east' });
-    await vi.advanceTimersByTimeAsync(15_000);
-    await hub.tick();
+    await startSolo(a);
     hub.shutdown();
     expect(a.last('server.restarting')).toBeDefined();
     expect(a.closedWith?.code).toBe(1001);

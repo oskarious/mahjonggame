@@ -105,7 +105,7 @@
       {@const p = view.players[seat]}
       <section class="seat" class:me={rel === 0} class:active={active === seat} aria-label="{names[seat]}, {POS[rel]}">
         <div class="info">
-          <span class="name">{#if players?.[seat]?.bot}<span class="bot" title="Bot">🤖</span>{/if}{names[seat]}</span>
+          <span class="name">{names[seat]}</span>
           <span class="wind" class:dealer={p.seatWind === 0}>{WIND_SHORT[p.seatWind]}</span>
           <span class="score">{p.score}</span>
           {#if players}<span class="rating">{players[seat].rating}</span>{/if}
@@ -230,10 +230,6 @@
     font-size: 0.68rem;
     font-weight: 600;
     color: var(--ink-dim);
-  }
-  .bot {
-    font-size: 0.7rem;
-    margin-right: 2px;
   }
   .rating {
     font-size: 0.62rem;

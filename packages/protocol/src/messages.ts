@@ -3,7 +3,7 @@
 import type { Action, FinalStanding, GameEvent, HintLevel, PlayerView } from '@mahjong/engine';
 
 /** Bumped when a change is not backwards compatible; the server refuses other versions. */
-export const PROTOCOL_VERSION = 1;
+export const PROTOCOL_VERSION = 2;
 
 /** Game length. Both use the online default rules (DEFAULT_RULES with this length). */
 export type Format = 'east' | 'south';
@@ -34,11 +34,11 @@ export type ClientMessage =
 // ---------------------------------------------------------------------------
 // Server → client
 
+/** A seat as other players see it. Bot players and humans are deliberately indistinguishable. */
 export interface PlayerInfo {
   seat: number;
   name: string;
   rating: number;
-  bot: boolean;
 }
 
 export interface GameInfo {
@@ -98,6 +98,7 @@ export type ServerMessage =
   | { type: 'error'; code: ErrorCode; message?: string; requestSeq?: number }
   /** Another connection of the same account took over; this one is done and must not reconnect. */
   | { type: 'takenOver' }
+  /** `ratings` has an entry for every rated seat (humans and bot players). */
   | { type: 'game.end'; gameId: string; final: FinalStanding[]; ratings: RatingChange[] }
   /** The server is shutting down; reconnect with backoff. */
   | { type: 'server.restarting' }

@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_RULES } from '@mahjong/engine';
 import { Hub } from '../src/hub.ts';
-import type { SeatInit } from '../src/matchmaking.ts';
+import { anonymousBot, type SeatInit } from '../src/matchmaking.ts';
 import { replayGame } from '../src/recovery.ts';
 import { Room } from '../src/room.ts';
 import { MemoryStore } from '../src/store.ts';
-import { FakeClient, TEST_CONFIG } from './helpers.ts';
+import { FakeClient, TEST_CONFIG, addBots, botSeat, seeded, tickUntil } from './helpers.ts';
 
 const seats: SeatInit[] = [
   { kind: 'human', userId: 'a', name: 'a', rating: 1000, games: 0 },
-  { kind: 'bot', skill: 0.4 },
-  { kind: 'bot', skill: 0.6 },
+  anonymousBot(0.4),
+  botSeat('x', 1180),
   { kind: 'human', userId: 'd', name: 'd', rating: 1150, games: 30 },
 ];
 
@@ -40,18 +40,23 @@ describe('records and recovery', () => {
     expect(new Set(rec.results.map((r) => r.points)).size).toBeGreaterThan(1);
     const after = rec.results.find((r) => r.seat === 0)!.ratingAfter!;
     expect(store.ratings.get('a')).toEqual({ rating: after, games: 1 });
+    expect(store.ratings.get('x')!.games).toBe(31);
+    expect(rec.results.find((r) => r.seat === 1)!.ratingAfter).toBeNull(); // the anonymous bot is not rated
     expect(store.ratings.has('b')).toBe(false);
   });
 
   it('a room rebuilt from the store continues from the last stored action', async () => {
     const store = new MemoryStore();
-    const hub1 = new Hub({ store, config: TEST_CONFIG, random: () => 0.3, log: () => {} });
+    await addBots(store, [950, 990, 1010, 1050, 1100]);
+    const hub1 = new Hub({ store, config: TEST_CONFIG, random: seeded('recovery'), log: () => {} });
+    await hub1.bots.load();
     const a = new FakeClient('a');
     await hub1.attach(a);
     hub1.handle(a, { type: 'queue.join', format: 'east' });
-    await vi.advanceTimersByTimeAsync(15_000);
-    await hub1.tick();
+    await tickUntil(hub1, () => !!hub1.roomOf('a'));
     const { room: room1, seat } = hub1.roomOf('a')!;
+    const botIds = room1.seats.flatMap((s) => (s.kind === 'bot' ? [s.userId!] : [])).sort();
+    expect(botIds).toHaveLength(3);
     // Play a while: the human times out on every decision, bots play.
     await vi.advanceTimersByTimeAsync(60_000);
     await room1.idle();
@@ -62,12 +67,17 @@ describe('records and recovery', () => {
     const snapshot = JSON.stringify(room1.state);
 
     // New process: recover from the store.
-    const hub2 = new Hub({ store, config: TEST_CONFIG, random: () => 0.3, log: () => {} });
+    const hub2 = new Hub({ store, config: TEST_CONFIG, random: seeded('recovery-2'), log: () => {} });
+    await hub2.bots.load();
     const n = await hub2.recover((g) => replayGame(g.rules, g.seed, g.actions));
     expect(n).toBe(1);
     const { room: room2, seat: seat2 } = hub2.roomOf('a')!;
     expect(seat2).toBe(seat);
     expect(JSON.stringify(room2.state)).toBe(snapshot);
+    // The recovered room keeps its bot players, who are busy again in the new process.
+    expect(room2.seats.flatMap((s) => (s.kind === 'bot' ? [s.userId!] : [])).sort()).toEqual(botIds);
+    for (const id of botIds) expect(hub2.bots.bots.get(id)).toMatchObject({ state: 'busy', roomId: room2.id });
+    expect(room2.info(seat2).players.map((p) => p.name)).toEqual(room1.info(seat).players.map((p) => p.name));
     expect(store.games.get(room2.id)!.actions).toHaveLength(cut);
 
     // The player reconnects and gets their view at the same sequence number; then the game runs to the end.

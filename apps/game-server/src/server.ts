@@ -1,8 +1,10 @@
-// HTTP server with /healthz and the authenticated /ws upgrade. Separated from main.ts so tests can start one.
+// HTTP server with /healthz, the internal admin API and the authenticated /ws upgrade. Separated from main.ts so tests
+// can start one.
 import { createServer, type IncomingMessage, type Server } from 'node:http';
 import type { Socket } from 'node:net';
 import { WebSocketServer } from 'ws';
 import { MAX_MESSAGE_BYTES } from '@mahjong/protocol';
+import { handleInternal } from './admin.ts';
 import { authenticateUpgrade, type FetchLike } from './auth.ts';
 import type { Config } from './config.ts';
 import { Connection } from './connection.ts';
@@ -20,6 +22,14 @@ export function createGameServer(hub: Hub, config: Config, fetchFn?: FetchLike):
     if (req.url === '/healthz') {
       res.writeHead(200, { 'content-type': 'text/plain', 'cache-control': 'no-store' });
       res.end('ok');
+      return;
+    }
+    if (req.url?.startsWith('/internal/')) {
+      handleInternal(req, res, hub, config).catch((e) => {
+        console.error('[admin] request failed', e);
+        if (!res.headersSent) res.writeHead(500);
+        res.end();
+      });
       return;
     }
     res.writeHead(404);

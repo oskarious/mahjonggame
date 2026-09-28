@@ -18,7 +18,7 @@
     hints: HintLevel;
     maxHints?: HintLevel;
     onhints: (level: HintLevel) => void;
-    /** Online: seat info for bot markers and ratings. */
+    /** Online: seat info (ratings). */
     players?: PlayerInfo[] | null;
     /** Online: own decision countdown. */
     deadlineAt?: number | null;

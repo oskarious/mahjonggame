@@ -1,7 +1,9 @@
-// Everything that is not one game: connected users, the queue, the rooms, and routing of client messages.
+// Everything that is not one game: connected users, the queue, the bot players, the rooms, and routing of client
+// messages.
 import { DEFAULT_RULES, type HintLevel, makeRules } from '@mahjong/engine';
 import type { ClientMessage, Format, GameInfo, RatingInfo, ServerMessage } from '@mahjong/protocol';
 import { randomUUID } from 'node:crypto';
+import { BotPool } from './bots.ts';
 import type { Config } from './config.ts';
 import { type Match, Matchmaker } from './matchmaking.ts';
 import { type Client, Room } from './room.ts';
@@ -27,6 +29,7 @@ export interface HubDeps {
 
 export class Hub {
   readonly matchmaker: Matchmaker;
+  readonly bots: BotPool;
   #store: Store;
   #config: Config;
   #random: () => number;
@@ -44,6 +47,15 @@ export class Hub {
     this.#log = deps.log ?? ((msg, err) => console.error(`[hub] ${msg}`, err ?? ''));
     this.#now = deps.now ?? Date.now;
     this.matchmaker = new Matchmaker(deps.config, this.#random);
+    this.bots = new BotPool({
+      store: deps.store,
+      matchmaker: this.matchmaker,
+      config: deps.config,
+      startGame: (match, opts) => this.startGame(match, opts),
+      random: this.#random,
+      now: this.#now,
+      log: (msg, err) => this.#log(`bots: ${msg}`, err),
+    });
   }
 
   get rooms(): ReadonlyMap<string, Room> {
@@ -137,7 +149,7 @@ export class Hub {
     }
   }
 
-  /** Matchmaking tick: starts games and reports waiting times. Call once a second. */
+  /** Matchmaking tick: starts games, moves bot players, reports waiting times. Call once a second. */
   async tick(): Promise<void> {
     if (this.#stopped) return;
     const now = this.#now();
@@ -148,17 +160,18 @@ export class Hub {
         this.#log('failed to start a game', e);
       }
     }
+    await this.bots.tick();
     for (const { entry, format } of this.matchmaker.queued()) {
       this.#clients.get(entry.userId)?.send({ type: 'queue.status', format, waitedMs: now - entry.joinedAt });
     }
   }
 
-  async startGame(match: Match): Promise<Room> {
+  async startGame(match: Match, opts: { fast?: boolean } = {}): Promise<Room> {
     const id = randomUUID();
     const seed = randomUUID();
     const rules = makeRules(DEFAULT_RULES, { length: match.format });
     await this.#store.createGame({ id, format: match.format, rules, seed, seats: match.seats });
-    const room = this.#makeRoom({ id, format: match.format, rules, seed, seats: match.seats });
+    const room = this.#makeRoom({ id, format: match.format, rules, seed, seats: match.seats, fast: opts.fast });
     for (const [seat, s] of match.seats.entries()) {
       if (s.kind !== 'human') continue;
       const client = this.#clients.get(s.userId);
@@ -191,6 +204,7 @@ export class Hub {
   /** Stops matchmaking, tells clients to reconnect later and stops the rooms' timers. */
   shutdown(): void {
     this.#stopped = true;
+    this.bots.stop();
     for (const c of this.#clients.values()) {
       c.send({ type: 'server.restarting' });
       c.close(1001, 'restarting');
@@ -200,12 +214,20 @@ export class Hub {
 
   #makeRoom(init: ConstructorParameters<typeof Room>[1]): Room {
     const room = new Room(
-      { store: this.#store, config: this.#config, random: this.#random, log: this.#log, onEnd: (r, ratings) => this.#onEnd(r, ratings) },
+      {
+        store: this.#store,
+        config: this.#config,
+        random: this.#random,
+        log: this.#log,
+        thinkScale: () => this.bots.settings.thinkScale,
+        onEnd: (r, ratings) => this.#onEnd(r, ratings),
+      },
       init,
     );
     this.#rooms.set(room.id, room);
     for (const [seat, s] of init.seats.entries()) {
       if (s.kind === 'human') this.#seatOf.set(s.userId, { room, seat });
+      else if (s.userId !== null) this.bots.seated(s.userId, room.id);
     }
     return room;
   }
@@ -219,6 +241,7 @@ export class Hub {
       const c = this.#clients.get(r.userId);
       if (c) c.rating = { rating: r.rating, games: r.games };
     }
+    this.bots.roomEnded(room, ratings);
   }
 }
 
