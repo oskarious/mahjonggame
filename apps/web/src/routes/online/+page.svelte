@@ -29,6 +29,33 @@
 
   // Initial level only; later changes go through setHints.
   const game = new RemoteGame(readHints());
+  const AUTO_KEY = 'riichi:autoRiichi';
+  const SKIP_KEY = 'riichi:skipCalls';
+  function readFlag(key: string, fallback: boolean) {
+    try {
+      const v = localStorage.getItem(key);
+      return v === null ? fallback : v === '1';
+    } catch {
+      return fallback;
+    }
+  }
+  function writeFlag(key: string, v: boolean) {
+    try {
+      localStorage.setItem(key, v ? '1' : '0');
+    } catch {
+      /* storage unavailable */
+    }
+  }
+  game.autoRiichiDiscard = readFlag(AUTO_KEY, true);
+  game.skipCalls = readFlag(SKIP_KEY, false);
+  function setAuto(v: boolean) {
+    game.autoRiichiDiscard = v;
+    writeFlag(AUTO_KEY, v);
+  }
+  function setSkip(v: boolean) {
+    game.skipCalls = v;
+    writeFlag(SKIP_KEY, v);
+  }
   let format: Format = $state('east');
   let table: Table | undefined = $state();
 
@@ -74,7 +101,18 @@
     ratings={game.end?.ratings ?? null}
     onagain={again}
     onhome={() => goto('/')}
-  />
+  >
+    {#snippet settings()}
+      <label class="check">
+        <input type="checkbox" checked={game.autoRiichiDiscard} onchange={(e) => setAuto(e.currentTarget.checked)} />
+        <span>Auto-discard after riichi</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" checked={game.skipCalls} onchange={(e) => setSkip(e.currentTarget.checked)} />
+        <span>Skip calls (still asks for ron)</span>
+      </label>
+    {/snippet}
+  </Table>
 {:else}
   <main class="page lobby">
     <a class="back" href="/" aria-label="Home">←</a>

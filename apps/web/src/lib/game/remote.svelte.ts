@@ -41,6 +41,10 @@ export class RemoteGame implements GameSource {
   bank: number | null = $state(null);
   end: { final: FinalStanding[]; ratings: RatingChange[] } | null = $state.raw(null);
   error: string | null = $state(null);
+  /** In riichi, discard the drawn tile automatically when nothing else is possible (as offline). */
+  autoRiichiDiscard = $state(true);
+  /** Pass on pon/chii/kan automatically (still asked for ron). */
+  skipCalls = $state(false);
   readonly red: RedFives = DEFAULT_RULES.redFives;
   names: string[] = $derived.by(() => {
     const info = this.info as GameInfo | null;
@@ -52,6 +56,7 @@ export class RemoteGame implements GameSource {
   #hints: HintLevel;
   #attempt = 0;
   #retry: ReturnType<typeof setTimeout> | null = null;
+  #auto: ReturnType<typeof setTimeout> | null = null;
   #destroyed = false;
   #url: string;
 
@@ -116,6 +121,7 @@ export class RemoteGame implements GameSource {
   destroy(): void {
     this.#destroyed = true;
     if (this.#retry) clearTimeout(this.#retry);
+    if (this.#auto) clearTimeout(this.#auto);
     this.#ws?.close();
     this.#ws = null;
   }
@@ -159,6 +165,26 @@ export class RemoteGame implements GameSource {
     this.deadlineAt = null;
     this.bank = null;
     if (this.status === 'ended') this.status = 'idle';
+  }
+
+  /** Decisions the player has opted out of making by hand, sent after a short pause so the table still shows them. */
+  #automate(v: PlayerView): void {
+    if (this.#auto) clearTimeout(this.#auto);
+    this.#auto = null;
+    if (v.phase !== 'playing' || !v.actions.length) return;
+    const legal = v.actions;
+    let action: Action | null = null;
+    if (this.autoRiichiDiscard && v.players[v.seat].riichi && legal.every((a) => a.type === 'discard')) action = legal[0];
+    else if (this.skipCalls && legal.some((a) => a.type === 'pass') && !legal.some((a) => a.type === 'ron')) {
+      action = legal.find((a) => a.type === 'pass')!;
+    }
+    if (!action) return;
+    const seq = v.seq;
+    this.#auto = setTimeout(() => {
+      this.#auto = null;
+      const now = this.#view as PlayerView | null;
+      if (now && now.seq === seq) this.act(action);
+    }, 350);
   }
 
   #send(msg: ClientMessage): void {
@@ -210,6 +236,7 @@ export class RemoteGame implements GameSource {
         this.bank = msg.bank ?? null;
         this.error = null;
         if (this.status !== 'ended') this.status = 'playing';
+        this.#automate(msg.view);
         return;
       }
       case 'game.end':
