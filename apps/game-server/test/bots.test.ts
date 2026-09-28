@@ -206,6 +206,23 @@ describe('the pool', () => {
     expect(hub.bots.snapshot().bots.find((b) => b.id === id)!.state).toBe('retired');
   });
 
+  it('the maximum pool counts active bots only', async () => {
+    const { hub } = await setup([1000, 1010, 1020], { settings: { botPoolMax: 3 } });
+    const full = 'That would be more than 3 active bots (maximum pool)';
+    expect(await hub.bots.createBots({ name: 'ExtraHeron' })).toEqual({ error: full });
+    expect(await hub.bots.createBots({ count: 2, minRating: 1000, maxRating: 1100 })).toEqual({ error: full });
+    const [first] = [...hub.bots.bots.values()];
+    await hub.bots.updateBot(first.id, { active: false });
+    // 2 active + 1 retired: room for one more active bot, though there are already 3 in total.
+    expect(await hub.bots.createBots({ name: 'ExtraHeron' })).toMatchObject({ created: [{ name: 'ExtraHeron' }] });
+    expect(hub.bots.bots.size).toBe(4);
+    expect(await hub.bots.updateBot(first.id, { active: true })).toEqual({ error: full });
+    // Raising the minimum tops up active bots; retired ones are not counted either way.
+    await hub.bots.updateSettings({ botPoolMax: 6, botPoolMin: 5 });
+    await hub.bots.ensurePool();
+    expect([...hub.bots.bots.values()].filter((b) => b.active)).toHaveLength(5);
+  });
+
   it('rejects taken or invalid names and bad values', async () => {
     const { hub, store } = await setup([1000, 1100]);
     const [x, y] = [...hub.bots.bots.values()];

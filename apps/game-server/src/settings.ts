@@ -17,6 +17,7 @@ export const DEFAULT_BOT_SETTINGS: BotSettings = {
   growAfterMs: 30_000,
   botRestMs: [10_000, 90_000],
   thinkScale: 1,
+  timeoutPercent: 0.5,
 };
 
 export const SETTINGS_KEY = 'bots';
@@ -35,6 +36,7 @@ const NUMBERS: Record<NumberKey, { min: number; max: number; int: boolean }> = {
   warmupTables: { min: 0, max: 100, int: true },
   growAfterMs: { min: 0, max: DAY, int: true },
   thinkScale: { min: 0, max: 5, int: false },
+  timeoutPercent: { min: 0, max: 10, int: false },
 };
 const RANGES: Record<RangeKey, { max: number }> = {
   summonAfterMs: { max: 10 * 60_000 },

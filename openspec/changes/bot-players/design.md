@@ -92,7 +92,7 @@ human is simply skipped. The word lists are curated to avoid offensive combinati
 3. On arrival, pick an idle, rested bot whose rating fits the human's current window and every other group member's.
    Choose randomly among the 3 closest, prefer bots not in `recentOpponents`, and queue it for this human.
 4. If no idle bot fits and the human has waited `growAfterMs` (30 s) with the window at max, create a bot at
-   `skillForElo(humanRating)`. If `botPoolMax` is reached, summon the nearest idle bot regardless of window. A player
+   `skillForElo(humanRating)`. If `botPoolMax` active bots exist, summon the nearest idle bot regardless of window. A player
    always gets a game.
 
 Withdrawal: each tick, bot entries whose summoner is no longer queued (left, or seated in a table without them) leave
@@ -135,6 +135,11 @@ gain was fewer stored rows.
 - With about 5 % probability, a long think of up to `turnMs + 0.6 × remaining bank`. The bank is charged like a
   human's, and the delay is always capped below the deadline.
 - All delays are multiplied by the `thinkScale` setting (D7). `#fast` (abandoned game, warm-up) stays 0.
+- With `timeoutPercent` chance per decision (default 0.5 %), a bot player at a table with a human times out instead:
+  the room schedules the normal timeout at base + bank, plays `timeoutAction` and empties the bot's bank, exactly as for
+  a human. Three bots make about 180 decisions per game, so the default gives about one timeout per game. Not in games
+  without humans (nobody to convince, and it would only slow background games) and not for takeover bots (the absent
+  human would pay for it).
 
 Because timing is only visible through when events arrive, and deadlines are only ever sent to the deciding seat, this
 is enough to hide which seats are bots. `botDelayMs` is removed.
@@ -159,7 +164,8 @@ the admin page if bots are being created on demand regularly.
 
 **Settings are runtime data, not env.** A `setting` table (`key text PK, value jsonb, updatedAt`) holds the bot knobs:
 `botPoolMin`, `botPoolMax`, `idleReserve`, `backgroundEveryMs`, `backgroundEnabled`, `warmupEveryMs`, `warmupTables`,
-`summonAfterMs`, `botArrivalMs`, `growAfterMs`, `botRestMs`, and a `thinkScale` multiplier for D6 delays. The game
+`summonAfterMs`, `botArrivalMs`, `growAfterMs`, `botRestMs`, a `thinkScale` multiplier and `timeoutPercent` for D6. Both
+`botPoolMin` and `botPoolMax` count active bots only (retired bots are ignored), so they can't contradict each other. The game
 server loads them at startup over the code defaults. It is the only writer (D9), so changes apply immediately without
 polling. The env var `BOTS=off` still disables background games (tests, local debugging). Summoning is always on,
 because a player must always get a game. Timers, rating K and hint thresholds stay in env/config, as today.

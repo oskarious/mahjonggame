@@ -98,6 +98,8 @@ export interface RoomDeps {
   log?: (msg: string, err?: unknown) => void;
   /** Current multiplier for bot think times (a runtime setting). Default 1. */
   thinkScale?: () => number;
+  /** Chance in percent that a bot player lets a decision time out in a game with humans (a runtime setting). Default 0. */
+  timeoutPercent?: () => number;
 }
 
 type RoomConfig = Pick<
@@ -133,6 +135,7 @@ export class Room {
   #random: () => number;
   #log: (msg: string, err?: unknown) => void;
   #thinkScale: () => number;
+  #timeoutPercent: () => number;
   #chain: Promise<void> = Promise.resolve();
   #pending = new Map<Seat, Pending>();
   #graceTimers = new Map<Seat, Timer>();
@@ -155,6 +158,7 @@ export class Room {
     this.#random = deps.random ?? Math.random;
     this.#log = deps.log ?? ((msg, err) => console.error(`[room ${init.id}] ${msg}`, err ?? ''));
     this.#thinkScale = deps.thinkScale ?? (() => 1);
+    this.#timeoutPercent = deps.timeoutPercent ?? (() => 0);
     this.#fast = init.fast ?? false;
     this.seats = init.seats.map((s) =>
       s.kind === 'bot'
@@ -391,7 +395,13 @@ export class Room {
     const now = Date.now();
     for (const seat of pending) {
       if (this.#pending.has(seat)) continue;
-      if (this.#botPlays(seat)) {
+      if (this.#botPlays(seat) && !this.#fast && this.#botTimesOut(seat)) {
+        // Like a distracted human: the full time runs out and the automatic move is played.
+        const base = g.hand.step.type === 'turn' ? this.#config.turnMs : this.#config.callMs;
+        const total = base + this.seats[seat].bank;
+        const timer = setTimeout(() => this.#timeout(seat, key), total);
+        this.#pending.set(seat, { mode: 'bot', key, startedAt: now, base, deadlineAt: now + total, timer });
+      } else if (this.#botPlays(seat)) {
         const delay = this.#fast ? 0 : this.#think(seat);
         const timer = setTimeout(() => this.#botMove(seat, key), delay);
         this.#pending.set(seat, { mode: 'bot', key, startedAt: now, base: delay, deadlineAt: now + delay, timer });
@@ -402,6 +412,14 @@ export class Room {
         this.#pending.set(seat, { mode: 'human', key, startedAt: now, base, deadlineAt: now + total, timer });
       }
     }
+  }
+
+  /** Whether a bot player lets this decision time out: only in games with humans, where it has to look human. */
+  #botTimesOut(seat: Seat): boolean {
+    const s = this.seats[seat];
+    const pct = this.#timeoutPercent();
+    if (pct <= 0 || s.kind !== 'bot' || s.userId === null || !this.hasHumans) return false;
+    return this.#random() > 1 - pct / 100;
   }
 
   /** A human-like delay for the bot deciding at `seat`; time beyond the base comes out of the seat's bank. */
@@ -440,7 +458,7 @@ export class Room {
       if (this.#closed || this.#finished) return;
       if (decisionKey(this.state) !== key || !pendingSeats(this.state).includes(seat)) return;
       const s = this.seats[seat];
-      if (s.kind === 'human') s.bank = 0;
+      s.bank = 0;
       const a = timeoutAction(this.state, seat);
       if (a) await this.#apply(a, seat);
     });

@@ -220,6 +220,7 @@ export class Hub {
         random: this.#random,
         log: this.#log,
         thinkScale: () => this.bots.settings.thinkScale,
+        timeoutPercent: () => this.bots.settings.timeoutPercent,
         onEnd: (r, ratings) => this.#onEnd(r, ratings),
       },
       init,

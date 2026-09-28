@@ -60,8 +60,14 @@
 - [x] 9.3 `INTERNAL_TOKEN` in `compose.production.yml` (both services), both `.env.example` files, and the dev config
 - [x] 9.4 Browser check on localhost: non-admin gets 404; after setting the role in the DB the page loads, creating/retiring bots and changing a setting work and survive a game-server restart
 
-## 10. Wrap-up
+## 10. Follow-ups
 
-- [x] 10.1 `npm test` and `npm run typecheck` pass
-- [x] 10.2 Manual check in dev (`web-5175` + game 3002): queue solo, see named opponents with ratings arrive at varying times, play to the end, see every seat's rating change; restart the game server mid-game and resume
-- [x] 10.3 Update AGENTS.md (game server section: bot players, summoning, background games, pacing; users table contains bots; bot settings, admin role and `/internal` API, `INTERNAL_TOKEN`) and the layout block
+- [x] 10.1 Settings on the admin page grouped into sections, each field explained
+- [x] 10.2 `botPoolMax` counts active bots only (growth, admin creation, reactivation); tests
+- [x] 10.3 `timeoutPercent` setting: bot players occasionally time out in games with humans; tests
+
+## 11. Wrap-up
+
+- [x] 11.1 `npm test` and `npm run typecheck` pass
+- [x] 11.2 Manual check in dev (`web-5175` + game 3002): queue solo, see named opponents with ratings arrive at varying times, play to the end, see every seat's rating change; restart the game server mid-game and resume
+- [x] 11.3 Update AGENTS.md (game server section: bot players, summoning, background games, pacing; users table contains bots; bot settings, admin role and `/internal` API, `INTERNAL_TOKEN`) and the layout block

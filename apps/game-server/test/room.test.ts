@@ -24,7 +24,7 @@ async function build(
   state?: GameState,
   config: Partial<Config> = {},
   attach = true,
-  opts: { random?: () => number; fast?: boolean } = {},
+  opts: { random?: () => number; fast?: boolean; timeoutPercent?: number } = {},
 ): Promise<Built> {
   const store = new MemoryStore();
   const cfg = { ...TEST_CONFIG, ...config };
@@ -33,7 +33,14 @@ async function build(
   await store.createGame({ id: 'g1', format: 'east', rules, seed, seats });
   const ended: RatingUpdate[][] = [];
   const room = new Room(
-    { store, config: cfg, random: opts.random ?? (() => 0), onEnd: (_r, ratings) => ended.push(ratings), log: (m, e) => console.error(m, e) },
+    {
+      store,
+      config: cfg,
+      random: opts.random ?? (() => 0),
+      timeoutPercent: () => opts.timeoutPercent ?? 0,
+      onEnd: (_r, ratings) => ended.push(ratings),
+      log: (m, e) => console.error(m, e),
+    },
     { id: 'g1', format: 'east', rules, seed, seats, state, fast: opts.fast },
   );
   const clients = seats.map((s) => (s.kind === 'human' ? new FakeClient(s.userId) : null));
@@ -376,6 +383,30 @@ describe('Room bot players', () => {
     const sum = updates.reduce((a, u) => a + u.rating - before.get(u.userId)!, 0);
     expect(Math.abs(sum)).toBeLessThanOrEqual(2);
     expect(store.games.get('g1')!.actions.length).toBe(room.state.seq);
+  });
+
+  it('a bot player sometimes lets its timer run out, like a human, but only with humans at the table', async () => {
+    const seats = [human('a'), botSeat('x'), botSeat('y'), botSeat('z')];
+    const { room, store, clients } = await build(seats, turnState(), {}, true, { random: () => 0.5, timeoutPercent: 100 });
+    const c = clients[0]!;
+    room.act(0, 0, discardOf(c), c);
+    await room.idle();
+    expect(pendingSeats(room.state)).toEqual([1]);
+    const drawn = room.state.hand.players[1].drawn!;
+    // The full base time plus the whole bank passes, then the automatic move (discard the drawn tile) is played.
+    await vi.advanceTimersByTimeAsync(8_000 + 15_000 - 1);
+    expect(room.state.seq).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
+    await room.idle();
+    expect(store.log[1].action).toEqual({ type: 'discard', seat: 1, tile: drawn });
+    expect(room.seats[1].bank).toBe(0);
+
+    // Without humans at the table the same setting does nothing: the game keeps its normal pace.
+    const bots = [botSeat('w'), botSeat('x'), botSeat('y'), botSeat('z')];
+    const b = await build(bots, undefined, {}, false, { random: seeded('no-timeouts'), timeoutPercent: 100 });
+    await vi.advanceTimersByTimeAsync(60_000);
+    await b.room.idle();
+    expect(b.room.state.seq).toBeGreaterThan(20);
   });
 
   it('a warm-up (fast) room plays without delays', async () => {

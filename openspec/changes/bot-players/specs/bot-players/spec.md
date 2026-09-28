@@ -23,7 +23,8 @@ On startup, and whenever the setting changes, the game server SHALL make sure a 
 bot players exists. Missing bots SHALL be
 created with skills spread over the bot skill range and a starting rating equal to the calibrated Elo for their skill.
 When a waiting human cannot be served by any idle bot within the widest rating window, the server SHALL create a new bot
-player whose calibrated Elo is closest to that human's rating, up to a configured maximum pool size.
+player whose calibrated Elo is closest to that human's rating, up to a configured maximum number of active bots.
+Retired bots count towards neither the minimum nor the maximum.
 
 #### Scenario: Empty database
 - **WHEN** the game server starts against a database with no bot players
@@ -73,7 +74,10 @@ the new-player threshold), background games MAY run without move delays so that 
 ### Requirement: Indistinguishable from humans
 Clients SHALL NOT be told whether a seat is a bot player. Seat information for bot players SHALL have the same shape and
 content as for humans (name and rating). In games with humans, bot players SHALL act after human-like delays: shorter
-for obvious decisions, longer for harder ones, and occasionally dipping into their time bank, but never timing out.
+for obvious decisions, longer for harder ones, and occasionally dipping into their time bank. With a small configurable
+chance per decision a bot player SHALL let its timer run out like a distracted human: it waits the full time, the
+automatic timeout move is played and its time bank is used up for the hand. Timeouts SHALL only happen in games with
+humans.
 
 #### Scenario: Same seat info
 - **WHEN** a client receives the players of a game with humans and bot players
@@ -81,7 +85,16 @@ for obvious decisions, longer for harder ones, and occasionally dipping into the
 
 #### Scenario: Varied pace
 - **WHEN** a bot player makes many decisions in a game
-- **THEN** its response times vary, and some exceed the base turn time without exceeding base time plus bank
+- **THEN** its response times vary, and some exceed the base turn time
+
+#### Scenario: Occasional timeout
+- **WHEN** a bot player at a table with a human times out on its turn
+- **THEN** its move is played only when base time plus bank have run out, it is the automatic timeout move, and the
+  bot's bank is empty for the rest of the hand
+
+#### Scenario: No timeouts without humans
+- **WHEN** a background game of four bot players runs
+- **THEN** no bot lets its timer run out
 
 ### Requirement: Offline bots unchanged
 Offline play in the browser SHALL keep its unnamed skill-based bots. Bot players exist only in online play.

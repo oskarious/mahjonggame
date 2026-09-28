@@ -169,11 +169,11 @@
           <div class="grid">
             <label class="field">
               Minimum pool <input name="botPoolMin" type="number" min="0" value={s.botPoolMin} />
-              <small class="hint">Active bots to keep. Missing ones are created right away, spread over the bot rating range (about 960–1310). Default 120.</small>
+              <small class="hint">Active bots to keep. Raising it creates the missing ones right away, spread over the bot rating range (about 960–1310); lowering it removes none (retire bots for that). Default 120.</small>
             </label>
             <label class="field">
               Maximum pool <input name="botPoolMax" type="number" min="0" value={s.botPoolMax} />
-              <small class="hint">Cap for bots created on demand. At the cap, a waiting player gets the nearest idle bot even if its rating is far off. Default 1000.</small>
+              <small class="hint">Most active bots. Bots created for waiting players, added here or reactivated stop at this number; then a waiting player gets the nearest idle bot even if its rating is far off. Default 1000.</small>
             </label>
           </div>
         </section>
@@ -240,7 +240,11 @@
           <div class="grid">
             <label class="field">
               Think time × <input name="thinkScale" type="number" min="0" max="5" step="0.05" value={s.thinkScale} />
-              <small class="hint">Multiplies how long bots take per move in live games: 1 = human-like, 0.5 = twice as fast, 0 = instant. Bots never run out their turn timer. Default 1.</small>
+              <small class="hint">Multiplies how long bots take per move in live games: 1 = human-like, 0.5 = twice as fast, 0 = instant. Default 1.</small>
+            </label>
+            <label class="field">
+              Timeout chance (%) <input name="timeoutPercent" type="number" min="0" max="10" step="0.1" value={s.timeoutPercent} />
+              <small class="hint">Chance per decision that a bot lets its timer run out, like a distracted player: it waits the full time plus its time bank, then the automatic move is played and its bank is empty for the rest of the hand. Only in games with players. Three bots make about 180 decisions a game, so 0.5 means roughly one timeout per game. Default 0.5.</small>
             </label>
           </div>
         </section>

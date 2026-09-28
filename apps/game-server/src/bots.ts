@@ -208,11 +208,14 @@ export class BotPool {
   /** Creates bots for the admin: `count` spread over a rating range, or one with an optional name/skill. */
   async createBots(req: CreateBotsRequest): Promise<{ created: BotSummary[] } | { error: string }> {
     const out: PoolBot[] = [];
+    const adding = 'count' in req ? req.count : 1;
+    if (Number.isInteger(adding) && adding > 0 && this.#activeCount() + adding > this.settings.botPoolMax) {
+      return { error: this.#overMax() };
+    }
     if ('count' in req) {
       const { count, minRating, maxRating } = req;
       if (!Number.isInteger(count) || count < 1 || count > 500) return { error: 'count must be an integer from 1 to 500' };
       if (![minRating, maxRating].every(Number.isFinite) || minRating > maxRating) return { error: 'Give a rating range, low to high' };
-      if (this.#bots.size + count > this.settings.botPoolMax) return { error: `The pool would exceed botPoolMax (${this.settings.botPoolMax})` };
       for (let i = 0; i < count; i++) {
         const rating = minRating + ((maxRating - minRating) * (i + this.#random())) / count;
         const b = await this.#create(skillForElo(rating));
@@ -247,6 +250,7 @@ export class BotPool {
       return { error: 'skill must be from 0 to 1' };
     }
     if (patch.active !== undefined && typeof patch.active !== 'boolean') return { error: 'active must be true or false' };
+    if (patch.active === true && !b.active && this.#activeCount() >= this.settings.botPoolMax) return { error: this.#overMax() };
     const clean: BotPatch = {};
     if (patch.name !== undefined) clean.name = patch.name;
     if (patch.skill !== undefined) clean.skill = patch.skill;
@@ -291,6 +295,11 @@ export class BotPool {
     b.roomId = null;
   }
 
+  #overMax(): string {
+    return `That would be more than ${this.settings.botPoolMax} active bots (maximum pool)`;
+  }
+
+  /** Active bots: the ones the minimum and maximum pool size count. Retired bots are never counted. */
   #activeCount(): number {
     let n = 0;
     for (const b of this.#bots.values()) if (b.active) n++;
@@ -392,7 +401,7 @@ export class BotPool {
 
   /** Nobody fits this human: create a bot near their rating, or at the size limit send the nearest idle bot anyway. */
   #grow(human: QueueEntry, format: Format, d: Demand, now: number): void {
-    if (this.#bots.size >= this.settings.botPoolMax) {
+    if (this.#activeCount() >= this.settings.botPoolMax) {
       const nearest = this.#available(now).sort((a, b) => Math.abs(a.rating - human.rating) - Math.abs(b.rating - human.rating))[0];
       if (nearest) {
         this.#enqueue(nearest, human, format, now);

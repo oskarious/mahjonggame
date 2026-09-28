@@ -36,7 +36,8 @@ An admin SHALL be able to create bots (a number of bots spread over a rating ran
 skill), rename a bot, change a bot's skill, retire a bot and reactivate a retired bot. Created bots follow the same rules
 as seeded bots. Renaming SHALL enforce the same username rules and uniqueness as sign-up. Changing skill SHALL keep the
 bot's rating. A retired bot SHALL never be summoned or seated again. A busy bot that is retired SHALL finish its current
-game. Retired bots SHALL keep their account, rating and game history, and SHALL NOT count towards the minimum pool size.
+game. Retired bots SHALL keep their account, rating and game history, and SHALL NOT count towards the minimum or maximum
+pool size. Creating or reactivating bots SHALL be refused if it would take the number of active bots above the maximum.
 
 #### Scenario: Create bots in a range
 - **WHEN** an admin creates 10 bots between 1100 and 1250
@@ -54,10 +55,15 @@ game. Retired bots SHALL keep their account, rating and game history, and SHALL 
 - **WHEN** an admin reactivates a retired bot
 - **THEN** it can be summoned and seated again with its previous rating and game count
 
+#### Scenario: Maximum counts active bots
+- **WHEN** the maximum is 3, there are 3 active bots and one of them is retired
+- **THEN** one new bot can be created, and reactivating the retired one afterwards is refused
+
 ### Requirement: Runtime bot settings
 An admin SHALL be able to view and change the bot settings at runtime: minimum and maximum pool size, idle reserve,
 background game interval and on/off, warm-up interval and table cap, summon and arrival delays, on-demand growth delay,
-rest after games, and a think-time multiplier. Changes SHALL take effect without restarting the game server, SHALL be
+rest after games, a think-time multiplier and the chance that a bot lets a decision time out. Each setting SHALL be
+explained on the page. Changes SHALL take effect without restarting the game server, SHALL be
 validated (for example no negative delays, and a minimum not above the maximum), and SHALL persist across restarts.
 
 #### Scenario: Pause background games

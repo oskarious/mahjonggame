@@ -129,7 +129,8 @@ DATABASE_URL=... BETTER_AUTH_SECRET=... ORIGIN=http://localhost:8080 docker comp
   remaining ms only to the deciding seat; expiry applies `timeoutAction`. A decision is identified by its step
   (`decisionKey`) so other seats' responses in a call window don't reset it. Bots (bot players and takeover bots)
   act after a human-like `thinkDelay` (pacing.ts: quick when forced, longer with more options, ~5 % long thinks into
-  their own bank, never within 1 s of the deadline; × `thinkScale`; 0 when fast-forwarding). Between hands: `ready`
+  their own bank, never within 1 s of the deadline; × `thinkScale`; 0 when fast-forwarding). With `timeoutPercent`
+  (0.5 %) a bot player at a table with a human times out instead (full time, `timeoutAction`, bank emptied). Between hands: `ready`
   from every connected human, or 12 s; rooms without humans pause 3–9 s.
 - **Disconnects:** 10 s grace (timeouts keep running), then a bot at `skillForElo(rating)` plays the seat until the
   human reconnects; the newest connection of a user wins (`takenOver` to the old one). No human connected for 5 min →
@@ -147,7 +148,8 @@ DATABASE_URL=... BETTER_AUTH_SECRET=... ORIGIN=http://localhost:8080 docker comp
   - *Background games*: every ~45 s (±50 %) 4 close idle bots play a normal room (persisted, rated, recovered) if
     `idleReserve` (30) idle bots remain. Rooms without humans skip the abandon fast-forward. *Warm-up* (fewer than
     half the bots have 20 games): fast rooms every 2 s, at most `warmupTables`.
-  - Pool size: `botPoolMin` 120 active bots are created at start (ratings uniform over `botElo(0..1)`). All knobs are
+  - Pool size: `botPoolMin` 120 active bots are created at start (ratings uniform over `botElo(0..1)`); `botPoolMax`
+    caps active bots (growth, admin creation, reactivation); retired bots count for neither. All knobs are
     runtime settings (settings.ts, `setting` key `bots`), edited on `/admin`; env `BOTS=off` stops background games.
 - **Ratings:** pairwise Elo from final points (tie = draw), K 40 for the first 20 games then 20, **every seat with an
   account is rated** (bot players too; only the anonymous `userId: null` bots of pre-bot-player records are fixed at

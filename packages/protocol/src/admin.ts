@@ -3,9 +3,9 @@
 
 /** Runtime bot settings (see apps/game-server/src/settings.ts for defaults and limits). Durations in ms. */
 export interface BotSettings {
-  /** Active bot players the pool keeps (missing ones are created). */
+  /** Active bot players the pool keeps (missing ones are created). Retired bots do not count. */
   botPoolMin: number;
-  /** Upper bound for on-demand growth. */
+  /** Most active bot players: on-demand growth, admin creation and reactivation stop here. */
   botPoolMax: number;
   /** A background game only starts if at least this many idle bots remain for humans. */
   idleReserve: number;
@@ -26,6 +26,8 @@ export interface BotSettings {
   botRestMs: [number, number];
   /** Multiplier for bot think times in live games. */
   thinkScale: number;
+  /** Chance in percent, per decision, that a bot player lets its timer run out in a game with humans. */
+  timeoutPercent: number;
 }
 
 export type AdminBotState = 'idle' | 'resting' | 'queued' | 'busy' | 'retired';

@@ -44,6 +44,8 @@ export const actions: Actions = {
     }
     const scale = num(f.get('thinkScale'));
     if (scale !== undefined) patch.thinkScale = scale;
+    const timeouts = num(f.get('timeoutPercent'));
+    if (timeouts !== undefined) patch.timeoutPercent = timeouts;
     const r = await internalApi<{ settings: BotSettings }>('PUT', '/settings', patch);
     if (!r.ok) return fail(400, { form: 'settings', error: r.error });
     return { form: 'settings', ok: 'Saved' };
