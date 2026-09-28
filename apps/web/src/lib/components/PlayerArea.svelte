@@ -47,6 +47,13 @@
   const kans = $derived(actions.filter((a): a is Extract<Action, { type: 'kan' }> => a.type === 'kan'));
   const chiis = $derived(actions.filter((a): a is Extract<Action, { type: 'chii' }> => a.type === 'chii'));
   const inCall = $derived(!onTurn && actions.length > 0);
+  /** Something to decide: buttons cover the left side (choices) and the right side (Pass / Back). */
+  const leftButtons = $derived(
+    picking !== null ||
+      inCall ||
+      (onTurn && (!!find('tsumo') || riichiable.size > 0 || kans.length > 0 || !!find('kyuushu'))),
+  );
+  const rightButton = $derived(picking !== null || inCall);
 
   const concealed = $derived(sortTiles(view.hand.filter((t) => t !== view.drawn)));
 
@@ -228,55 +235,80 @@
 </script>
 
 <section class="me" bind:this={meEl}>
-  <!-- Round info | the tile to act on (drawn, or claimable) | dora + wall; hints and buttons underneath. -->
+  <!-- One row, as tall as the tile slot: round + hints | the tile to act on | dora + wall + cog.
+       When there is something to decide, the buttons overlay the left side and Pass/Back the right. -->
   <div class="panel">
-    <div class="round">
-      <strong>{WINDS[view.roundWind]} {view.dealer + 1}</strong>
-      <span class="dim">{view.honba} honba{view.riichiSticks ? ` · ${view.riichiSticks} riichi` : ''}</span>
-    </div>
-    <div class="dora">
-      <span class="dim">Dora</span>
-      <!-- The indicator is the flipped tile; the dora is the next tile in its sequence. -->
-      {#each view.doraIndicators as t (t)}
-        <span class="dora-pair" title="Indicator → dora">
-          <span class="indicator"><Tile tile={t} {red} plain /></span>
-          <span class="arrow" aria-hidden="true">→</span>
-          <Tile tile={doraFromIndicator(kindOf(t)) * 4 + 1} {red} />
-        </span>
-      {/each}
-      <span class="wall" aria-label="{view.wallCount} tiles left in the wall">
-        <span class="wall-tile" aria-hidden="true"></span>{view.wallCount}
-      </span>
-    </div>
-    <div class="hints">
-      {#if hints}
-        {#if hints.complete}
-          <span class="chip gold">Complete!</span>
-        {:else if hints.tenpai}
-          <span class="chip good">Tenpai</span>
-        {:else}
-          <span class="chip">{away(hints.tilesAway)}</span>
-        {/if}
-        {#if hints.furiten}<span class="chip bad">Furiten</span>{/if}
-        {#if preview}
-          <span class="preview">
-            → {preview.tenpai ? 'tenpai' : `${preview.shanten + 1} away`}
-            {#if preview.furiten}<span class="chip bad">furiten</span>{/if}
-          </span>
-        {/if}
-        {#if (preview ?? hints).waits?.length}
-          <span class="waits" aria-label="Winning tiles">
-            {#each (preview ?? hints).waits! as w (w.kind)}
-              <span class="wait" title={kindName(w.kind)}>
-                <Tile tile={w.kind * 4 + 1} {red} plain /><small>×{w.remaining}</small>
+    <div class="side left">
+      <div class="info" class:covered={leftButtons}>
+        <div class="round">
+          <strong>{WINDS[view.roundWind]} {view.dealer + 1}</strong>
+          <span class="dim">{view.honba} honba{view.riichiSticks ? ` · ${view.riichiSticks} riichi` : ''}</span>
+        </div>
+        <div class="hints">
+          {#if hints}
+            {#if hints.complete}
+              <span class="chip gold">Complete!</span>
+            {:else if hints.tenpai}
+              <span class="chip good">Tenpai</span>
+            {:else}
+              <span class="chip">{away(hints.tilesAway)}</span>
+            {/if}
+            {#if hints.furiten}<span class="chip bad">Furiten</span>{/if}
+            {#if preview}
+              <span class="preview">
+                → {preview.tenpai ? 'tenpai' : `${preview.shanten + 1} away`}
+                {#if preview.furiten}<span class="chip bad">furiten</span>{/if}
               </span>
+            {/if}
+            {#if (preview ?? hints).waits?.length}
+              <span class="waits" aria-label="Winning tiles">
+                {#each (preview ?? hints).waits! as w (w.kind)}
+                  <span class="wait" title={kindName(w.kind)}>
+                    <Tile tile={w.kind * 4 + 1} {red} plain /><small>×{w.remaining}</small>
+                  </span>
+                {/each}
+              </span>
+            {:else if preview && preview.ukeire.length}
+              <span class="sub">{preview.total} useful tiles</span>
+            {/if}
+          {/if}
+        </div>
+      </div>
+      {#if leftButtons}
+        <div class="overlay" role="toolbar" aria-label="Actions">
+          {#if picking === 'kan'}
+            {#each kans as a (a.kind)}
+              <button class="btn choice" onclick={() => onact(a)}><Tile tile={a.kind * 4 + 1} {red} /> Kan</button>
             {/each}
-          </span>
-        {:else if preview && preview.ukeire.length}
-          <span class="sub">{preview.total} useful tiles</span>
-        {/if}
+          {:else if picking === 'chii'}
+            {#each chiis as a (a.tiles.join())}
+              <button class="btn choice" onclick={() => onact(a)}>
+                {#each sortTiles([...a.tiles, view.claimable!.tile]) as t (t)}<Tile tile={t} {red} />{/each}
+              </button>
+            {/each}
+          {:else if onTurn}
+            {#if find('tsumo')}<button class="btn primary" onclick={() => onact(find('tsumo')!)}>Tsumo</button>{/if}
+            {#if riichiable.size}
+              <button class="btn" class:primary={riichiMode} onclick={() => ((riichiMode = !riichiMode), (selected = null))}>
+                Riichi
+              </button>
+            {/if}
+            {#if kans.length}
+              <button class="btn" onclick={() => (kans.length === 1 ? onact(kans[0]) : (picking = 'kan'))}>Kan</button>
+            {/if}
+            {#if find('kyuushu')}<button class="btn ghost" onclick={() => onact(find('kyuushu')!)}>Abort hand</button>{/if}
+          {:else if inCall}
+            {#if find('ron')}<button class="btn primary" onclick={() => onact(find('ron')!)}>Ron</button>{/if}
+            {#if find('pon')}<button class="btn" onclick={() => onact(find('pon')!)}>Pon</button>{/if}
+            {#if chiis.length}
+              <button class="btn" onclick={() => (chiis.length === 1 ? onact(chiis[0]) : (picking = 'chii'))}>Chii</button>
+            {/if}
+            {#if find('daiminkan')}<button class="btn" onclick={() => onact(find('daiminkan')!)}>Kan</button>{/if}
+          {/if}
+        </div>
       {/if}
     </div>
+
     <span class="middle">
       {#if inCall}
         <span class="claim">
@@ -300,41 +332,37 @@
         </span>
       {/if}
     </span>
-    <span class="buttons" role="toolbar" aria-label="Actions">
-    {#if picking === 'kan'}
-      {#each kans as a (a.kind)}
-        <button class="btn choice" onclick={() => onact(a)}><Tile tile={a.kind * 4 + 1} {red} /> Kan</button>
-      {/each}
-      <button class="btn ghost" onclick={() => (picking = null)}>Back</button>
-    {:else if picking === 'chii'}
-      {#each chiis as a (a.tiles.join())}
-        <button class="btn choice" onclick={() => onact(a)}>
-          {#each sortTiles([...a.tiles, view.claimable!.tile]) as t (t)}<Tile tile={t} {red} />{/each}
-        </button>
-      {/each}
-      <button class="btn ghost" onclick={() => (picking = null)}>Back</button>
-    {:else if onTurn}
-      {#if find('tsumo')}<button class="btn primary" onclick={() => onact(find('tsumo')!)}>Tsumo</button>{/if}
-      {#if riichiable.size}
-        <button class="btn" class:primary={riichiMode} onclick={() => ((riichiMode = !riichiMode), (selected = null))}>
-          Riichi
-        </button>
+
+    <div class="side right">
+      <div class="info" class:covered={rightButton}>
+        <div class="dora">
+          <span class="dim">Dora</span>
+          <!-- The indicator is the flipped tile; the dora is the next tile in its sequence. -->
+          {#each view.doraIndicators as t (t)}
+            <span class="dora-pair" title="Indicator → dora">
+              <span class="indicator"><Tile tile={t} {red} plain /></span>
+              <span class="arrow" aria-hidden="true">→</span>
+              <Tile tile={doraFromIndicator(kindOf(t)) * 4 + 1} {red} />
+            </span>
+          {/each}
+        </div>
+        <div class="bottom">
+          <span class="wall" aria-label="{view.wallCount} tiles left in the wall">
+            <span class="wall-tile" aria-hidden="true"></span>{view.wallCount}
+          </span>
+          <button class="cog" aria-label="Settings" onclick={onsettings}>⚙</button>
+        </div>
+      </div>
+      {#if rightButton}
+        <div class="overlay">
+          {#if picking !== null}
+            <button class="btn ghost" onclick={() => (picking = null)}>Back</button>
+          {:else}
+            <button class="btn ghost" onclick={() => onact(find('pass')!)}>Pass</button>
+          {/if}
+        </div>
       {/if}
-      {#if kans.length}
-        <button class="btn" onclick={() => (kans.length === 1 ? onact(kans[0]) : (picking = 'kan'))}>Kan</button>
-      {/if}
-      {#if find('kyuushu')}<button class="btn ghost" onclick={() => onact(find('kyuushu')!)}>Abort hand</button>{/if}
-    {:else if inCall}
-      {#if find('ron')}<button class="btn primary" onclick={() => onact(find('ron')!)}>Ron</button>{/if}
-      {#if find('pon')}<button class="btn" onclick={() => onact(find('pon')!)}>Pon</button>{/if}
-      {#if chiis.length}
-        <button class="btn" onclick={() => (chiis.length === 1 ? onact(chiis[0]) : (picking = 'chii'))}>Chii</button>
-      {/if}
-      {#if find('daiminkan')}<button class="btn" onclick={() => onact(find('daiminkan')!)}>Kan</button>{/if}
-      <button class="btn ghost" onclick={() => onact(find('pass')!)}>Pass</button>
-    {/if}
-    <button class="cog" aria-label="Settings" onclick={onsettings}>⚙</button>
-    </span>
+    </div>
   </div>
 
   <div
@@ -382,43 +410,70 @@
     padding: 0 8px calc(10px + env(safe-area-inset-bottom));
   }
 
-  /*
-    round   middle  dora
-    hints   middle  buttons
-  */
+  /* left | middle | right: one row, as tall as the tile slot. */
   .panel {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    grid-template-areas:
-      'round middle dora'
-      'hints middle buttons';
-    grid-template-rows: auto 1fr;
-    align-items: center;
     column-gap: 8px;
-    row-gap: 4px;
-    min-height: 74px;
     font-size: 0.8rem;
   }
-  .round {
-    grid-area: round;
+  .side {
+    position: relative;
+    min-width: 0;
+  }
+  .info {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .right .info {
+    align-items: flex-end;
+  }
+  /* Kept in layout (so nothing shifts) but hidden while buttons cover it. */
+  .info.covered {
+    visibility: hidden;
+  }
+  /* Buttons: anchored to the bottom of their side, centred when they fit, growing upward over the
+     board when they do not (three chii options). Two per row on the left; Pass/Back fills the right. */
+  .overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: 100%;
     display: flex;
     flex-wrap: wrap;
+    align-content: center;
     align-items: center;
+    gap: 4px;
+    z-index: 5;
+    --tw: 18px;
+  }
+  .overlay .btn {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+    min-height: 34px;
+    padding: 0 8px;
+    font-size: 0.95rem;
+  }
+  .overlay .choice {
+    flex-basis: 100%;
+    gap: 1px;
+  }
+  .right .overlay .btn {
+    flex-basis: 100%;
+    min-height: 48px;
+  }
+
+  .round {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
     column-gap: 6px;
     line-height: 1.2;
   }
-  /* Settings: bottom right, after any action buttons. */
-  .cog {
-    flex: none;
-    width: 36px;
-    height: 36px;
-    margin-right: -6px;
-    font-size: 1.2rem;
-    border-radius: 50%;
-    color: var(--ink-dim);
-  }
   .dora {
-    grid-area: dora;
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
@@ -444,11 +499,15 @@
   .dim {
     color: var(--ink-dim);
   }
+  .bottom {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
   .wall {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    margin-left: 4px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
@@ -458,10 +517,17 @@
     border: 1.5px solid var(--ink-dim);
     border-radius: 3px;
   }
+  .cog {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    margin-right: -6px;
+    font-size: 1.15rem;
+    border-radius: 50%;
+    color: var(--ink-dim);
+  }
 
   .hints {
-    grid-area: hints;
-    align-self: end;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -488,46 +554,22 @@
     color: var(--ink-dim);
   }
 
+  /* The slot keeps its height even when empty (off turn, no call), so the panel never jumps. */
   .middle {
-    grid-area: middle;
     display: flex;
     align-items: center;
-    /* Room for the drawn tile to rise when selected. */
-    padding-top: 10px;
+    min-height: calc(44px * 4 / 3 + 14px);
   }
-  .buttons {
-    grid-area: buttons;
-    align-self: end;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-    min-width: 0;
-    --tw: 20px;
-  }
-  .buttons .btn {
-    flex: 0 1 auto;
-    min-width: 64px;
-  }
-  .choice {
-    gap: 1px;
-  }
-  /* The claimable tile takes the drawn tile's slot during a call window (they never coexist). */
-  .claim {
-    --tw: 32px;
-    display: inline-flex;
-    padding: 8px 10px 6px;
-    border-radius: 12px;
-    background: var(--panel-2);
-  }
-  /* The drawn tile: one big target in the middle of the row, in its own slot (same panel as the magnifier). */
+  /* The tile to act on: the drawn tile, or the claimable tile during a call window (never both). */
+  .claim,
   .drawn {
     --tw: 44px;
     display: inline-flex;
     padding: 8px 10px 6px;
     border-radius: 12px;
     background: var(--panel-2);
+  }
+  .drawn {
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
