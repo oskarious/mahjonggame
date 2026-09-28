@@ -270,10 +270,24 @@
 
 
 
+  /** In a call window: the hand tiles some offered call would use (the rest dim). Ron uses none. */
+  const callTiles = $derived.by(() => {
+    const out = new Set<TileId>();
+    if (!inCall) return out;
+    for (const a of actions) {
+      if (a.type === 'pon' || a.type === 'chii') for (const t of a.tiles) out.add(t);
+      if (a.type === 'daiminkan' && view.claimable) {
+        const k = kindOf(view.claimable.tile);
+        for (const t of view.hand) if (kindOf(t) === k) out.add(t);
+      }
+    }
+    return out;
+  });
+
   function tileState(t: TileId) {
     const allowed = riichiMode ? riichiable.has(t) : discardable.has(t);
     return {
-      dim: onTurn && !allowed,
+      dim: onTurn ? !allowed : inCall && !callTiles.has(t),
       mark: (allowed && best.has(kindOf(t)) ? 'hint' : null) as 'hint' | null,
     };
   }
