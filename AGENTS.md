@@ -285,6 +285,8 @@ A client is assumed to be modified: it reads every byte and every timing it gets
 - Dev ports: something else on this machine may already listen on 3001/5173. Override with `PORT` in
   `apps/game-server/.env`, `GAME_SERVER_URL` in `apps/web/.env` (used by the Vite /ws proxy and the home page
   health check) and `WEB_INTERNAL_URL` in the game server's env; `.claude/launch.json` has spare configs.
+- **Stop the dev servers you started as soon as your browser check is done** (`preview_stop`), so the next agent
+  finds the port free. Don't add new launch configs to dodge a busy port; reuse the existing ones.
 - **The `user` table contains bot players.** Anything that counts, lists or emails users must join `bot` (bot users
   have `@bot.invalid` emails). Admins: `UPDATE "user" SET role = 'admin' WHERE username = '…'` (no UI, by design).
 - The game server's `WEB_INTERNAL_URL` must point at the web server that set the cookie (dev: the Vite port the
