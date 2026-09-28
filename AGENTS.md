@@ -166,7 +166,9 @@ DATABASE_URL=... BETTER_AUTH_SECRET=... ORIGIN=http://localhost:8080 docker comp
   `cqw` directly, not `var(--w)`.
 - **Visual language (one meaning per cue):** gold glow = dora (incl. red fives); blue glow = matches the tile you are
   holding/selecting (only then — never automatic); raised tile = last discard / winning tile; green dot = suggested
-  discard (hint level "full" only).
+  discard (hint level "full" only); dimmed = not usable for the current decision (illegal discards on turn / in
+  riichi mode; in a call window every hand tile no offered pon/chii/kan would use — Ron uses none). Dimmed tiles stay
+  inspectable.
 - **Minimal text.** Prefer visual cues over explanatory copy; no helper sentences, position labels, "x seen", etc.
   Keep only information-bearing text (yaku, scores, hint values the player opted into, button labels).
 - Tiles show a Latin corner index (1-9 in suit colour, E/S/W/N, Wh/G/R); hidden on tiles < 16 px; toggle in settings
