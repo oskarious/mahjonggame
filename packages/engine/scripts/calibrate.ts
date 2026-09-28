@@ -26,9 +26,9 @@ import {
 
 /** Skill levels to measure. */
 const SKILLS = [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1];
-/** This skill is pinned to ANCHOR_ELO; the others are relative to it. */
-const ANCHOR_SKILL = 0.45;
-const ANCHOR_ELO = 1500;
+/** This skill is pinned to ANCHOR_ELO (a beginner = a new player's starting rating); the others are relative to it. */
+const ANCHOR_SKILL = 0.15;
+const ANCHOR_ELO = 1000;
 
 interface Job {
   from: number;

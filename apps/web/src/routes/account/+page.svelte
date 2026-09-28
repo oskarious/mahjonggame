@@ -58,6 +58,10 @@
 
   <h1>{data.user?.name}</h1>
   <p class="email">{data.email}</p>
+  <p class="rating">
+    <strong>{data.rating}</strong>
+    <span>{data.games} rated {data.games === 1 ? 'game' : 'games'}</span>
+  </p>
 
   <button class="btn" onclick={() => toggle('password')} aria-expanded={open === 'password'}>Change password</button>
   {#if open === 'password'}
@@ -113,6 +117,20 @@
     margin: -8px 0 10px;
     color: var(--ink-dim);
     overflow-wrap: anywhere;
+  }
+  .rating {
+    margin: 0 0 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .rating strong {
+    font-size: 1.6rem;
+  }
+  .rating span {
+    color: var(--ink-dim);
+    font-size: 0.9rem;
   }
   .danger-text {
     color: var(--danger);

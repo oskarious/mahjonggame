@@ -1,0 +1,24 @@
+{
+  "name": "@mahjong/game-server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env src/main.ts",
+    "start": "node src/main.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@mahjong/engine": "*",
+    "@mahjong/protocol": "*",
+    "kysely": "^0.29.6",
+    "pg": "^8.23.0",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/pg": "^8.23.1",
+    "@types/ws": "^8.18.1"
+  }
+}

@@ -4,8 +4,43 @@
     {
       "name": "web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace", "@mahjong/web", "--", "--port", "5173", "--strictPort"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "@mahjong/web",
+        "--",
+        "--port",
+        "5173",
+        "--strictPort"
+      ],
       "port": 5173
+    },
+    {
+      "name": "game",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "@mahjong/game-server"
+      ],
+      "port": 3002
+    },
+    {
+      "name": "web-5175",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "@mahjong/web",
+        "--",
+        "--port",
+        "5175",
+        "--strictPort"
+      ],
+      "port": 5175
     }
   ]
 }

@@ -2,6 +2,7 @@ import {
   type Action,
   type GameState,
   type HintLevel,
+  type RedFives,
   type RuleSet,
   type Seat,
   applyAction,
@@ -13,6 +14,7 @@ import {
   viewFor,
 } from '@mahjong/engine';
 import { DEFAULT_BOT_ELO } from '$lib/bots';
+import type { GameSource } from './source';
 
 export interface LocalSettings {
   hints: HintLevel;
@@ -44,7 +46,7 @@ export const DEFAULT_SETTINGS: LocalSettings = {
  * A game played entirely in the browser against bots. Exposes the same shape the online client
  * will: a player view plus `act()`, so the table UI does not care where the game runs.
  */
-export class LocalGame {
+export class LocalGame implements GameSource {
   readonly human: Seat;
   readonly seed: string;
   readonly rules: RuleSet;
@@ -70,6 +72,14 @@ export class LocalGame {
   act(action: Action): void {
     this.#apply(action);
     this.#schedule();
+  }
+
+  next(): void {
+    this.act({ type: 'nextHand' });
+  }
+
+  get red(): RedFives {
+    return this.rules.redFives;
   }
 
   destroy(): void {

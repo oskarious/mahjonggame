@@ -1,5 +1,5 @@
 # Web app (SvelteKit, adapter-node). Build context is the repo root because the app depends on
-# the engine workspace package.
+# the engine and protocol workspace packages.
 
 FROM node:22-alpine AS build
 WORKDIR /app
@@ -7,19 +7,22 @@ WORKDIR /app
 # Install dependencies first so they are cached until a package.json or the lockfile changes.
 COPY package.json package-lock.json ./
 COPY packages/engine/package.json packages/engine/
+COPY packages/protocol/package.json packages/protocol/
 COPY apps/web/package.json apps/web/
 RUN npm ci
 
 COPY packages/engine packages/engine
+COPY packages/protocol packages/protocol
 COPY apps/web apps/web
 COPY tsconfig.base.json ./
 RUN npm run build --workspace @mahjong/web
 
-# Production node_modules for the web app only (better-auth, pg). The engine and Svelte are bundled into the build.
+# Production node_modules for the web app only (better-auth, pg). The engine, protocol and Svelte are bundled into the build.
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/engine/package.json packages/engine/
+COPY packages/protocol/package.json packages/protocol/
 COPY apps/web/package.json apps/web/
 RUN npm ci --omit=dev --workspace @mahjong/web --ignore-scripts
 

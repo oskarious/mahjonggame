@@ -1,29 +1,14 @@
 <script lang="ts">
-  import { onDestroy, setContext } from 'svelte';
+  import { onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import {
-    DEFAULT_RULES,
-    EMA_2025,
-    type HintLevel,
-    type Kind,
-    doraFromIndicator,
-    kindOf,
-    makeRules,
-  } from '@mahjong/engine';
-  import { TILE_MARKS, type TileMarks } from '$lib/marks';
+  import { DEFAULT_RULES, EMA_2025, type HintLevel, makeRules } from '@mahjong/engine';
   import { LocalGame } from '$lib/game/local.svelte';
   import { randomId } from '$lib/random';
   import { parseBotElo } from '$lib/bots';
   import { WINDS } from '$lib/labels';
-  import Board from '$lib/components/Board.svelte';
-  import DevPanel from '$lib/components/DevPanel.svelte';
-  import FinalSheet from '$lib/components/FinalSheet.svelte';
-  import PlayerArea from '$lib/components/PlayerArea.svelte';
-  import ResultSheet from '$lib/components/ResultSheet.svelte';
-
-  const QUICK_KEY = 'riichi:quickDiscard';
-  const LABELS_KEY = 'riichi:tileLabels';
+  import LocalSettings from '$lib/components/LocalSettings.svelte';
+  import Table from '$lib/components/Table.svelte';
 
   function newGame(): LocalGame {
     const q = page.url.searchParams;
@@ -38,134 +23,33 @@
   }
 
   let game = $state(newGame());
-  let showSettings = $state(false);
-  let showFinal = $state(false);
-  let quickDiscard = $state(readFlag(QUICK_KEY, false));
-  let tileLabels = $state(readFlag(LABELS_KEY, true));
-
-  function readFlag(key: string, fallback: boolean) {
-    try {
-      const v = localStorage.getItem(key);
-      return v === null ? fallback : v === '1';
-    } catch {
-      return fallback;
-    }
-  }
-  function writeFlag(key: string, v: boolean) {
-    try {
-      localStorage.setItem(key, v ? '1' : '0');
-    } catch {
-      /* storage unavailable */
-    }
-  }
-  function setQuick(v: boolean) {
-    quickDiscard = v;
-    writeFlag(QUICK_KEY, v);
-  }
-  function setLabels(v: boolean) {
-    tileLabels = v;
-    writeFlag(LABELS_KEY, v);
-  }
-
-  $effect(() => {
-    document.body.classList.toggle('no-tile-labels', !tileLabels);
-    return () => document.body.classList.remove('no-tile-labels');
-  });
+  let table: Table | undefined = $state();
 
   function restart() {
     const settings = { ...game.settings };
     game.destroy();
     game = newGame();
     Object.assign(game.settings, settings);
-    showFinal = false;
-    showSettings = false;
+    table?.reset();
   }
 
   onDestroy(() => game.destroy());
 
-  const view = $derived(game.view);
-
-  // Board-wide tile markings: dora, and every copy of the tile the player is looking at.
-  let focusKind: Kind | null = $state(null);
-  const marks: TileMarks = $state({ dora: new Set(), focus: null });
-  setContext(TILE_MARKS, marks);
-  $effect(() => {
-    marks.dora = new Set(view.doraIndicators.map((t) => doraFromIndicator(kindOf(t))));
-    marks.focus = focusKind;
-  });
-  const red = $derived(game.rules.redFives);
   const revealed = $derived(game.settings.reveal ? game.state.hand.players.map((p) => p.hand) : null);
 </script>
 
-<svelte:head><title>{WINDS[view.roundWind]} {view.dealer + 1} · Riichi</title></svelte:head>
+<svelte:head><title>{WINDS[game.view.roundWind]} {game.view.dealer + 1} · Riichi</title></svelte:head>
 
-<div class="screen">
-  <div class="board-wrap">
-    <Board {view} names={game.names} {red} {revealed} />
-  </div>
-
-  {#if game.error}<p class="error" role="alert">{game.error}</p>{/if}
-
-  <PlayerArea
-    {view}
-    {red}
-    {quickDiscard}
-    bind:focusKind
-    onact={(a) => game.act(a)}
-    onsettings={() => (showSettings = true)}
-  />
-</div>
-
-{#if view.result && (view.phase === 'handOver' || (view.phase === 'gameOver' && !showFinal))}
-  <ResultSheet
-    result={view.result}
-    {view}
-    names={game.names}
-    {red}
-    nextLabel={view.phase === 'gameOver' ? 'Final results' : 'Next hand'}
-    onnext={() => (view.phase === 'gameOver' ? (showFinal = true) : game.act({ type: 'nextHand' }))}
-  />
-{/if}
-
-{#if view.final && showFinal}
-  <FinalSheet final={view.final} names={game.names} me={view.seat} onagain={restart} onhome={() => goto('/')} />
-{/if}
-
-{#if showSettings}
-  <DevPanel
-    {game}
-    {quickDiscard}
-    onquick={setQuick}
-    {tileLabels}
-    onlabels={setLabels}
-    onclose={() => (showSettings = false)}
-    onnew={restart}
-    onhome={() => goto('/')}
-  />
-{/if}
-
-<style>
-  .screen {
-    height: 100dvh;
-    max-width: 560px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding-top: calc(6px + env(safe-area-inset-top));
-  }
-  .board-wrap {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-  .error {
-    margin: 0 8px;
-    padding: 6px 10px;
-    border-radius: 8px;
-    background: var(--danger);
-    color: #1f0c05;
-    font-size: 0.85rem;
-  }
-</style>
+<Table
+  bind:this={table}
+  {game}
+  hints={game.settings.hints}
+  onhints={(l) => (game.settings.hints = l)}
+  {revealed}
+  onagain={restart}
+  onhome={() => goto('/')}
+>
+  {#snippet settings()}
+    <LocalSettings {game} onnew={restart} />
+  {/snippet}
+</Table>

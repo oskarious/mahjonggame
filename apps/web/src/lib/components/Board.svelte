@@ -5,6 +5,7 @@
     type RedFives,
     type Tile as TileId,
   } from '@mahjong/engine';
+  import type { PlayerInfo } from '@mahjong/protocol';
   import { WIND_SHORT } from '$lib/labels';
   import { sortTiles } from '$lib/tiles';
   import Melds from './Melds.svelte';
@@ -17,8 +18,10 @@
     red: RedFives;
     /** Debug: every seat's concealed tiles. */
     revealed?: TileId[][] | null;
+    /** Online: who sits where (bot marker, rating). */
+    players?: PlayerInfo[] | null;
   }
-  let { view, names, red, revealed = null }: Props = $props();
+  let { view, names, red, revealed = null, players = null }: Props = $props();
 
   // Turn order from the player after me down to me: right, across, left (the only chii source) and me.
   const rows = $derived([1, 2, 3, 0].map((rel) => ({ rel, seat: (view.seat + rel) % 4 })));
@@ -102,9 +105,10 @@
       {@const p = view.players[seat]}
       <section class="seat" class:me={rel === 0} class:active={active === seat} aria-label="{names[seat]}, {POS[rel]}">
         <div class="info">
-          <span class="name">{names[seat]}</span>
+          <span class="name">{#if players?.[seat]?.bot}<span class="bot" title="Bot">🤖</span>{/if}{names[seat]}</span>
           <span class="wind" class:dealer={p.seatWind === 0}>{WIND_SHORT[p.seatWind]}</span>
           <span class="score">{p.score}</span>
+          {#if players}<span class="rating">{players[seat].rating}</span>{/if}
           {#if p.riichi}<span class="stick" title="Riichi"></span>{/if}
         </div>
         <div class="main">
@@ -226,6 +230,15 @@
     font-size: 0.68rem;
     font-weight: 600;
     color: var(--ink-dim);
+  }
+  .bot {
+    font-size: 0.7rem;
+    margin-right: 2px;
+  }
+  .rating {
+    font-size: 0.62rem;
+    color: var(--ink-dim);
+    opacity: 0.8;
   }
   .hidden-hand {
     display: flex;

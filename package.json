@@ -7,7 +7,9 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace @mahjong/web",
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "npm run dev --workspace @mahjong/web",
+    "dev:game": "npm run dev --workspace @mahjong/game-server",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },

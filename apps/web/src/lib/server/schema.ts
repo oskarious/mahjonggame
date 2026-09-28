@@ -1,4 +1,5 @@
-import type { ColumnType, Generated, Insertable, Selectable } from 'kysely';
+import type { ColumnType, Generated, Insertable, JSONColumnType, Selectable } from 'kysely';
+import type { Action, FinalStanding, RuleSet } from '@mahjong/engine';
 
 // Table types for Kysely. Keep in sync with migrations/ (auth tables are written by Better Auth; we mostly read them).
 type Timestamp = ColumnType<Date, Date | string | undefined, Date | string>;
@@ -54,11 +55,56 @@ export interface VerificationTable {
   updatedAt: Timestamp;
 }
 
+// --- Online play (migration 0002_game_server). Written by apps/game-server, which keeps its own copy of these types.
+
+export interface RatingTable {
+  userId: string;
+  rating: number;
+  /** Rated games played. */
+  games: number;
+  updatedAt: Timestamp;
+}
+
+export interface GameTable {
+  id: string;
+  format: 'east' | 'south';
+  rules: JSONColumnType<RuleSet>;
+  seed: string;
+  status: 'running' | 'finished';
+  createdAt: Timestamp;
+  endedAt: Timestamp | null;
+  final: JSONColumnType<FinalStanding[]> | null;
+}
+
+export interface GameSeatTable {
+  gameId: string;
+  seat: number;
+  /** Null for bots and deleted accounts. */
+  userId: string | null;
+  botSkill: number | null;
+  ratingBefore: number | null;
+  ratingAfter: number | null;
+  placement: number | null;
+  points: number | null;
+}
+
+export interface GameActionTable {
+  gameId: string;
+  /** Sequence number the action was applied at (GameState.seq before applying). */
+  seq: number;
+  action: JSONColumnType<Action>;
+  at: Timestamp;
+}
+
 export interface DB {
   user: UserTable;
   session: SessionTable;
   account: AccountTable;
   verification: VerificationTable;
+  rating: RatingTable;
+  game: GameTable;
+  game_seat: GameSeatTable;
+  game_action: GameActionTable;
 }
 
 export type User = Selectable<UserTable>;

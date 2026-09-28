@@ -1,0 +1,68 @@
+# Production: one Dokploy "Docker Compose" application with two services on the same domain.
+#   /    → web:3000          (SvelteKit, root Dockerfile)
+#   /ws  → game-server:3001  (WebSocket game server, apps/game-server/Dockerfile)
+# Postgres is the existing Dokploy database service on the same network (not defined here).
+# Environment comes from the Dokploy app (see AGENTS.md → Deployment). Both services join dokploy-network so
+# Dokploy's Traefik can route the domain entries to them.
+#
+# Local check against the dev Postgres (from the repo root, with ORIGIN=http://localhost:8080 etc. in the shell):
+#   docker compose -f compose.production.yml up --build
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      ORIGIN: ${ORIGIN}
+      ADDRESS_HEADER: ${ADDRESS_HEADER:-X-Forwarded-For}
+      XFF_DEPTH: ${XFF_DEPTH:-1}
+      # Home page shows "Play online" only while this answers /healthz.
+      GAME_SERVER_URL: http://game-server:3001
+    expose:
+      - '3000'
+    ports:
+      # Only for local checks; Dokploy routes through Traefik and ignores host ports (remove if it complains).
+      - '${WEB_PORT:-8080}:3000'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/healthz']
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    networks:
+      - default
+      - dokploy-network
+
+  game-server:
+    build:
+      context: .
+      dockerfile: apps/game-server/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      ORIGIN: ${ORIGIN}
+      WEB_INTERNAL_URL: http://web:3000
+    expose:
+      - '3001'
+    ports:
+      # Only for local checks (production reaches it through Traefik at /ws).
+      - '${GAME_PORT:-8081}:3001'
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3001/healthz']
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - default
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true

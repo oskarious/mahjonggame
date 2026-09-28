@@ -1,15 +1,19 @@
 <script lang="ts">
   import type { FinalStanding } from '@mahjong/engine';
+  import type { RatingChange } from '@mahjong/protocol';
   import { signed } from '$lib/labels';
 
   interface Props {
     final: FinalStanding[];
     names: string[];
     me: number;
+    /** Online: rating changes of the human players. */
+    ratings?: RatingChange[] | null;
     onagain: () => void;
     onhome: () => void;
   }
-  let { final, names, me, onagain, onhome }: Props = $props();
+  let { final, names, me, ratings = null, onagain, onhome }: Props = $props();
+  const change = (seat: number) => ratings?.find((r) => r.seat === seat) ?? null;
   const mine = $derived(final.find((f) => f.seat === me)!);
   const ORD = ['1st', '2nd', '3rd', '4th'];
 </script>
@@ -19,7 +23,7 @@
     <h2>{ORD[mine.rank - 1]} place</h2>
     <table>
       <thead>
-        <tr><th></th><th>Player</th><th class="num">Points</th><th class="num">Result</th></tr>
+        <tr><th></th><th>Player</th><th class="num">Points</th><th class="num">Result</th>{#if ratings}<th class="num">Rating</th>{/if}</tr>
       </thead>
       <tbody>
         {#each final as f (f.seat)}
@@ -28,6 +32,12 @@
             <td>{names[f.seat]}</td>
             <td class="num">{f.points}</td>
             <td class="num" class:up={f.score > 0} class:down={f.score < 0}>{signed(f.score)}</td>
+            {#if ratings}
+              {@const r = change(f.seat)}
+              <td class="num rating">
+                {#if r}<span class:up={r.after > r.before} class:down={r.after < r.before}>{signed(r.after - r.before)}</span> → {r.after}{/if}
+              </td>
+            {/if}
           </tr>
         {/each}
       </tbody>
@@ -90,6 +100,9 @@
   }
   .down {
     color: var(--danger);
+  }
+  .rating {
+    white-space: nowrap;
   }
   .buttons {
     display: grid;

@@ -32,6 +32,14 @@
   <h1>Riichi</h1>
   <p class="tag">Quick riichi mahjong. One hand, portrait, no fluff.</p>
 
+  {#if data.online}
+    <a class="btn primary big online" href="/online">
+      <span>Play online</span>
+      <span class="elo">{data.online.rating}</span>
+    </a>
+    <p class="or">or</p>
+  {/if}
+
   <form
     onsubmit={(e) => {
       e.preventDefault();
@@ -73,7 +81,7 @@
       </select>
     </fieldset>
 
-    <button class="btn primary big" type="submit">Play vs bots</button>
+    <button class="btn big" class:primary={!data.online} type="submit">Play vs bots</button>
   </form>
 </main>
 
@@ -152,5 +160,21 @@
     min-height: 56px;
     font-size: 1.15rem;
     margin-top: 8px;
+  }
+  .online {
+    text-decoration: none;
+    margin-top: 0;
+  }
+  .online .elo {
+    font-size: 0.85rem;
+    font-weight: 600;
+    opacity: 0.75;
+    font-variant-numeric: tabular-nums;
+  }
+  .or {
+    margin: 0;
+    text-align: center;
+    color: var(--ink-dim);
+    font-size: 0.8rem;
   }
 </style>
