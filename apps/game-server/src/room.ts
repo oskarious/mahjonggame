@@ -138,6 +138,8 @@ export class Room {
   #timeoutPercent: () => number;
   #chain: Promise<void> = Promise.resolve();
   #pending = new Map<Seat, Pending>();
+  /** Per seat: the view and bank last sent (see #sendUpdate). */
+  #lastSent = new Map<Seat, string>();
   #graceTimers = new Map<Seat, Timer>();
   #readyTimer: Timer | null = null;
   #abandonTimer: Timer | null = null;
@@ -267,7 +269,8 @@ export class Room {
     this.#run(async () => {
       if (this.#closed || this.#finished) return;
       const g = this.state;
-      if (seq !== g.seq) {
+      // Clients only know the public sequence number (see GameState.publicSeq).
+      if (seq !== g.publicSeq) {
         this.#error(client, 'staleSeq', seq);
         this.#sendUpdate(seat, []);
         return;
@@ -525,15 +528,23 @@ export class Room {
     }, this.#config.abandonMs);
   }
 
-  #sendUpdate(seat: Seat, events: GameEvent[]): void {
+  /**
+   * Sends `seat` its view and the events. Unless `force`, nothing is sent when the seat gets no events and its view
+   * and bank are unchanged: the message alone would tell it that someone acted (e.g. a hidden call response).
+   */
+  #sendUpdate(seat: Seat, events: GameEvent[], force = true): void {
     const s = this.seats[seat];
     if (s.kind !== 'human' || !s.client) return;
+    const view = viewFor(this.state, seat, { hints: s.hints });
+    const sent = JSON.stringify([view, s.bank]);
+    if (!force && !events.length && this.#lastSent.get(seat) === sent) return;
+    this.#lastSent.set(seat, sent);
     const p = this.#pending.get(seat);
     const msg: Extract<ServerMessage, { type: 'update' }> = {
       type: 'update',
       gameId: this.id,
-      seq: this.state.seq,
-      view: viewFor(this.state, seat, { hints: s.hints }),
+      seq: this.state.publicSeq,
+      view,
       events: events.map((e) => redactEvent(e, seat)),
       bank: s.bank,
     };
@@ -542,7 +553,7 @@ export class Room {
   }
 
   #broadcast(events: GameEvent[]): void {
-    for (let seat = 0; seat < 4; seat++) this.#sendUpdate(seat, events);
+    for (let seat = 0; seat < 4; seat++) this.#sendUpdate(seat, events, false);
   }
 
   async #finish(): Promise<void> {

@@ -1,5 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type Action, type GameState, type Tile, DEFAULT_RULES, applyAction, kindOf, pendingSeats } from '@mahjong/engine';
+import {
+  type Action,
+  type GameState,
+  type Tile,
+  DEFAULT_RULES,
+  applyAction,
+  botAction,
+  createGame,
+  kindOf,
+  pendingSeats,
+  scrambleHidden,
+} from '@mahjong/engine';
 import { rig } from '../../../packages/engine/test/helpers.ts';
 import type { Config } from '../src/config.ts';
 import { anonymousBot, type SeatInit } from '../src/matchmaking.ts';
@@ -338,6 +349,50 @@ describe('Room authority', () => {
     expect(store.log).toHaveLength(1);
     expect(room.state.seq).toBe(1);
     expect(c.last('update')!.seq).toBe(1);
+  });
+});
+
+describe('Room hidden information', () => {
+  it('tells nobody about a call response while the window stays open', async () => {
+    // Seat 0 (human a) discards 5m: seat 1 (a bot) can chii with 46m, seat 2 (human b) can pon with 55m.
+    const g = rig({ hands: [undefined, '46m', '55m'], draws: '5m' });
+    const { room, clients } = await build([human('a'), bot, human('b'), bot], g);
+    const [a, , b] = clients as FakeClient[];
+    room.act(0, 0, { type: 'discard', seat: 0, tile: room.state.hand.players[0].drawn! }, a);
+    await room.idle();
+    expect(pendingSeats(room.state)).toEqual([1, 2]);
+    const offer = b.last('update')!;
+    expect(offer.view.actions.some((x) => x.type === 'pon')).toBe(true);
+    const before = [a.sent.length, b.sent.length];
+    // The bot answers after its think time; the window still waits for b, so nothing public happened.
+    await vi.advanceTimersByTimeAsync(4_000);
+    await room.idle();
+    expect(pendingSeats(room.state)).toEqual([2]);
+    expect([a.sent.length, b.sent.length]).toEqual(before);
+    // b's view is still current: acting on it is not stale.
+    room.act(2, offer.seq, { type: 'pass', seat: 2 }, b);
+    await room.idle();
+    expect(b.all('error')).toEqual([]);
+    expect(pendingSeats(room.state)).not.toContain(2);
+    expect(a.sent.length).toBeGreaterThan(before[0]);
+  });
+
+  it('bot think times do not depend on what the seat cannot see', async () => {
+    const pace = { turnMs: 8_000, callMs: 5_000, bank: 15_000, scale: 1 };
+    const scramble = seeded('scramble-pace');
+    let g = createGame(DEFAULT_RULES, 'pace').state;
+    const random = seeded('pace-bots');
+    for (let i = 0; i < 400 && g.phase !== 'gameOver'; i++) {
+      if (g.phase === 'handOver') {
+        g = applyAction(g, { type: 'nextHand' }).state;
+        continue;
+      }
+      for (const seat of pendingSeats(g)) {
+        const hidden = scrambleHidden(g, seat, scramble);
+        expect(thinkDelay(hidden, seat, pace, seeded(`t${i}`))).toBe(thinkDelay(g, seat, pace, seeded(`t${i}`)));
+      }
+      g = applyAction(g, botAction(g, pendingSeats(g)[0], { random })!).state;
+    }
   });
 });
 

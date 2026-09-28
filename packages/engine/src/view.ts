@@ -26,6 +26,7 @@ export interface PublicPlayer {
 /** Everything one seat is allowed to know. Safe to send to that player's client. */
 export interface PlayerView {
   seat: Seat;
+  /** `GameState.publicSeq` (never the raw action count, which counts other seats' hidden call responses). */
   seq: number;
   phase: GameState['phase'];
   roundWind: number;
@@ -111,7 +112,7 @@ export function viewFor(g: GameState, seat: Seat, opts: ViewOptions = {}): Playe
   const step = h.step;
   return {
     seat,
-    seq: g.seq,
+    seq: g.publicSeq,
     phase: g.phase,
     roundWind: g.roundWind,
     dealer: g.dealer,

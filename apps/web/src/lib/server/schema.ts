@@ -72,7 +72,8 @@ export interface GameTable {
   format: 'east' | 'south';
   rules: JSONColumnType<RuleSet>;
   seed: string;
-  status: 'running' | 'finished';
+  /** 'aborted': could not be resumed (e.g. its log no longer replays after an engine change); unrated. */
+  status: 'running' | 'finished' | 'aborted';
   createdAt: Timestamp;
   endedAt: Timestamp | null;
   final: JSONColumnType<FinalStanding[]> | null;

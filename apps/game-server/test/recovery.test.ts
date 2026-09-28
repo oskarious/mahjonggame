@@ -85,7 +85,7 @@ describe('records and recovery', () => {
     await hub2.attach(a2);
     await room2.idle();
     expect(a2.last('welcome')!.activeGame?.gameId).toBe(room1.id);
-    expect(a2.last('update')!.seq).toBe(cut);
+    expect(a2.last('update')!.seq).toBe(room1.state.publicSeq);
     hub2.detach(a2);
     await vi.advanceTimersByTimeAsync(5 * 60_000);
     await vi.runAllTimersAsync();
@@ -94,5 +94,17 @@ describe('records and recovery', () => {
     const rec = store.games.get(room2.id)!;
     expect(replayGame(rec.rules, rec.seed, rec.actions).final).toEqual(rec.final);
     expect(rec.actions.map((_, i) => i)).toEqual(rec.actions.map((_, i) => i)); // contiguous by construction
+  });
+
+  it('marks a game whose log no longer replays as aborted', async () => {
+    const store = new MemoryStore();
+    await store.createGame({ id: 'old', format: 'east', rules: DEFAULT_RULES, seed: 'old', seats });
+    // A discard the replayed wall did not deal (as after a change to wall generation).
+    await store.appendAction('old', 0, { type: 'discard', seat: 1, tile: 0 });
+    const hub = new Hub({ store, config: TEST_CONFIG, log: () => {} });
+    await hub.bots.load();
+    expect(await hub.recover((g) => replayGame(g.rules, g.seed, g.actions))).toBe(0);
+    expect(store.games.get('old')!.status).toBe('aborted');
+    expect(await store.loadRunningGames()).toEqual([]);
   });
 });

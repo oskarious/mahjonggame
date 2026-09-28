@@ -5,7 +5,7 @@ import type { LocalSettings } from './local.svelte';
  * Bump when an engine change makes old logs replay differently (wall generation, action shapes, RuleSet fields):
  * a save with another version is discarded instead of replayed.
  */
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2; // 2: ChaCha20 wall RNG
 const KEY = 'riichi.localGame';
 
 /** The offline game in progress: enough to rebuild it by replaying `actions`. */

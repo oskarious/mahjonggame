@@ -123,6 +123,11 @@ export interface GameState {
   final: FinalStanding[] | null;
   /** Number of actions applied. */
   seq: number;
+  /**
+   * Number of actions with a visible effect (events). A call-window response that leaves the window open changes
+   * nothing the other seats may see, so it does not count: clients get this one, never `seq`.
+   */
+  publicSeq: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,6 +193,7 @@ export function createGame(rules: RuleSet, seed: string): Transition {
     next: null,
     final: null,
     seq: 0,
+    publicSeq: 0,
   };
   startHand(g, events);
   return { state: g, events };
@@ -231,6 +237,7 @@ export function applyAction(state: GameState, action: Action): Transition {
     }
   }
   g.seq++;
+  if (ev.length) g.publicSeq++;
   return { state: g, events: ev };
 }
 

@@ -195,7 +195,9 @@ export class Hub {
         room.start();
         n++;
       } catch (e) {
-        this.#log(`could not recover game ${g.id}`, e);
+        // Its log no longer replays (e.g. the wall generation changed): end it unrated instead of retrying forever.
+        this.#log(`could not recover game ${g.id}; marking it aborted`, e);
+        await this.#store.abortGame(g.id).catch((err) => this.#log(`could not abort game ${g.id}`, err));
       }
     }
     return n;

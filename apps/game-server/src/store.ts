@@ -64,6 +64,8 @@ export interface Store {
   finishGame(gameId: string, final: FinalStanding[], seats: SeatResult[], ratings: RatingUpdate[]): Promise<void>;
   /** Unfinished games with their action logs, for recovery on startup. */
   loadRunningGames(): Promise<StoredGame[]>;
+  /** Marks a running game that cannot be resumed as aborted (no result, no rating change). */
+  abortGame(gameId: string): Promise<void>;
   /** Every bot player, active or retired. */
   loadBots(): Promise<BotRow[]>;
   /** Creates a bot player (user, bot and rating rows). Null if the name is taken. */
@@ -140,6 +142,15 @@ export class PgStore implements Store {
           .execute();
       }
     });
+  }
+
+  async abortGame(gameId: string): Promise<void> {
+    await this.#db
+      .updateTable('game')
+      .set({ status: 'aborted', endedAt: new Date() })
+      .where('id', '=', gameId)
+      .where('status', '=', 'running')
+      .execute();
   }
 
   async loadRunningGames(): Promise<StoredGame[]> {
@@ -270,7 +281,7 @@ export class PgStore implements Store {
 /** In-memory store for tests; records the same things in plain objects. */
 export class MemoryStore implements Store {
   ratings = new Map<string, RatingRow>();
-  games = new Map<string, StoredGame & { status: 'running' | 'finished'; final: FinalStanding[] | null; results: SeatResult[] }>();
+  games = new Map<string, StoredGame & { status: 'running' | 'finished' | 'aborted'; final: FinalStanding[] | null; results: SeatResult[] }>();
   /** Every appended action in order, across games (for assertions on persist-before-send). */
   log: { gameId: string; seq: number; action: Action }[] = [];
   /** Optional hook to delay or fail writes in tests. */
@@ -302,6 +313,11 @@ export class MemoryStore implements Store {
     g.final = final;
     g.results = seats;
     for (const r of ratings) this.ratings.set(r.userId, { rating: r.rating, games: r.games });
+  }
+
+  async abortGame(gameId: string): Promise<void> {
+    const g = this.games.get(gameId);
+    if (g?.status === 'running') g.status = 'aborted';
   }
 
   async loadRunningGames(): Promise<StoredGame[]> {
