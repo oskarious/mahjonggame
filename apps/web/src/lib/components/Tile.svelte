@@ -222,9 +222,10 @@
       0 0 calc(var(--w) * 0.4) rgba(242, 183, 5, 0.95),
       0 calc(var(--w) * 0.08) 0 #e0c46a;
   }
-  /* A claimed (greyed) discard still lights up when it matches. */
-  .glow-blue.dim .face,
-  .glow-gold.dim .face {
+  /* A claimed (greyed) discard still lights up when it matches. Not in the own hand (compact): there dim means
+     "can't discard this now" (e.g. riichi mode) and must win over the glow. */
+  .glow-blue.dim:not(.compact) .face,
+  .glow-gold.dim:not(.compact) .face {
     filter: none;
   }
   .index {

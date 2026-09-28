@@ -56,6 +56,21 @@
         "--strictPort"
       ],
       "port": 5177
+    },
+    {
+      "name": "web-5179",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "@mahjong/web",
+        "--",
+        "--port",
+        "5179",
+        "--strictPort"
+      ],
+      "port": 5179
     }
   ]
 }

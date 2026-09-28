@@ -156,6 +156,58 @@ describe('hint levels in the player view', () => {
     expect(t.tenpai).toBe(true);
   });
 
+  it('waits: on turn, the waits of each riichi discard (and nothing else)', () => {
+    const g = rig({ hands: ['123m456p789s55m23s'], draws: '5m' });
+    const h = viewFor(g, 0, { hints: 'waits' }).hints!;
+    const opts = Object.fromEntries(h.riichi!.map((o) => [kindToString(o.kind), kinds(o.waits)]));
+    expect(opts).toEqual({ '5m': '1s 4s', '2s': '3s', '3s': '2s' });
+    const fiveM = h.riichi!.find((o) => kindToString(o.kind) === '5m')!;
+    expect(fiveM.waits.map((w) => w.remaining)).toEqual([4, 4]);
+    expect(h.riichi!.every((o) => !o.furiten)).toBe(true);
+    expect(h.discards).toBeUndefined();
+    expect(h.ukeire).toBeUndefined();
+    expect(h.waits).toEqual([]);
+    expect(viewFor(g, 0, { hints: 'full' }).hints!.riichi).toEqual(h.riichi);
+  });
+
+  it('waits: a riichi discard that leaves a discarded wait is furiten', () => {
+    const g = rig({ hands: ['123m456p789s55m23s'], discards: ['1s'], draws: '1z' });
+    const [o] = viewFor(g, 0, { hints: 'waits' }).hints!.riichi!;
+    expect([kindToString(o.kind), o.furiten]).toEqual(['1z', true]);
+  });
+
+  it('riichi options: none at low levels, between turns, or when riichi is not legal', () => {
+    const g = rig({ hands: ['123m456p789s55m23s'], draws: '5m' });
+    expect(viewFor(g, 0, { hints: 'distance' }).hints!.riichi).toBeUndefined();
+    expect(viewFor(g, 0).hints).toBeNull();
+    expect(viewFor(tenpai, 1, { hints: 'waits' }).hints!.riichi).toEqual([]);
+
+    const open = rig({ hands: ['456p789s55m23s'], melds: [[['chii', '123m']]], draws: '5m' });
+    expect(viewFor(open, 0, { hints: 'waits' }).hints!.riichi).toEqual([]);
+    const broke = rig({ hands: ['123m456p789s55m23s'], draws: '5m', scores: [500, 25000, 25000, 49500] });
+    expect(viewFor(broke, 0, { hints: 'waits' }).hints!.riichi).toEqual([]);
+    const lastTile = rig({ hands: ['123m456p789s55m23s'], draws: '5m', wallSize: 1 });
+    expect(viewFor(lastTile, 0, { hints: 'waits' }).hints!.riichi).toEqual([]);
+  });
+
+  it('riichi options match the legal riichi discards (random hands)', () => {
+    const rng = seedRng('riichi-options');
+    let withRiichi = 0;
+    for (let i = 0; i < 200; i++) {
+      // One suit per hand, so tenpai (and riichi) is common.
+      const suit = 36 * randomInt(rng, 3);
+      const tiles = shuffle(rng, Array.from({ length: 36 }, (_, j) => j + suit)).slice(0, 14);
+      const str = (ts: Tile[]) => ts.map((t) => kindToString(kindOf(t))).join('');
+      const g = rig({ hands: [str(tiles.slice(0, 13))], draws: str(tiles.slice(13)) });
+      const v = viewFor(g, 0, { hints: 'waits' });
+      const legal = new Set(v.actions.flatMap((a) => (a.type === 'discard' && a.riichi ? [kindOf(a.tile)] : [])));
+      expect(new Set(v.hints!.riichi!.map((o) => o.kind))).toEqual(legal);
+      for (const o of v.hints!.riichi!) expect(o.waits.length).toBeGreaterThan(0);
+      if (legal.size) withRiichi++;
+    }
+    expect(withRiichi).toBeGreaterThan(0);
+  });
+
   it('full: improving tiles and ranked discards', () => {
     const onTurn = rig({ hands: ['123m456p789s55m23s'], draws: '1z' });
     const h = viewFor(onTurn, 0, { hints: 'full' }).hints!;

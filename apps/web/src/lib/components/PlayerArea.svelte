@@ -244,6 +244,21 @@
     );
   });
 
+  /** Riichi mode: what riichi with the magnified tile would wait on (hint level "waits" and up). */
+  const riichiPreview = $derived.by(() => {
+    const m = magnified as { tile: TileId } | null;
+    if (!riichiMode || !m) return null;
+    return hints?.riichi?.find((o) => o.kind === kindOf(m.tile)) ?? null;
+  });
+  /** Measured magnifier width, so a wide one (waits row) is clamped fully on screen. */
+  let magEl: HTMLDivElement | undefined = $state();
+  let magWidth = $state(0);
+  $effect(() => {
+    void magnified;
+    void riichiPreview;
+    magWidth = magEl?.offsetWidth ?? 0;
+  });
+
   const focus = $derived.by(() => {
     const pressed = (press ?? hovered) as { tile: TileId } | null;
     if (pressed) return kindOf(pressed.tile);
@@ -430,8 +445,20 @@
       class:blocked={onTurn && !canDiscard(magnified.tile)}
       style:--x="{magnified.x}px"
       style:--b="{magnified.b}px"
+      style:--half="{Math.max(52, magWidth / 2 + 4)}px"
+      bind:this={magEl}
     >
       <Tile tile={magnified.tile} {red} plain />
+      {#if riichiPreview}
+        <span class="mag-waits" aria-label="Winning tiles after riichi">
+          {#each riichiPreview.waits as w (w.kind)}
+            <span class="wait" class:dead={w.remaining === 0} title={kindName(w.kind)}>
+              <Tile tile={w.kind * 4 + 1} {red} plain /><small>×{w.remaining}</small>
+            </span>
+          {/each}
+          {#if riichiPreview.furiten}<span class="chip bad">furiten</span>{/if}
+        </span>
+      {/if}
     </div>
   {/if}
 </section>
@@ -645,8 +672,26 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     pointer-events: none;
     z-index: 10;
-    /* Keep it on screen at the edges. */
-    left: clamp(52px, var(--x, 50%), calc(100% - 52px));
+    /* Own width, not shrink-to-fit near the edge, so the measured --half (below) is stable. */
+    width: max-content;
+    /* Keep it on screen at the edges (--half: half its measured width). */
+    left: clamp(var(--half, 52px), var(--x, 50%), calc(100% - var(--half, 52px)));
+  }
+  /* Riichi mode: what the magnified discard would wait on. At most 5 per row. */
+  .mag-waits {
+    --tw: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 4px 6px;
+    max-width: calc(5 * 42px);
+  }
+  .mag-waits .wait.dead {
+    opacity: 0.4;
+  }
+  .magnifier.flick .wait small {
+    color: inherit;
   }
   .magnifier.flick {
     background: var(--accent);
