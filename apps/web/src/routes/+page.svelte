@@ -1,6 +1,9 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { BOT_PRESETS, DEFAULT_BOT_ELO } from '$lib/bots';
+  import { type SavedGame, loadSave } from '$lib/game/saved';
+  import { WINDS } from '$lib/labels';
 
   let { data } = $props();
 
@@ -8,6 +11,10 @@
   let length = $state('east');
   let bots = $state(DEFAULT_BOT_ELO);
   let hints = $state('waits');
+  /** Read on mount: the page is server-rendered and the save lives in the browser. */
+  let saved: SavedGame | null = $state(null);
+
+  onMount(() => (saved = loadSave()));
 
   function start() {
     const params = new URLSearchParams({ preset, length, bots: String(bots), hints });
@@ -81,7 +88,17 @@
       </select>
     </fieldset>
 
-    <button class="btn big" class:primary={!data.online} type="submit">Play vs bots</button>
+    <div class="start">
+      {#if saved}
+        <a class="btn big" class:primary={!data.online} href="/play">
+          <span>Continue</span>
+          <span class="round">{WINDS[saved.round.wind]} {saved.round.dealer + 1}</span>
+        </a>
+      {/if}
+      <button class="btn big" class:primary={!data.online && !saved} type="submit">
+        {saved ? 'New game' : 'Play vs bots'}
+      </button>
+    </div>
   </form>
 </main>
 
@@ -165,7 +182,16 @@
     text-decoration: none;
     margin-top: 0;
   }
-  .online .elo {
+  .start {
+    display: flex;
+    gap: 8px;
+  }
+  .start .btn {
+    flex: 1;
+    text-decoration: none;
+  }
+  .online .elo,
+  .start .round {
     font-size: 0.85rem;
     font-weight: 600;
     opacity: 0.75;

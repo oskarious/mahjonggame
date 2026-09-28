@@ -15,6 +15,14 @@ import {
 } from '@mahjong/engine';
 import { DEFAULT_BOT_ELO } from '$lib/bots';
 import type { GameSource } from './source';
+import { type SavedGame, clearSave, writeSave } from './saved';
+
+export interface LocalGameOptions {
+  /** Keep the game in localStorage after every action, so /play can resume it. */
+  autosave?: boolean;
+  /** Actions to replay before play starts (restoring a saved game). Throws if one is illegal. */
+  actions?: Action[];
+}
 
 export interface LocalSettings {
   hints: HintLevel;
@@ -58,15 +66,37 @@ export class LocalGame implements GameSource {
   readonly log: Action[] = [];
   view = $derived.by(() => viewFor(this.state, this.human, { hints: this.settings.hints }));
   #timer: ReturnType<typeof setTimeout> | null = null;
+  #autosave: boolean;
 
-  constructor(rules: RuleSet, seed: string, human: Seat, settings: Partial<LocalSettings> = {}) {
+  constructor(
+    rules: RuleSet,
+    seed: string,
+    human: Seat,
+    settings: Partial<LocalSettings> = {},
+    options: LocalGameOptions = {},
+  ) {
     this.rules = rules;
     this.seed = seed;
     this.human = human;
     this.names = [0, 1, 2, 3].map((s) => (s === human ? 'You' : `Bot ${'ABC'[(s - human + 3) % 4]}`));
     Object.assign(this.settings, settings);
-    this.state = createGame(rules, seed).state;
+    let state = createGame(rules, seed).state;
+    for (const a of options.actions ?? []) {
+      state = applyAction(state, a).state;
+      this.log.push(a);
+    }
+    this.state = state;
+    this.#autosave = options.autosave ?? false;
+    this.#save();
     this.#schedule();
+  }
+
+  /** Rebuilds a saved game by replaying its log; throws if the log no longer replays. */
+  static restore(saved: SavedGame): LocalGame {
+    return new LocalGame(saved.rules, saved.seed, saved.human, saved.settings, {
+      autosave: true,
+      actions: saved.actions,
+    });
   }
 
   act(action: Action): void {
@@ -100,11 +130,25 @@ export class LocalGame implements GameSource {
       this.state = applyAction(this.state, action).state;
       this.log.push(action);
       this.error = null;
+      this.#save();
       return true;
     } catch (e) {
       this.error = e instanceof Error ? e.message : String(e);
       return false;
     }
+  }
+
+  #save(): void {
+    if (!this.#autosave) return;
+    if (this.state.phase === 'gameOver') return clearSave();
+    writeSave({
+      rules: this.rules,
+      seed: this.seed,
+      human: this.human,
+      settings: $state.snapshot(this.settings),
+      actions: this.log,
+      round: { wind: this.state.roundWind, dealer: this.state.dealer },
+    });
   }
 
   #schedule(): void {

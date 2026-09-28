@@ -41,6 +41,7 @@ apps/game-server/       @mahjong/game-server: Node 22 + ws, no build step (type 
 apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjong/engine and @mahjong/protocol
   src/lib/game/source.ts         GameSource: what the table needs (view, names, red, act, next)
   src/lib/game/local.svelte.ts   LocalGame: engine + bots in the browser (offline play, debug controls)
+  src/lib/game/saved.ts          the offline game in localStorage (rules, seed, seat, settings, action log)
   src/lib/game/remote.svelte.ts  RemoteGame: same-origin /ws client, auto-reconnect, takeover, deadline state
   src/lib/server/       db.ts (Kysely + pg pool), schema.ts (table types incl. rating/game tables), auth.ts, migrate.ts,
                         game-server.ts (is the game server up? → "Play online" on the home page)
@@ -235,3 +236,8 @@ DATABASE_URL=... BETTER_AUTH_SECRET=... ORIGIN=http://localhost:8080 docker comp
 - Timer defaults (8 s / 5 s / 15 s bank) and the bot anchor (skill 0.15 = 1000) are guesses until humans have played;
   both are config/constants, and re-anchoring the bots is a constant shift for everyone.
 - Debug features (show bots' hands, autoplay) exist only in offline play; online games never expose them.
+- **Offline games autosave** after every action (one slot, `saved.ts`) and resume by replaying the log: bare `/play`
+  resumes, `/play?…` starts a new game and then replaces the URL with `/play`; the home page shows Continue next to
+  New game. The save is cleared at game over; unreadable or non-replaying saves are dropped silently. **Bump
+  `SAVE_VERSION`** after engine changes that make old logs replay differently (wall generation, action shapes,
+  RuleSet fields) — a legal-but-different replay is not detected otherwise.
