@@ -100,19 +100,20 @@
 <svelte:head><title>{WINDS[view.roundWind]} {view.dealer + 1} · Riichi</title></svelte:head>
 
 <div class="screen">
-  <header>
-    <button class="icon" aria-label="Home" onclick={() => goto('/')}>←</button>
-    <span class="title">{game.names[view.seat]} · {WINDS[view.players[view.seat].seatWind]}</span>
-    <button class="icon" aria-label="Settings" onclick={() => (showSettings = true)}>⚙</button>
-  </header>
-
   <div class="board-wrap">
     <Board {view} names={game.names} {red} {revealed} />
   </div>
 
   {#if game.error}<p class="error" role="alert">{game.error}</p>{/if}
 
-  <PlayerArea {view} {red} {quickDiscard} bind:focusKind onact={(a) => game.act(a)} />
+  <PlayerArea
+    {view}
+    {red}
+    {quickDiscard}
+    bind:focusKind
+    onact={(a) => game.act(a)}
+    onsettings={() => (showSettings = true)}
+  />
 </div>
 
 {#if view.result && (view.phase === 'handOver' || (view.phase === 'gameOver' && !showFinal))}
@@ -131,7 +132,16 @@
 {/if}
 
 {#if showSettings}
-  <DevPanel {game} {quickDiscard} onquick={setQuick} {tileLabels} onlabels={setLabels} onclose={() => (showSettings = false)} onnew={restart} />
+  <DevPanel
+    {game}
+    {quickDiscard}
+    onquick={setQuick}
+    {tileLabels}
+    onlabels={setLabels}
+    onclose={() => (showSettings = false)}
+    onnew={restart}
+    onhome={() => goto('/')}
+  />
 {/if}
 
 <style>
@@ -142,24 +152,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding-top: env(safe-area-inset-top);
-  }
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4px 6px 0;
-  }
-  .icon {
-    width: 44px;
-    height: 44px;
-    font-size: 1.3rem;
-    border-radius: 50%;
-    color: var(--ink-dim);
-  }
-  .title {
-    font-size: 0.85rem;
-    color: var(--ink-dim);
+    padding-top: calc(6px + env(safe-area-inset-top));
   }
   .board-wrap {
     flex: 1;

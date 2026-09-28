@@ -4,10 +4,8 @@
     type PlayerView,
     type RedFives,
     type Tile as TileId,
-    doraFromIndicator,
-    kindOf,
   } from '@mahjong/engine';
-  import { WIND_SHORT, WINDS } from '$lib/labels';
+  import { WIND_SHORT } from '$lib/labels';
   import { sortTiles } from '$lib/tiles';
   import Melds from './Melds.svelte';
   import Pond from './Pond.svelte';
@@ -99,29 +97,6 @@
 </script>
 
 <div class="board">
-  <div class="round">
-    <div class="round-text">
-      <strong>{WINDS[view.roundWind]} {view.dealer + 1}</strong>
-      <span class="dim">
-        {view.honba} honba{view.riichiSticks ? ` · ${view.riichiSticks} riichi` : ''}
-      </span>
-    </div>
-    <!-- The indicator is the flipped tile; the dora is the next tile in its sequence. -->
-    <div class="dora">
-      <span class="dim">Dora</span>
-      {#each view.doraIndicators as t (t)}
-        <span class="dora-pair" title="Indicator → dora">
-          <span class="indicator"><Tile tile={t} {red} plain /></span>
-          <span class="arrow" aria-hidden="true">→</span>
-          <Tile tile={doraFromIndicator(kindOf(t)) * 4 + 1} {red} />
-        </span>
-      {/each}
-    </div>
-    <span class="wall" aria-label="{view.wallCount} tiles left in the wall">
-      <span class="wall-tile" aria-hidden="true"></span>{view.wallCount}
-    </span>
-  </div>
-
   <div class="rows" bind:this={rowsEl} style:--tw="{layout.tw}px" style:--meld-tw="{meldTw}px">
     {#each rows as { rel, seat } (seat)}
       {@const p = view.players[seat]}
@@ -163,64 +138,7 @@
     padding: 0 6px;
   }
 
-  .round {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 4px 8px;
-    border-radius: 10px;
-    background: var(--surface);
-    font-size: 0.8rem;
-    --tw: 18px;
-  }
-  .round-text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.2;
-  }
-  .dora {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-  }
-  .dora .dim {
-    margin-right: 4px;
-  }
-  .dora-pair {
-    display: inline-flex;
-    align-items: flex-end;
-    gap: 1px;
-    margin-left: 4px;
-    --tw: 22px;
-  }
-  .indicator {
-    --tw: 14px;
-    opacity: 0.8;
-  }
-  .arrow {
-    font-size: 0.7rem;
-    color: var(--ink-dim);
-    align-self: center;
-  }
-  .dim {
-    color: var(--ink-dim);
-  }
-  .wall {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-  }
-  .wall-tile {
-    width: 12px;
-    height: 16px;
-    border: 1.5px solid var(--ink-dim);
-    border-radius: 3px;
-  }
-
-  /* Four equal rows filling the space between the round bar and the own hand. */
+  /* Four equal rows filling the space between the header and the own hand. */
   .rows {
     flex: 1;
     min-height: 0;

@@ -18,6 +18,8 @@
     mark?: 'last' | 'hint' | 'win' | null;
     /** Skip the board-wide dora / same-tile markings (icons, previews, the magnifier). */
     plain?: boolean;
+    /** Own hand: a larger corner index (largest below 32 px) so small tiles stay readable. */
+    compact?: boolean;
     onclick?: (e: MouseEvent) => void;
   }
 
@@ -30,6 +32,7 @@
     dim = false,
     mark = null,
     plain = false,
+    compact = false,
     onclick,
   }: Props = $props();
   const marks = getContext<TileMarks | undefined>(TILE_MARKS);
@@ -51,7 +54,9 @@
   {:else}
     <img src={tileImage(tile, red)} alt="" draggable="false" />
     {#if glow}<span class="tint {glow}" aria-hidden="true"></span>{/if}
-    <span class="index {index!.suit}" class:red-five={redFive} aria-hidden="true">{index!.text}</span>
+    <span class="index {index!.suit}" class:red-five={redFive} class:wide={index!.text.length > 1} aria-hidden="true"
+      >{index!.text}</span
+    >
   {/if}
 {/snippet}
 
@@ -64,6 +69,7 @@
     class:selected
     class:dim
     class:focused
+    class:compact
     aria-label={dora ? `${label}, dora` : label}
     aria-pressed={selected}
     {onclick}
@@ -77,6 +83,7 @@
     class:haku
     class:dim
     class:focused
+    class:compact
     role="img"
     aria-label={dora ? `${label}, dora` : label}
   >
@@ -173,6 +180,23 @@
   }
   :global(body.no-tile-labels) .index {
     display: none;
+  }
+
+  /* Own-hand tiles (compact prop): a bigger corner index than the board, biggest on small tiles.
+     cqw, not var(--w): a --w holding cqw units would re-resolve against .face (a container) here. */
+  .tile.compact .index {
+    font-size: max(40cqw, 7px);
+  }
+  .tile.compact .index.wide {
+    font-size: max(30cqw, 7px);
+  }
+  @container (max-width: 31.9px) {
+    .tile.compact .index {
+      font-size: max(48cqw, 9px);
+    }
+    .tile.compact .index.wide {
+      font-size: max(36cqw, 9px);
+    }
   }
 
   /* Same kind as the tile the player is looking at. */

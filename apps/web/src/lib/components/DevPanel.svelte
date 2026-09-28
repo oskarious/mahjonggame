@@ -10,8 +10,10 @@
     onlabels: (v: boolean) => void;
     onclose: () => void;
     onnew: () => void;
+    /** Leave the game (the play screen has no other way back). */
+    onhome: () => void;
   }
-  let { game, quickDiscard, onquick, tileLabels, onlabels, onclose, onnew }: Props = $props();
+  let { game, quickDiscard, onquick, tileLabels, onlabels, onclose, onnew, onhome }: Props = $props();
   let copied = $state(false);
 
   async function copyLog() {
@@ -57,11 +59,11 @@
 
     <label class="check">
       <input type="checkbox" checked={tileLabels} onchange={(e) => onlabels(e.currentTarget.checked)} />
-      <span>Numbers and letters on tiles</span>
+      <span>Corner labels on tiles</span>
     </label>
     <label class="check">
       <input type="checkbox" checked={quickDiscard} onchange={(e) => onquick(e.currentTarget.checked)} />
-      <span>One-tap discard</span>
+      <span>One-click discard (mouse)</span>
     </label>
     <label class="check">
       <input type="checkbox" bind:checked={game.settings.autoRiichiDiscard} onchange={() => game.poke()} />
@@ -88,6 +90,7 @@
     <div class="row">
       <button class="btn ghost" onclick={copyLog}>{copied ? 'Copied!' : 'Copy game log'}</button>
       <button class="btn ghost" onclick={onnew}>New game</button>
+      <button class="btn ghost" onclick={onhome}>Leave game</button>
     </div>
     <button class="btn primary" onclick={onclose}>Done</button>
   </div>
