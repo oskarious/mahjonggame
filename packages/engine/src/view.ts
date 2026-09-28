@@ -1,6 +1,6 @@
-import { type Kind, type Tile, kindOf } from './tiles.ts';
+import type { Tile } from './tiles.ts';
 import type { Meld, Seat } from './types.ts';
-import { type DiscardOption, type TileCount, analyzeSeat } from './analysis.ts';
+import { type DiscardOption, type TenpaiOption, type TileCount, analyzeSeat, tenpaiOptions } from './analysis.ts';
 import {
   type Action,
   type Discard,
@@ -45,6 +45,12 @@ export interface PlayerView {
   actions: Action[];
   /** Hints about the own hand, limited to the requested hint level (null when off or between hands). */
   hints: HandHints | null;
+  /**
+   * Never gated by the hint level: what the own hand waits on. On own turn one entry per discard kind that leaves
+   * the hand tenpai (shown when that tile is inspected); between turns the current waits (at most one entry, kind
+   * null). Empty between hands.
+   */
+  tenpai: TenpaiOption[];
   result: HandResult | null;
   final: FinalStanding[] | null;
 }
@@ -70,23 +76,10 @@ export interface HandHints {
   /** 'waits' and up; between turns only (empty on own turn). */
   waits?: TileCount[];
   furiten?: boolean;
-  /**
-   * 'waits' and up, own turn only: one entry per kind that can be discarded for riichi (best first), empty when
-   * riichi is not legal. Reveals no more than the legal riichi discards already do, plus the waits they lead to.
-   */
-  riichi?: RiichiOption[];
   /** 'full' only. */
   ukeire?: TileCount[];
   total?: number;
   discards?: DiscardOption[] | null;
-}
-
-/** What declaring riichi with a discard of `kind` would wait on. */
-export interface RiichiOption {
-  kind: Kind;
-  waits: TileCount[];
-  /** A wait is among own discards (including this one). */
-  furiten: boolean;
 }
 
 export interface ViewOptions {
@@ -94,12 +87,7 @@ export interface ViewOptions {
   hints?: HintLevel;
 }
 
-export function handHints(
-  g: GameState,
-  seat: Seat,
-  level: HintLevel,
-  actions: readonly Action[] = legalActions(g, seat),
-): HandHints | null {
+export function handHints(g: GameState, seat: Seat, level: HintLevel): HandHints | null {
   if (level === 'off' || g.phase !== 'playing') return null;
   const a = analyzeSeat(g, seat);
   const onTurn = a.discards !== null;
@@ -113,21 +101,14 @@ export function handHints(
   if (level === 'distance') return hints;
   hints.waits = onTurn ? [] : a.waits;
   hints.furiten = a.furiten;
-  hints.riichi = onTurn ? riichiOptions(a.discards!, actions) : [];
   if (level === 'waits') return hints;
   return { ...hints, waits: a.waits, ukeire: a.ukeire, total: a.total, discards: a.discards };
-}
-
-function riichiOptions(discards: readonly DiscardOption[], actions: readonly Action[]): RiichiOption[] {
-  const kinds = new Set(actions.flatMap((a) => (a.type === 'discard' && a.riichi ? [kindOf(a.tile)] : [])));
-  return discards.filter((o) => kinds.has(o.kind)).map(({ kind, waits, furiten }) => ({ kind, waits, furiten }));
 }
 
 export function viewFor(g: GameState, seat: Seat, opts: ViewOptions = {}): PlayerView {
   const h = g.hand;
   const me = h.players[seat];
   const step = h.step;
-  const actions = legalActions(g, seat);
   return {
     seat,
     seq: g.seq,
@@ -151,8 +132,9 @@ export function viewFor(g: GameState, seat: Seat, opts: ViewOptions = {}): Playe
     drawn: me.drawn,
     turn: step.type === 'turn' ? step.seat : null,
     claimable: step.type === 'calls' || step.type === 'chankan' ? { seat: step.seat, tile: step.tile } : null,
-    actions,
-    hints: handHints(g, seat, opts.hints ?? 'off', actions),
+    actions: legalActions(g, seat),
+    hints: handHints(g, seat, opts.hints ?? 'off'),
+    tenpai: g.phase === 'playing' ? tenpaiOptions(g, seat) : [],
     result: g.result,
     final: g.final,
   };

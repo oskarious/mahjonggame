@@ -244,18 +244,22 @@
     );
   });
 
-  /** Riichi mode: what riichi with the magnified tile would wait on (hint level "waits" and up). */
-  const riichiPreview = $derived.by(() => {
+  /**
+   * What the hand waits on (any hint level): on turn, after discarding the magnified tile (if it can be discarded
+   * now, so riichi mode only shows riichi discards); between turns, the current waits.
+   */
+  const waitsPreview = $derived.by(() => {
     const m = magnified as { tile: TileId } | null;
-    if (!riichiMode || !m) return null;
-    return hints?.riichi?.find((o) => o.kind === kindOf(m.tile)) ?? null;
+    if (!m) return null;
+    if (!onTurn) return view.tenpai.find((o) => o.kind === null) ?? null;
+    return canDiscard(m.tile) ? (view.tenpai.find((o) => o.kind === kindOf(m.tile)) ?? null) : null;
   });
   /** Measured magnifier width, so a wide one (waits row) is clamped fully on screen. */
   let magEl: HTMLDivElement | undefined = $state();
   let magWidth = $state(0);
   $effect(() => {
     void magnified;
-    void riichiPreview;
+    void waitsPreview;
     magWidth = magEl?.offsetWidth ?? 0;
   });
 
@@ -463,14 +467,14 @@
       bind:this={magEl}
     >
       <Tile tile={magnified.tile} {red} plain />
-      {#if riichiPreview}
-        <span class="mag-waits" aria-label="Winning tiles after riichi">
-          {#each riichiPreview.waits as w (w.kind)}
+      {#if waitsPreview}
+        <span class="mag-waits" aria-label="Winning tiles">
+          {#each waitsPreview.waits as w (w.kind)}
             <span class="wait" class:dead={w.remaining === 0} title={kindName(w.kind)}>
               <Tile tile={w.kind * 4 + 1} {red} plain /><small>×{w.remaining}</small>
             </span>
           {/each}
-          {#if riichiPreview.furiten}<span class="chip bad">furiten</span>{/if}
+          {#if waitsPreview.furiten}<span class="chip bad">furiten</span>{/if}
         </span>
       {/if}
     </div>

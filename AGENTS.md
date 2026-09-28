@@ -204,10 +204,11 @@ DATABASE_URL=... BETTER_AUTH_SECRET=... ORIGIN=http://localhost:8080 docker comp
 - Tiles show a Latin corner index (1-9 in suit colour, E/S/W/N, Wh/G/R); hidden on tiles < 16 px; toggle in settings
   (the toggle only affects corner labels, never the compact face).
 - **Hint levels are server-decided** (`viewFor(..., { hints: 'off' | 'distance' | 'waits' | 'full' })`, default off),
-  intended to depend on Elo; anything above the level is never sent. From "waits" up, `hints.riichi` gives the waits
-  (and furiten) of each riichi-legal discard on the own turn; in riichi mode the magnifier shows them under the tile
-  (the left panel is covered by the buttons then). The magnifier is `width: max-content` and clamped by its measured
-  width, so wide wait rows stay on screen.
+  intended to depend on Elo; anything above the level is never sent. **Tenpai waits are never gated:** `view.tenpai`
+  (every level) holds, on the own turn, the waits (and furiten) after each discard that leaves the hand tenpai, and
+  between turns the current waits; the magnifier shows them under the inspected tile (on turn only for tiles that
+  can be discarded now, so riichi mode shows riichi discards only). The hint levels add the passive panel display.
+  The magnifier is `width: max-content` and clamped by its measured width, so wide wait rows stay on screen.
 - Dark neutral theme (tokens in `src/app.css`); no green felt.
 
 ## Gotchas we hit

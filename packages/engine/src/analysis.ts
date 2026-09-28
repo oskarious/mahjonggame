@@ -119,6 +119,41 @@ export function analyzeDiscards(
   return out.sort((a, b) => a.shanten - b.shanten || b.total - a.total || a.kind - b.kind);
 }
 
+/** What the hand waits on after discarding a tile of `kind` (on own turn), or right now (`kind` null). */
+export interface TenpaiOption {
+  kind: Kind | null;
+  waits: TileCount[];
+  /** A wait is among own discards (including this one); between turns also temporary / riichi furiten. */
+  furiten: boolean;
+}
+
+/**
+ * Waits only, cheaper than analyzeSeat (no shanten or ukeire). On own turn: one entry per discard kind that leaves
+ * the hand tenpai (in hand order); between turns: the current waits, or nothing when noten.
+ */
+export function tenpaiOptions(g: GameState, seat: Seat): TenpaiOption[] {
+  const p = g.hand.players[seat];
+  const unseen = unseenCounts(g, seat);
+  const ownDiscards = p.discards.map((d) => kindOf(d.tile));
+  if (p.hand.length + 3 * p.melds.length === 13) {
+    const w = waits(p.hand, p.melds);
+    if (!w.length) return [];
+    const furiten = p.tempFuriten || p.riichiFuriten || w.some((k) => ownDiscards.includes(k));
+    return [{ kind: null, waits: toCounts(w, unseen), furiten }];
+  }
+  const out: TenpaiOption[] = [];
+  const tried = new Set<Kind>();
+  p.hand.forEach((t, i) => {
+    const kind = kindOf(t);
+    if (tried.has(kind)) return;
+    tried.add(kind);
+    const w = waits([...p.hand.slice(0, i), ...p.hand.slice(i + 1)], p.melds);
+    if (!w.length) return;
+    out.push({ kind, waits: toCounts(w, unseen), furiten: w.some((k) => k === kind || ownDiscards.includes(k)) });
+  });
+  return out;
+}
+
 /** Full analysis for one seat in the current state (between turns or on their own turn). */
 export function analyzeSeat(g: GameState, seat: Seat): SeatAnalysis {
   const p = g.hand.players[seat];

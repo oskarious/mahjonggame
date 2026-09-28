@@ -3,7 +3,7 @@
 import type { Action, FinalStanding, GameEvent, HintLevel, PlayerView } from '@mahjong/engine';
 
 /** Bumped when a change is not backwards compatible; the server refuses other versions. */
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 3;
 
 /** Game length. Both use the online default rules (DEFAULT_RULES with this length). */
 export type Format = 'east' | 'south';
