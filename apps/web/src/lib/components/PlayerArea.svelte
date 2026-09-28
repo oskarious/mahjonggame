@@ -530,7 +530,7 @@
     align-items: center;
     gap: 4px;
     z-index: 5;
-    --tw: 18px;
+    --tw: calc(18px * 4 / 3 / var(--tile-ratio, 4 / 3));
   }
   .overlay .btn {
     flex: 1 1 calc(50% - 4px);
@@ -561,16 +561,16 @@
     justify-content: flex-end;
     align-items: center;
     gap: 2px 6px;
-    --tw: 18px;
+    --tw: calc(18px * 4 / 3 / var(--tile-ratio, 4 / 3));
   }
   .dora-pair {
     display: inline-flex;
     align-items: flex-end;
     gap: 1px;
-    --tw: 22px;
+    --tw: calc(22px * 4 / 3 / var(--tile-ratio, 4 / 3));
   }
   .indicator {
-    --tw: 14px;
+    --tw: calc(14px * 4 / 3 / var(--tile-ratio, 4 / 3));
     opacity: 0.8;
   }
   .arrow {
@@ -624,7 +624,7 @@
   .waits {
     display: inline-flex;
     gap: 5px;
-    --tw: 24px;
+    --tw: calc(24px * 4 / 3 / var(--tile-ratio, 4 / 3));
   }
   .wait {
     display: inline-flex;
@@ -636,16 +636,19 @@
     color: var(--ink-dim);
   }
 
-  /* The slot keeps its height even when empty (off turn, no call), so the panel never jumps. */
+  /* The slot keeps its height even when empty (off turn, no call), so the panel never jumps. It is the same for
+     every tileset: the tile in it is as tall as a 44 px Classic tile (narrower with a taller ratio). All panel and
+     magnifier tiles are sized like this (Classic width × 4/3 ÷ ratio), so switching tilesets never resizes the panel. */
   .middle {
+    --slot-h: calc(44px * 4 / 3);
     display: flex;
     align-items: center;
-    min-height: calc(44px * 4 / 3 + 14px);
+    min-height: calc(var(--slot-h) + 14px);
   }
   /* The tile to act on: the drawn tile, or the claimable tile during a call window (never both). */
   .claim,
   .drawn {
-    --tw: 44px;
+    --tw: calc(var(--slot-h) / var(--tile-ratio, 4 / 3));
     display: inline-flex;
     padding: 8px 10px 6px;
     border-radius: 12px;
@@ -658,9 +661,10 @@
   }
 
   /* The strip is taller than the tiles: anywhere in it picks the nearest tile.
-     Tiles split the width by how many are held (--n), so open hands get bigger tiles. */
+     Tiles split the width by how many are held (--n), so open hands get bigger tiles, up to the height of a 52 px
+     Classic tile (taller tilesets would otherwise take the board's height once a few sets are called). */
   .hand {
-    --tw: min(calc((100cqw - 10px) / var(--n, 13)), 52px);
+    --tw: min(calc((100cqw - 10px) / var(--n, 13)), calc(52px * 4 / 3 / var(--tile-ratio, 4 / 3)));
     position: relative;
     display: flex;
     justify-content: center;
@@ -676,7 +680,7 @@
   }
 
   .magnifier {
-    --tw: 56px;
+    --tw: calc(56px * 4 / 3 / var(--tile-ratio, 4 / 3));
     position: absolute;
     bottom: var(--b, 0px);
     translate: -50% 0;
@@ -697,7 +701,7 @@
   }
   /* Riichi mode: what the magnified discard would wait on. At most 5 per row. */
   .mag-waits {
-    --tw: 22px;
+    --tw: calc(22px * 4 / 3 / var(--tile-ratio, 4 / 3));
     display: flex;
     flex-wrap: wrap;
     justify-content: center;

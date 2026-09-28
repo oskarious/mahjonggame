@@ -8,6 +8,7 @@
   import type { PlayerInfo } from '@mahjong/protocol';
   import { WIND_SHORT } from '$lib/labels';
   import { sortTiles } from '$lib/tiles';
+  import { tileset } from '$lib/tileset.svelte';
   import Melds from './Melds.svelte';
   import Pond from './Pond.svelte';
   import Tile from './Tile.svelte';
@@ -60,7 +61,7 @@
   });
 
   /** Largest tile width (and tiles per line) that fits `capacity` discards in a quarter of the space. */
-  function fit(w: number, h: number, capacity: number) {
+  function fit(w: number, h: number, capacity: number, ratio: number) {
     const rowH = (h - 3 * ROW_GAP) / 4 - SEAT_CHROME_V - 2;
     const pondW = w - SEAT_CHROME_H;
     let best = { tw: 14, perLine: 12 };
@@ -69,9 +70,9 @@
       const lines = Math.ceil(capacity / perLine);
       // Room for a sideways riichi tile and the gaps between groups of six.
       const groups = perLine % 6 === 0 ? perLine / 6 - 1 : 0;
-      const byWidth = pondW / (perLine + 0.34 + groups * 0.25);
+      const byWidth = pondW / (perLine + (ratio - 1) + groups * 0.25);
       // Discard lines plus the melds line (MELD_SCALE tall) share the row height.
-      const byHeight = (rowH - (lines - 1) * LINE_GAP) / (lines + MELD_SCALE) / (4 / 3);
+      const byHeight = (rowH - (lines - 1) * LINE_GAP) / (lines + MELD_SCALE) / ratio;
       const tw = Math.floor(Math.min(byWidth, byHeight, 44) * 2) / 2;
       // Prefer the classic rows of six when the size is about the same.
       const better = tw > best.tw + 1 || (tw >= best.tw - 1 && perLine % 6 === 0 && best.perLine % 6 !== 0);
@@ -79,15 +80,16 @@
     }
     return best;
   }
-  const layout = $derived(fit(box.w, box.h, capacity));
+  const ratio = $derived(tileset().ratio);
+  const layout = $derived(fit(box.w, box.h, capacity, ratio));
   const meldTw = $derived(Math.floor(layout.tw * MELD_SCALE * 2) / 2);
 
-  /** Width of a row of melds in tile widths: sideways tiles are 4/3 wide, plus a small gap per set. */
+  /** Width of a row of melds in tile widths: sideways tiles are `ratio` wide, plus a small gap per set. */
   function meldUnits(melds: Meld[]): number {
     let units = 0;
     for (const m of melds) {
       const sideways = m.type === 'ankan' ? 0 : m.type === 'shouminkan' ? 2 : 1;
-      units += m.tiles.length + sideways / 3 + 0.3;
+      units += m.tiles.length + sideways * (ratio - 1) + 0.3;
     }
     return units;
   }
@@ -220,7 +222,7 @@
     display: flex;
     align-items: flex-end;
     gap: 6px;
-    height: calc(var(--meld-tw) * 4 / 3 + 2px);
+    height: calc(var(--meld-tw) * var(--tile-ratio, 4 / 3) + 2px);
   }
   .name {
     max-width: 100%;

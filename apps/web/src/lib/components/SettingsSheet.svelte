@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import type { HintLevel } from '@mahjong/engine';
+  import type { TilesetId } from '$lib/tiles';
+  import { setTileset, tileset } from '$lib/tileset.svelte';
 
   interface Props {
     hints: HintLevel;
@@ -68,6 +70,13 @@
       </select>
     </label>
 
+    <label>
+      <span>Tiles</span>
+      <select value={tileset().id} onchange={(e) => setTileset(e.currentTarget.value as TilesetId)}>
+        <option value="classic">Classic</option>
+        <option value="slim">Slim</option>
+      </select>
+    </label>
     <label class="check">
       <input type="checkbox" checked={tileLabels} onchange={(e) => onlabels(e.currentTarget.checked)} />
       <span>Corner labels on tiles</span>

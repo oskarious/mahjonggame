@@ -8,6 +8,7 @@
   import { setSoundEnabled, setSoundVolume, sound } from '$lib/audio/player';
   import { TILE_MARKS, type TileMarks } from '$lib/marks';
   import type { GameSource } from '$lib/game/source';
+  import { tileset } from '$lib/tileset.svelte';
   import Board from './Board.svelte';
   import FinalSheet from './FinalSheet.svelte';
   import PlayerArea from './PlayerArea.svelte';
@@ -100,6 +101,12 @@
       cueState = out.state;
       for (const c of out.cues) sound().play(c.id, c.delay);
     });
+  });
+
+  // The tile ratio for layout CSS outside Tile (meld lines, the own panel's slot).
+  $effect(() => {
+    document.body.style.setProperty('--tile-ratio', String(tileset().ratio));
+    return () => document.body.style.removeProperty('--tile-ratio');
   });
 
   $effect(() => {

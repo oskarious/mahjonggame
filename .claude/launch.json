@@ -104,6 +104,21 @@
         "PORT": "3004",
         "WEB_INTERNAL_URL": "http://localhost:5177"
       }
+    },
+    {
+      "name": "web-5181",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "@mahjong/web",
+        "--",
+        "--port",
+        "5181",
+        "--strictPort"
+      ],
+      "port": 5181
     }
   ]
 }

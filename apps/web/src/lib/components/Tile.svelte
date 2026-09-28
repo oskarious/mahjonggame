@@ -3,6 +3,7 @@
   import { isRedTile, kindOf, type RedFives, type Tile } from '@mahjong/engine';
   import { TILE_MARKS, type TileMarks } from '$lib/marks';
   import { kindIndex, kindName, tileImage } from '$lib/tiles';
+  import { tileset } from '$lib/tileset.svelte';
 
   interface Props {
     tile?: Tile | null;
@@ -35,6 +36,7 @@
     compact = false,
     onclick,
   }: Props = $props();
+  const set = $derived(tileset());
   const marks = getContext<TileMarks | undefined>(TILE_MARKS);
   const label = $derived(back || tile === null ? 'Hidden tile' : kindName(kindOf(tile)));
   // The white dragon artwork is blank; draw the common blue frame so it doesn't look missing.
@@ -52,7 +54,7 @@
   {#if back || tile === null}
     <span class="back"></span>
   {:else}
-    <img src={tileImage(tile, red)} alt="" draggable="false" />
+    <img src={tileImage(tile, red, set)} alt="" draggable="false" />
     {#if glow}<span class="tint {glow}" aria-hidden="true"></span>{/if}
     <span class="index {index!.suit}" class:red-five={redFive} class:wide={index!.text.length > 1} aria-hidden="true"
       >{index!.text}</span
@@ -70,6 +72,9 @@
     class:dim
     class:focused
     class:compact
+    style:--tile-ratio={set.ratio}
+    style:--art-y="{set.margin.y}%"
+    style:--art-x="{set.margin.x}%"
     aria-label={dora ? `${label}, dora` : label}
     aria-pressed={selected}
     {onclick}
@@ -84,6 +89,9 @@
     class:dim
     class:focused
     class:compact
+    style:--tile-ratio={set.ratio}
+    style:--art-y="{set.margin.y}%"
+    style:--art-x="{set.margin.x}%"
     role="img"
     aria-label={dora ? `${label}, dora` : label}
   >
@@ -94,7 +102,7 @@
 <style>
   .tile {
     --w: var(--tw, 28px);
-    --h: calc(var(--w) * 4 / 3);
+    --h: calc(var(--w) * var(--tile-ratio, 4 / 3));
     position: relative;
     display: inline-block;
     flex: none;
@@ -131,11 +139,13 @@
       calc(var(--w) * -0.1) 0 calc(var(--w) * 0.12) rgba(0, 0, 0, 0.35);
   }
 
+  /* The artwork's place in the face depends on the tileset (Classic has a margin, Slim is edge to edge). */
   img {
     position: absolute;
-    inset: 7% 8%;
-    width: 84%;
-    height: 86%;
+    top: var(--art-y);
+    left: var(--art-x);
+    width: calc(100% - 2 * var(--art-x));
+    height: calc(100% - 2 * var(--art-y));
     object-fit: contain;
     user-select: none;
     pointer-events: none;
