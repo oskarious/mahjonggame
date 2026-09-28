@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
-  import { goto, replaceState } from '$app/navigation';
+  import { onDestroy } from 'svelte';
+  import { afterNavigate, goto, replaceState } from '$app/navigation';
   import { page } from '$app/state';
   import { DEFAULT_RULES, EMA_2025, type HintLevel, type RuleSet, makeRules } from '@mahjong/engine';
   import { LocalGame, type LocalSettings as Settings } from '$lib/game/local.svelte';
@@ -39,9 +39,12 @@
   let game = $state(openGame());
   let table: Table | undefined = $state();
 
-  // Parameters only choose the new game; a reload should resume it, not roll another.
-  onMount(() => {
-    if (page.url.search) replaceState('/play', {});
+  // Parameters only choose the new game; a reload should resume it, not roll another. On a full page load the
+  // router only counts as started right after the 'enter' afterNavigate callbacks, hence the microtask.
+  afterNavigate(() => {
+    queueMicrotask(() => {
+      if (page.url.search) replaceState('/play', {});
+    });
   });
 
   function restart() {
