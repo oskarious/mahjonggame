@@ -8,7 +8,8 @@ import {
   type RatingInfo,
   type ServerMessage,
 } from '@mahjong/protocol';
-import type { GameSource } from './source';
+import { sound } from '$lib/audio/player';
+import { type GameSource, type StepListener, StepListeners } from './source';
 
 export type RemoteStatus =
   /** Socket not open yet (first connection or reconnecting). */
@@ -59,6 +60,7 @@ export class RemoteGame implements GameSource {
   #auto: ReturnType<typeof setTimeout> | null = null;
   #destroyed = false;
   #url: string;
+  #listeners = new StepListeners();
 
   constructor(hints: HintLevel = 'full', url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`) {
     this.#hints = hints;
@@ -74,6 +76,10 @@ export class RemoteGame implements GameSource {
 
   get hasView(): boolean {
     return this.#view !== null;
+  }
+
+  listen(fn: StepListener): () => void {
+    return this.#listeners.add(fn);
   }
 
   connect(): void {
@@ -223,6 +229,7 @@ export class RemoteGame implements GameSource {
         if (this.status !== 'playing') this.status = 'queued';
         return;
       case 'game.start':
+        if (this.status === 'queued') sound().play('matchFound');
         this.info = msg.game;
         this.queue = null;
         this.end = null;
@@ -237,6 +244,7 @@ export class RemoteGame implements GameSource {
         this.error = null;
         if (this.status !== 'ended') this.status = 'playing';
         this.#automate(msg.view);
+        this.#listeners.emit(msg.events, msg.view);
         return;
       }
       case 'game.end':

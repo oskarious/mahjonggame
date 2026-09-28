@@ -4,6 +4,8 @@
   import { type Snippet, setContext } from 'svelte';
   import { type HintLevel, type Kind, type Tile as TileId, doraFromIndicator, kindOf } from '@mahjong/engine';
   import type { PlayerInfo, RatingChange } from '@mahjong/protocol';
+  import { cuesFor, initialCueState } from '$lib/audio/cues';
+  import { setSoundEnabled, setSoundVolume, sound } from '$lib/audio/player';
   import { TILE_MARKS, type TileMarks } from '$lib/marks';
   import type { GameSource } from '$lib/game/source';
   import Board from './Board.svelte';
@@ -54,6 +56,8 @@
   let showFinal = $state(false);
   let quickDiscard = $state(readFlag(QUICK_KEY, false));
   let tileLabels = $state(readFlag(LABELS_KEY, true));
+  let soundOn = $state(sound().enabled);
+  let volume = $state(Math.round(sound().volume * 100));
 
   function readFlag(key: string, fallback: boolean) {
     try {
@@ -78,6 +82,25 @@
     tileLabels = v;
     writeFlag(LABELS_KEY, v);
   }
+
+  function setSound(v: boolean) {
+    soundOn = v;
+    setSoundEnabled(v);
+  }
+  function setVolume(v: number) {
+    volume = v;
+    setSoundVolume(v);
+  }
+
+  // Sounds for live steps of whichever game is shown (a restart brings a new game object and fresh cue state).
+  $effect(() => {
+    let cueState = initialCueState();
+    return game.listen((events, v) => {
+      const out = cuesFor(events, v, cueState);
+      cueState = out.state;
+      for (const c of out.cues) sound().play(c.id, c.delay);
+    });
+  });
 
   $effect(() => {
     document.body.classList.toggle('no-tile-labels', !tileLabels);
@@ -145,6 +168,10 @@
     onquick={setQuick}
     {tileLabels}
     onlabels={setLabels}
+    {soundOn}
+    onsound={setSound}
+    {volume}
+    onvolume={setVolume}
     onclose={() => (showSettings = false)}
     {onhome}
   >

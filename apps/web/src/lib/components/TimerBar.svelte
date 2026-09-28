@@ -1,6 +1,8 @@
 <script lang="ts">
   // Countdown for the player's own decision: a bar that drains over the base time, then over the time bank
   // (gold). Seconds are only shown once the bank is in use.
+  import { sound } from '$lib/audio/player';
+
   interface Props {
     /** Absolute time the server acts for the player (Date.now based), or null when nothing is pending. */
     deadlineAt: number | null;
@@ -24,6 +26,16 @@
   const base = $derived(Math.max(0, total - bank));
   const remaining = $derived(deadlineAt === null ? 0 : Math.max(0, deadlineAt - now));
   const inBank = $derived(deadlineAt !== null && remaining <= bank);
+  // A tick for each of the last 5 seconds, once per second and deadline; stops when the deadline goes (we acted).
+  let warned: { deadline: number; secs: number } | null = null;
+  $effect(() => {
+    if (deadlineAt === null) return;
+    const secs = Math.ceil(remaining / 1000);
+    if (secs < 1 || secs > 5) return;
+    if (warned && warned.deadline === deadlineAt && warned.secs <= secs) return;
+    warned = { deadline: deadlineAt, secs };
+    sound().play('timeWarning');
+  });
   const fraction = $derived(inBank ? (bank ? remaining / bank : 0) : base ? (remaining - bank) / base : 0);
 </script>
 

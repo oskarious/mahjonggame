@@ -60,7 +60,10 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
                         0003_bot_players = bot, setting, user.role
   src/lib/components/   Table (the whole play screen, takes a GameSource), Board (4 seat rows), Pond, PlayerArea
                         (hand/actions/magnifier), Tile, TimerBar, sheets, SettingsSheet (+ LocalSettings for offline)
+  src/lib/audio/        sounds.ts (the sound manifest: cue id → file or null), cues.ts (step events → cues, pure),
+                        player.ts (Web Audio playback, sound settings)
   static/tiles/         FluffyStuff tile SVGs (CC0)
+  static/audio/         sound files named in sounds.ts (sources/licences in its README.md)
 openspec/               OpenSpec (spec-driven changes/specs); use it for larger features
 ```
 
@@ -74,7 +77,7 @@ npm run dev                  # web dev server on :5173 (also on the LAN) + game 
                              # (copy apps/game-server/.env.example to apps/game-server/.env too; `npm run dev:web` /
                              # `npm run dev:game` start one of them). Vite proxies /ws to GAME_SERVER_URL.
 npm run db:migrate --workspace @mahjong/web   # run migrations without starting the server
-npm test                     # engine (~300), protocol and game-server tests
+npm test                     # engine (~300), protocol, game-server and web (lib/audio) tests
 npm run typecheck            # engine + scripts + protocol + game-server + svelte-check
 npm run build --workspace @mahjong/web
 npm run calibrate --workspace @mahjong/engine -- --games 15000 --write   # re-measure bot Elo (~8 min, all cores)
@@ -247,6 +250,11 @@ A client is assumed to be modified: it reads every byte and every timing it gets
   can be discarded now, so riichi mode shows riichi discards only). The hint levels add the passive panel display.
   The magnifier is `width: max-content` and clamped by its measured width, so wide wait rows stay on screen.
 - Dark neutral theme (tokens in `src/app.css`); no green felt.
+- **Sounds:** every cue is listed in `lib/audio/sounds.ts`; `null` = no file yet, silent (no request, no error). Add a
+  sound by dropping the file into `static/audio` and naming it there. Cues come only from the step events redacted
+  for the own seat plus the own view (`GameSource.listen`, via `cuesFor`), never from hidden state; replays and
+  resyncs emit nothing. Generic stingers, no voice lines or music. On/off + volume in settings (`riichi:sound`,
+  `riichi:volume`); audio starts on the first user gesture.
 
 ## Gotchas we hit
 

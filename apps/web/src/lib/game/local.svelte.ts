@@ -10,11 +10,12 @@ import {
   createGame,
   legalActions,
   pendingSeats,
+  redactEvent,
   skillForElo,
   viewFor,
 } from '@mahjong/engine';
 import { DEFAULT_BOT_ELO } from '$lib/bots';
-import type { GameSource } from './source';
+import { type GameSource, type StepListener, StepListeners } from './source';
 import { type SavedGame, clearSave, writeSave } from './saved';
 
 export interface LocalGameOptions {
@@ -67,6 +68,7 @@ export class LocalGame implements GameSource {
   view = $derived.by(() => viewFor(this.state, this.human, { hints: this.settings.hints }));
   #timer: ReturnType<typeof setTimeout> | null = null;
   #autosave: boolean;
+  #listeners = new StepListeners();
 
   constructor(
     rules: RuleSet,
@@ -108,6 +110,10 @@ export class LocalGame implements GameSource {
     this.act({ type: 'nextHand' });
   }
 
+  listen(fn: StepListener): () => void {
+    return this.#listeners.add(fn);
+  }
+
   get red(): RedFives {
     return this.rules.redFives;
   }
@@ -127,10 +133,15 @@ export class LocalGame implements GameSource {
 
   #apply(action: Action): boolean {
     try {
-      this.state = applyAction(this.state, action).state;
+      const { state, events } = applyAction(this.state, action);
+      this.state = state;
       this.log.push(action);
       this.error = null;
       this.#save();
+      this.#listeners.emit(
+        events.map((e) => redactEvent(e, this.human)),
+        this.view,
+      );
       return true;
     } catch (e) {
       this.error = e instanceof Error ? e.message : String(e);

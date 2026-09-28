@@ -11,14 +11,33 @@
     onquick: (v: boolean) => void;
     tileLabels: boolean;
     onlabels: (v: boolean) => void;
+    soundOn: boolean;
+    onsound: (v: boolean) => void;
+    /** 0..100 */
+    volume: number;
+    onvolume: (v: number) => void;
     onclose: () => void;
     /** Leave the game (the play screen has no other way back). */
     onhome: () => void;
     /** Extra controls (offline: bots, debug). */
     children?: Snippet;
   }
-  let { hints, maxHints = 'full', onhints, quickDiscard, onquick, tileLabels, onlabels, onclose, onhome, children }: Props =
-    $props();
+  let {
+    hints,
+    maxHints = 'full',
+    onhints,
+    quickDiscard,
+    onquick,
+    tileLabels,
+    onlabels,
+    soundOn,
+    onsound,
+    volume,
+    onvolume,
+    onclose,
+    onhome,
+    children,
+  }: Props = $props();
 
   const LEVELS: { value: HintLevel; label: string }[] = [
     { value: 'off', label: 'Off' },
@@ -56,6 +75,23 @@
     <label class="check">
       <input type="checkbox" checked={quickDiscard} onchange={(e) => onquick(e.currentTarget.checked)} />
       <span>One-click discard (mouse)</span>
+    </label>
+
+    <label class="check">
+      <input type="checkbox" checked={soundOn} onchange={(e) => onsound(e.currentTarget.checked)} />
+      <span>Sound</span>
+    </label>
+    <label>
+      <span>Volume</span>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        step="5"
+        value={volume}
+        disabled={!soundOn}
+        oninput={(e) => onvolume(Number(e.currentTarget.value))}
+      />
     </label>
 
     {@render children?.()}
@@ -107,6 +143,12 @@
   .panel :global(input[type='checkbox']) {
     width: 22px;
     height: 22px;
+    min-height: 0;
+    accent-color: var(--accent);
+  }
+  input[type='range'] {
+    flex: 1;
+    max-width: 220px;
     min-height: 0;
     accent-color: var(--accent);
   }
