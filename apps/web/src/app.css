@@ -1,14 +1,33 @@
 :root {
-  --bg: #0e0f12;
+  /* The background: colour, and a pattern tile from static/patterns/ (or none) that darkens it where the motif is,
+     drifting from top-right to bottom-left. Keep theme-color in app.html equal to --bg. */
+  --bg: #48754d;
+  /* 044 */
+  --bg-pattern: url("/patterns/pattern_044.svg");
+  /* The tiles are black and white; the black parts darken. 1 = swap, for tiles whose motif is white. */
+  --bg-pattern-invert: 1;
+  --bg-pattern-size: 128px;
+  --bg-pattern-strength: 0.05;
+  --bg-drift-period: 85s;
   --line: rgba(255, 255, 255, 0.08);
   --ink: #ecebe6;
   --ink-dim: rgba(236, 235, 230, 0.6);
-  /* Seat rows and bars on the board. */
-  --surface: #17191e;
-  --surface-me: #1f2228;
-  /* Sheets, dialogs and buttons. */
-  --panel: #16181d;
-  --panel-2: #262a31;
+  /* Surfaces are --bg lightened towards --tint (a cool white: the default --bg reproduces the old greys exactly). */
+  --tint: #c4ddff;
+  /* Seat rows and bars on the board: translucent, so the pattern shows through subdued. */
+  --surface: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--bg), var(--tint) 6%) 82%,
+    transparent
+  );
+  --surface-me: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--bg), var(--tint) 11.4%) 82%,
+    transparent
+  );
+  /* Sheets, dialogs and buttons: opaque tints of the background. */
+  --panel: color-mix(in srgb, var(--bg), var(--tint) 4.4%);
+  --panel-2: color-mix(in srgb, var(--bg), var(--tint) 13.2%);
   --accent: #f2c14e;
   --accent-ink: #2b2104;
   --danger: #e76f51;
@@ -21,7 +40,7 @@
   font-family:
     system-ui,
     -apple-system,
-    'Segoe UI',
+    "Segoe UI",
     Roboto,
     sans-serif;
   color: var(--ink);
@@ -40,9 +59,35 @@ body {
   overscroll-behavior: none;
 }
 
+@supports not (color: color-mix(in srgb, red, blue)) {
+  :root {
+    --surface: #17191e;
+    --surface-me: #1f2228;
+    --panel: #16181d;
+    --panel-2: #262a31;
+  }
+}
+
+/* html paints --bg; body stays transparent so the fixed pattern layer (z-index -1, in the root stacking context)
+   shows between them. */
 body {
-  background: var(--bg);
   min-height: 100dvh;
+}
+
+/* The pattern canvas (BgPattern.svelte draws and moves it). */
+.bg-pattern {
+  position: fixed;
+  z-index: -1;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  height: 100lvh;
+  opacity: var(--bg-pattern-strength);
+  /* Multiply: white leaves the colour alone, black darkens it by the strength. */
+  mix-blend-mode: multiply;
+  pointer-events: none;
 }
 
 button {
