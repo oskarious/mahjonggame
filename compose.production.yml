@@ -2,7 +2,7 @@
 #   /    → web:3000          (SvelteKit, root Dockerfile)
 #   /ws  → game-server:3001  (WebSocket game server, apps/game-server/Dockerfile)
 # Postgres is the existing Dokploy database service on the same network (not defined here).
-# Environment comes from the Dokploy app (see AGENTS.md → Deployment). Both services join dokploy-network so
+# Environment comes from the Dokploy app (see docs/agents/deployment.md). Both services join dokploy-network so
 # Dokploy's Traefik can route the domain entries to them.
 #
 # Local check against the dev Postgres (from the repo root, with ORIGIN=http://localhost:8080 etc. in the shell):
