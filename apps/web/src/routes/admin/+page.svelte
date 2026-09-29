@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
   import type { AdminBot, AdminBotState } from '@mahjong/protocol';
+  import Title from '$lib/components/Title.svelte';
 
   let { data, form } = $props();
 
@@ -53,7 +54,7 @@
   const msg = (name: string) => (form?.form === name ? form : null);
 </script>
 
-<svelte:head><title>Bots · Riichi</title></svelte:head>
+<Title page="Bots" />
 
 <main class="admin">
   <header>

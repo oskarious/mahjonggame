@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { authClient } from '$lib/auth-client';
   import { authError } from '$lib/auth-errors';
+  import Title from '$lib/components/Title.svelte';
 
   let { data } = $props();
 
@@ -51,7 +52,7 @@
   }
 </script>
 
-<svelte:head><title>{data.user?.name} · Riichi</title></svelte:head>
+<Title page={data.user?.name} />
 
 <main class="page">
   <a class="back" href="/" aria-label="Home">←</a>

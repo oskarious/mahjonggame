@@ -3,6 +3,7 @@
   import { page } from '$app/state';
   import { authClient } from '$lib/auth-client';
   import { authError } from '$lib/auth-errors';
+  import Title from '$lib/components/Title.svelte';
   import { safeNext } from '$lib/safe-next';
   import { isValidUsername, USERNAME_MAX, USERNAME_MIN } from '$lib/username';
 
@@ -40,7 +41,7 @@
   }
 </script>
 
-<svelte:head><title>{mode === 'in' ? 'Sign in' : 'Sign up'} · Riichi</title></svelte:head>
+<Title page={mode === 'in' ? 'Sign in' : 'Sign up'} />
 
 <main class="page">
   <a class="back" href="/" aria-label="Home">←</a>

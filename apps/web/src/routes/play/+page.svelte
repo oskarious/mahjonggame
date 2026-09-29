@@ -10,6 +10,7 @@
   import { WINDS } from '$lib/labels';
   import LocalSettings from '$lib/components/LocalSettings.svelte';
   import Table from '$lib/components/Table.svelte';
+  import Title from '$lib/components/Title.svelte';
 
   /** A new game (replacing the saved one). */
   function newGame(rules: RuleSet, settings: Partial<Settings>, seed = randomId()): LocalGame {
@@ -59,7 +60,7 @@
   const revealed = $derived(game.settings.reveal ? game.state.hand.players.map((p) => p.hand) : null);
 </script>
 
-<svelte:head><title>{WINDS[game.view.roundWind]} {game.view.dealer + 1} · Riichi</title></svelte:head>
+<Title page="{WINDS[game.view.roundWind]} {game.view.dealer + 1}" />
 
 <Table
   bind:this={table}

@@ -6,6 +6,7 @@
   import { RemoteGame } from '$lib/game/remote.svelte';
   import { WINDS } from '$lib/labels';
   import Table from '$lib/components/Table.svelte';
+  import Title from '$lib/components/Title.svelte';
 
   const HINTS_KEY = 'riichi:onlineHints';
   function readHints(): HintLevel {
@@ -83,10 +84,10 @@
   onDestroy(() => game.destroy());
 
   const inGame = $derived((game.status === 'playing' || game.status === 'ended') && game.hasView);
-  const title = $derived(inGame ? `${WINDS[game.view.roundWind]} ${game.view.dealer + 1} · Riichi` : 'Online · Riichi');
+  const title = $derived(inGame ? `${WINDS[game.view.roundWind]} ${game.view.dealer + 1}` : 'Online');
 </script>
 
-<svelte:head><title>{title}</title></svelte:head>
+<Title page={title} />
 
 {#if inGame}
   <Table

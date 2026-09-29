@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { BOT_PRESETS, DEFAULT_BOT_ELO } from '$lib/bots';
+  import Title, { SITE_NAME } from '$lib/components/Title.svelte';
   import { type SavedGame, loadSave } from '$lib/game/saved';
   import { WINDS } from '$lib/labels';
 
@@ -22,7 +23,7 @@
   }
 </script>
 
-<svelte:head><title>Riichi</title></svelte:head>
+<Title />
 
 <main>
   <nav class="account">
@@ -33,11 +34,8 @@
     {/if}
   </nav>
 
-  <div class="logo" aria-hidden="true">
-    <img src="/tiles/Chun.svg" alt="" />
-  </div>
-  <h1>Riichi</h1>
-  <p class="tag">Quick riichi mahjong. One hand, portrait, no fluff.</p>
+  <h1><img src="/brand/logo-row.svg" alt={SITE_NAME} /></h1>
+  <p class="tag">Simply riichi mahjong</p>
 
   {#if data.online}
     <a class="btn primary big online" href="/online">
@@ -124,25 +122,14 @@
     color: var(--ink);
     text-decoration: none;
   }
-  .logo {
-    align-self: center;
-    width: 64px;
-    height: 84px;
-    border-radius: 10px;
-    background: var(--tile-face);
-    box-shadow: 0 5px 0 var(--tile-edge);
-    display: grid;
-    place-items: center;
-    rotate: -6deg;
-  }
-  .logo img {
-    width: 80%;
-  }
   h1 {
-    text-align: center;
-    margin: 12px 0 0;
-    font-size: 2rem;
-    letter-spacing: 0.02em;
+    margin: 16px 0 4px;
+    display: flex;
+    justify-content: center;
+  }
+  h1 img {
+    width: min(280px, 100%);
+    height: auto;
   }
   .tag {
     text-align: center;
