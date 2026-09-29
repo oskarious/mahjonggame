@@ -7,10 +7,10 @@
     red: RedFives;
     /** Tiles per line. With a multiple of six, groups of six get a small gap (the classic rows). */
     perLine: number;
-    /** The discard currently open for claims. */
-    claimable?: TileId | null;
+    /** The newest discard (raised until the next discard or a claim). */
+    last?: TileId | null;
   }
-  let { discards, red, perLine, claimable = null }: Props = $props();
+  let { discards, red, perLine, last = null }: Props = $props();
 
   // A riichi tile claimed by someone else passes the sideways marker to the next discard.
   const sideways = $derived.by(() => {
@@ -48,7 +48,7 @@
             {red}
             sideways={sideways.has(i)}
             dim={d.calledBy !== null}
-            mark={d.tile === claimable ? 'last' : null}
+            mark={d.tile === last ? 'last' : null}
           />
         </span>
       {/each}

@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  export const SITE_NAME = 'Riichi Arena';
+  export const SITE_NAME = "riichi arena";
 </script>
 
 <script lang="ts">

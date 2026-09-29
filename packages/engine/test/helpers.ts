@@ -190,6 +190,7 @@ export function rig(o: RigOptions): GameState {
     uninterrupted: o.uninterrupted ?? false,
     kans,
     riichiDeposits: [...(o.riichi ?? [])],
+    lastDiscard: null,
   };
   g.phase = 'playing';
   g.result = null;

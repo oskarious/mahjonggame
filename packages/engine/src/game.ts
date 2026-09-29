@@ -75,6 +75,8 @@ export interface HandState {
   kans: Seat[];
   /** Seats that paid a riichi deposit this hand. */
   riichiDeposits: Seat[];
+  /** The newest discard until the next one; null at hand start and once it is claimed. Public. */
+  lastDiscard: { seat: Seat; tile: Tile } | null;
 }
 
 export interface WinRecord {
@@ -325,6 +327,7 @@ function emptyHand(): HandState {
     uninterrupted: true,
     kans: [],
     riichiDeposits: [],
+    lastDiscard: null,
   };
 }
 
@@ -555,6 +558,7 @@ function discard(g: GameState, seat: Seat, tile: Tile, riichi: boolean, ev: Game
   if (riichi) p.riichi = { double: h.uninterrupted && p.discards.length === 0, ippatsu: true, accepted: false };
   else if (p.riichi) p.riichi.ippatsu = false;
   p.discards.push({ tile, tsumogiri, riichi, calledBy: null });
+  h.lastDiscard = { seat, tile };
   ev.push({ type: 'discard', seat, tile, tsumogiri, riichi });
   openCalls(g, seat, tile, ev);
 }
@@ -807,6 +811,7 @@ function applyCall(g: GameState, call: Action, discarder: Seat, tile: Tile, ev: 
   const meld: Meld = { type: call.type, tiles: [...own, tile], called: tile, from: discarder };
   const discards = h.players[discarder].discards;
   discards[discards.length - 1].calledBy = seat;
+  h.lastDiscard = null;
   p.melds.push(meld);
   p.tempFuriten = false;
   interrupt(h);

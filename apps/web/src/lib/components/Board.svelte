@@ -126,7 +126,7 @@
             discards={p.discards}
             {red}
             perLine={layout.perLine}
-            claimable={view.claimable?.seat === seat ? view.claimable.tile : null}
+            last={view.lastDiscard?.seat === seat ? view.lastDiscard.tile : null}
           />
         </div>
       </section>

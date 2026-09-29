@@ -1,24 +1,29 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { BOT_PRESETS, DEFAULT_BOT_ELO } from '$lib/bots';
-  import Title, { SITE_NAME } from '$lib/components/Title.svelte';
-  import { type SavedGame, loadSave } from '$lib/game/saved';
-  import { WINDS } from '$lib/labels';
+  import { goto } from "$app/navigation";
+  import { BOT_PRESETS, DEFAULT_BOT_ELO } from "$lib/bots";
+  import Title, { SITE_NAME } from "$lib/components/Title.svelte";
+  import { type SavedGame, loadSave } from "$lib/game/saved";
+  import { WINDS } from "$lib/labels";
+  import { onMount } from "svelte";
 
   let { data } = $props();
 
-  let preset = $state('default');
-  let length = $state('east');
+  let preset = $state("default");
+  let length = $state("east");
   let bots = $state(DEFAULT_BOT_ELO);
-  let hints = $state('waits');
+  let hints = $state("waits");
   /** Read on mount: the page is server-rendered and the save lives in the browser. */
   let saved: SavedGame | null = $state(null);
 
   onMount(() => (saved = loadSave()));
 
   function start() {
-    const params = new URLSearchParams({ preset, length, bots: String(bots), hints });
+    const params = new URLSearchParams({
+      preset,
+      length,
+      bots: String(bots),
+      hints,
+    });
     goto(`/play?${params}`);
   }
 </script>
@@ -35,7 +40,6 @@
   </nav>
 
   <h1><img src="/brand/logo-row.svg" alt={SITE_NAME} /></h1>
-  <p class="tag">Simply riichi mahjong</p>
 
   {#if data.online}
     <a class="btn primary big online" href="/online">
@@ -54,16 +58,28 @@
     <fieldset>
       <legend>Length</legend>
       <div class="seg">
-        <label class:on={length === 'east'}><input type="radio" bind:group={length} value="east" />East only</label>
-        <label class:on={length === 'south'}><input type="radio" bind:group={length} value="south" />East + South</label>
+        <label class:on={length === "east"}
+          ><input type="radio" bind:group={length} value="east" />East only</label
+        >
+        <label class:on={length === "south"}
+          ><input type="radio" bind:group={length} value="south" />East + South</label
+        >
       </div>
     </fieldset>
 
     <fieldset>
       <legend>Rules</legend>
       <div class="seg">
-        <label class:on={preset === 'default'}><input type="radio" bind:group={preset} value="default" />Online</label>
-        <label class:on={preset === 'ema'}><input type="radio" bind:group={preset} value="ema" />EMA 2025</label>
+        <label class:on={preset === "default"}
+          ><input
+            type="radio"
+            bind:group={preset}
+            value="default"
+          />Online</label
+        >
+        <label class:on={preset === "ema"}
+          ><input type="radio" bind:group={preset} value="ema" />EMA 2025</label
+        >
       </div>
     </fieldset>
 
@@ -71,7 +87,9 @@
       <legend>Opponents</legend>
       <div class="seg elo">
         {#each BOT_PRESETS as elo (elo)}
-          <label class:on={bots === elo}><input type="radio" bind:group={bots} value={elo} />{elo}</label>
+          <label class:on={bots === elo}
+            ><input type="radio" bind:group={bots} value={elo} />{elo}</label
+          >
         {/each}
       </div>
     </fieldset>
@@ -90,11 +108,17 @@
       {#if saved}
         <a class="btn big" class:primary={!data.online} href="/play">
           <span>Continue</span>
-          <span class="round">{WINDS[saved.round.wind]} {saved.round.dealer + 1}</span>
+          <span class="round"
+            >{WINDS[saved.round.wind]} {saved.round.dealer + 1}</span
+          >
         </a>
       {/if}
-      <button class="btn big" class:primary={!data.online && !saved} type="submit">
-        {saved ? 'New game' : 'Play vs bots'}
+      <button
+        class="btn big"
+        class:primary={!data.online && !saved}
+        type="submit"
+      >
+        {saved ? "New game" : "Play vs bots"}
       </button>
     </div>
   </form>

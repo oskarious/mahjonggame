@@ -43,6 +43,8 @@ export interface PlayerView {
   turn: Seat | null;
   /** Discard currently open for claims. */
   claimable: { seat: Seat; tile: Tile } | null;
+  /** The newest discard, until the next one or until it is claimed (public). */
+  lastDiscard: { seat: Seat; tile: Tile } | null;
   actions: Action[];
   /** Hints about the own hand, limited to the requested hint level (null when off or between hands). */
   hints: HandHints | null;
@@ -133,6 +135,7 @@ export function viewFor(g: GameState, seat: Seat, opts: ViewOptions = {}): Playe
     drawn: me.drawn,
     turn: step.type === 'turn' ? step.seat : null,
     claimable: step.type === 'calls' || step.type === 'chankan' ? { seat: step.seat, tile: step.tile } : null,
+    lastDiscard: h.lastDiscard && { ...h.lastDiscard },
     actions: legalActions(g, seat),
     hints: handHints(g, seat, opts.hints ?? 'off'),
     tenpai: g.phase === 'playing' ? tenpaiOptions(g, seat) : [],

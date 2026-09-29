@@ -10,6 +10,7 @@ import {
   legalActions,
   makeRules,
   parseTiles,
+  viewFor,
 } from '../src/index.ts';
 import {
   actionTypes,
@@ -572,5 +573,36 @@ describe('end of game', () => {
     expect(allLast({ scores: [39000, 30000, 30000, 20000], riichiSticks: 1 }).final![0].points).toBe(40000);
     const tied = allLast({ scores: [35000, 35000, 29000, 20000], riichiSticks: 1 });
     expect(tied.final!.slice(0, 2).map((f) => f.points)).toEqual([35500, 35500]);
+  });
+});
+
+describe('last discard', () => {
+  const last = (g: GameState) => g.hand.lastDiscard && { seat: g.hand.lastDiscard.seat, kind: kindToString(kindOf(g.hand.lastDiscard.tile)) };
+
+  it('stays through the next draw and moves on the next discard', () => {
+    const g = rig({ hands: ['1z', undefined, undefined], draws: '? 9s' });
+    expect(g.hand.lastDiscard).toBeNull();
+    let { state } = play(g, [discard(0, '1z')]);
+    expect(state.hand.step).toMatchObject({ type: 'turn', seat: 1 });
+    expect(last(state)).toEqual({ seat: 0, kind: '1z' });
+    expect(viewFor(state, 2).lastDiscard).toEqual(state.hand.lastDiscard);
+    ({ state } = play(state, [discard(1)]));
+    expect(last(state)).toEqual({ seat: 1, kind: '9s' });
+  });
+
+  it('stays through a closed quad until the quad player discards', () => {
+    const g = rig({ rules: noEma, hands: ['1z', '777p'], draws: '? 7p' });
+    let { state } = play(g, [discard(0, '1z'), kan(1, '7p')]);
+    expect(state.hand.players[1].melds[0].type).toBe('ankan');
+    expect(last(state)).toEqual({ seat: 0, kind: '1z' });
+    ({ state } = play(state, [discard(1)]));
+    expect(last(state)?.seat).toBe(1);
+  });
+
+  it('is cleared when the discard is claimed', () => {
+    const g = rig({ hands: ['3m', '45m', '33m'] });
+    const { state } = play(g, [discard(0, '3m'), pon(2)]);
+    expect(state.hand.lastDiscard).toBeNull();
+    expect(viewFor(state, 0).lastDiscard).toBeNull();
   });
 });
