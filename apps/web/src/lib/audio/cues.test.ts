@@ -45,27 +45,32 @@ describe('cuesFor', () => {
   });
 
   it('riichi: call + tile on the discard, stick on acceptance', () => {
-    expect(ids([discard(1, true)])).toEqual(['callRiichi', 'tilePlace']);
+    expect(ids([discard(ME, true)])).toEqual(['callRiichi', 'tilePlace']);
+    expect(ids([discard(1, true)])).toEqual(['callRiichiOther', 'tilePlace']);
     expect(ids([ev({ type: 'riichiAccepted', seat: 1, scores: [] })])).toEqual(['riichiStick']);
   });
 
-  it('calls by meld type', () => {
-    expect(ids([ev({ type: 'call', seat: 1, meld: meld('chii') })])).toEqual(['callChii', 'meldPlace']);
-    expect(ids([ev({ type: 'call', seat: 1, meld: meld('pon') })])).toEqual(['callPon', 'meldPlace']);
-    expect(ids([ev({ type: 'call', seat: 1, meld: meld('daiminkan') })])).toEqual(['callKan', 'meldPlace']);
+  it('calls by meld type, own or an opponent', () => {
+    expect(ids([ev({ type: 'call', seat: ME, meld: meld('chii') })])).toEqual(['callChii', 'meldPlace']);
+    expect(ids([ev({ type: 'call', seat: ME, meld: meld('pon') })])).toEqual(['callPon', 'meldPlace']);
+    expect(ids([ev({ type: 'call', seat: ME, meld: meld('daiminkan') })])).toEqual(['callKan', 'meldPlace']);
+    expect(ids([ev({ type: 'call', seat: 1, meld: meld('chii') })])).toEqual(['callChiiOther', 'meldPlace']);
+    expect(ids([ev({ type: 'call', seat: 1, meld: meld('pon') })])).toEqual(['callPonOther', 'meldPlace']);
+    expect(ids([ev({ type: 'call', seat: 1, meld: meld('daiminkan') })])).toEqual(['callKanOther', 'meldPlace']);
   });
 
   it('kan without a robbing window: announced once, then the dora flip', () => {
     expect(ids([ev({ type: 'kan', seat: 2, meld: meld('ankan') }), ev({ type: 'dora', indicator: 5 })])).toEqual([
-      'callKan',
+      'callKanOther',
       'meldPlace',
       'doraFlip',
     ]);
+    expect(ids([ev({ type: 'kan', seat: ME, meld: meld('ankan') })])).toEqual(['callKan', 'meldPlace']);
   });
 
   it('added kan with a robbing window: callKan only on the attempt', () => {
     const first = cuesFor([ev({ type: 'kanAttempt', seat: 2, tile: 5 })], idle, initialCueState());
-    expect(first.cues.map((c) => c.id)).toEqual(['callKan']);
+    expect(first.cues.map((c) => c.id)).toEqual(['callKanOther']);
     const second = cuesFor(
       [ev({ type: 'kan', seat: 2, meld: meld('shouminkan') }), ev({ type: 'dora', indicator: 5 })],
       idle,
@@ -73,7 +78,7 @@ describe('cuesFor', () => {
     );
     expect(second.cues.map((c) => c.id)).toEqual(['meldPlace', 'doraFlip']);
     // The next kan of that seat is announced again.
-    expect(ids([ev({ type: 'kan', seat: 2, meld: meld('ankan') })], idle, second.state)).toContain('callKan');
+    expect(ids([ev({ type: 'kan', seat: 2, meld: meld('ankan') })], idle, second.state)).toContain('callKanOther');
   });
 
   it('own draw prompts the turn; rinshan and other seats do not', () => {
@@ -82,16 +87,19 @@ describe('cuesFor', () => {
     expect(ids([ev({ type: 'draw', seat: 1, tile: null, rinshan: false })])).toEqual([]);
   });
 
-  it('wins: tsumo / ron, graded by the best hand, after a delay', () => {
-    const small = cuesFor([handEnd({ type: 'win', wins: [win(null, 'none', 800)] })], idle, initialCueState()).cues;
-    expect(small).toEqual([{ id: 'callTsumo' }, { id: 'winHand', delay: WIN_DELAY }]);
-    expect(ids([handEnd({ type: 'win', wins: [win(2, 'mangan', 2000)] })])).toEqual(['callRon', 'winLimit']);
-    expect(ids([handEnd({ type: 'win', wins: [win(2, 'yakuman', 8000)] })])).toEqual(['callRon', 'winYakuman']);
+  it('wins: tsumo / ron, own or an opponent, graded by the best hand, after a delay', () => {
+    const own = cuesFor([handEnd({ type: 'win', wins: [win(null, 'none', 800, ME)] })], idle, initialCueState());
+    expect(own.cues).toEqual([{ id: 'callTsumo' }, { id: 'winHand', delay: WIN_DELAY }]);
+    expect(ids([handEnd({ type: 'win', wins: [win(2, 'mangan', 2000, ME)] })])).toEqual(['callRon', 'winLimit']);
+    expect(ids([handEnd({ type: 'win', wins: [win(null, 'none', 800)] })])).toEqual(['callTsumoOther', 'winHand']);
+    expect(ids([handEnd({ type: 'win', wins: [win(2, 'yakuman', 8000)] })])).toEqual(['callRonOther', 'winYakuman']);
   });
 
-  it('double ron: one call, graded by the higher win', () => {
+  it('double ron: one call, ours if we are in it, graded by the higher win', () => {
     const wins = [win(3, 'none', 1000, 1), win(3, 'haneman', 3000, 2)];
-    expect(ids([handEnd({ type: 'win', wins })])).toEqual(['callRon', 'winLimit']);
+    expect(ids([handEnd({ type: 'win', wins })])).toEqual(['callRonOther', 'winLimit']);
+    const withMe = [win(3, 'none', 1000, ME), win(3, 'haneman', 3000, 2)];
+    expect(ids([handEnd({ type: 'win', wins: withMe })])).toEqual(['callRon', 'winLimit']);
   });
 
   it('draws', () => {

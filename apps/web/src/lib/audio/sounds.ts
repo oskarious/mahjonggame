@@ -7,7 +7,7 @@ export type SoundEntry = string | { file: string; volume?: number } | null;
 export const SOUNDS = {
   // Tiles
   /** Any discard, every seat. */
-  tilePlace: 'tile-place.mp3',
+  tilePlace: "tile-place.mp3",
   /** Own draw. */
   tileDraw: null,
   /** Called tiles slide into the meld area. */
@@ -17,13 +17,19 @@ export const SOUNDS = {
   /** A new dora indicator is turned over (after a kan). */
   doraFlip: null,
 
-  // Calls: generic stingers instead of voice lines
+  // Calls: generic stingers instead of voice lines. `call*` = own seat, `call*Other` = an opponent.
   callChii: null,
   callPon: null,
   callKan: null,
-  callRiichi: null,
+  callRiichi: "other-riichi-call.mp3",
   callRon: null,
   callTsumo: null,
+  callChiiOther: null,
+  callPonOther: null,
+  callKanOther: null,
+  callRiichiOther: "other-riichi-call.mp3",
+  callRonOther: null,
+  callTsumoOther: null,
 
   // Own seat
   /** Own turn starts after someone else acted. */

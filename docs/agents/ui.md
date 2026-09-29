@@ -63,7 +63,8 @@ The magnifier is `width: max-content` and clamped by its measured width, so wide
 ## Sounds
 
 Every cue is listed in `lib/audio/sounds.ts`; `null` = no file yet, silent (no request, no error). Add a sound by
-dropping the file into `static/audio` and naming it there. Cues come only from the step events redacted for the own
+dropping the file into `static/audio` and naming it there. Call stingers come in pairs: `call*` when the own seat
+calls, `call*Other` when an opponent does (the caller's seat is public, so this leaks nothing). Cues come only from the step events redacted for the own
 seat plus the own view (`GameSource.listen`, via `cuesFor`), never from hidden state; replays and resyncs emit
 nothing. Generic stingers, no voice lines or music. On/off + volume in settings (`riichi:sound`, `riichi:volume`);
 audio starts on the first user gesture.

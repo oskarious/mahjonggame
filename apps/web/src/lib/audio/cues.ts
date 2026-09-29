@@ -17,6 +17,8 @@ export interface CueState {
   callSeq: number | null;
 }
 
+type CallCue = 'callChii' | 'callPon' | 'callKan' | 'callRiichi' | 'callRon' | 'callTsumo';
+
 export type CueView = Pick<PlayerView, 'seat' | 'seq' | 'claimable' | 'actions'>;
 
 export const WIN_DELAY = 700;
@@ -30,6 +32,8 @@ export function cuesFor(events: GameEvent[], view: CueView, state: CueState): { 
   const cues: Cue[] = [];
   let { kanAttempt, callSeq } = state;
   const cue = (id: SoundId, delay?: number) => cues.push(delay ? { id, delay } : { id });
+  /** A call stinger: the own seat's, or the opponents' variant. */
+  const call = (seat: Seat, own: CallCue) => cue(seat === view.seat ? own : `${own}Other`);
 
   for (const e of events) {
     switch (e.type) {
@@ -45,22 +49,22 @@ export function cuesFor(events: GameEvent[], view: CueView, state: CueState): { 
         }
         break;
       case 'discard':
-        if (e.riichi) cue('callRiichi');
+        if (e.riichi) call(e.seat, 'callRiichi');
         cue('tilePlace');
         break;
       case 'riichiAccepted':
         cue('riichiStick');
         break;
       case 'call':
-        cue(e.meld.type === 'chii' ? 'callChii' : e.meld.type === 'pon' ? 'callPon' : 'callKan');
+        call(e.seat, e.meld.type === 'chii' ? 'callChii' : e.meld.type === 'pon' ? 'callPon' : 'callKan');
         cue('meldPlace');
         break;
       case 'kanAttempt':
         kanAttempt = e.seat;
-        cue('callKan');
+        call(e.seat, 'callKan');
         break;
       case 'kan':
-        if (kanAttempt !== e.seat) cue('callKan');
+        if (kanAttempt !== e.seat) call(e.seat, 'callKan');
         kanAttempt = null;
         cue('meldPlace');
         break;
@@ -69,7 +73,7 @@ export function cuesFor(events: GameEvent[], view: CueView, state: CueState): { 
         break;
       case 'handEnd':
         kanAttempt = null;
-        resultCues(e.result, cue);
+        resultCues(e.result, view.seat, cue);
         break;
       case 'gameEnd':
         cue(e.final[0]?.seat === view.seat ? 'gameEndFirst' : 'gameEnd', GAME_END_DELAY);
@@ -86,11 +90,13 @@ export function cuesFor(events: GameEvent[], view: CueView, state: CueState): { 
   return { cues, state: { kanAttempt, callSeq } };
 }
 
-function resultCues(result: HandResult, cue: (id: SoundId, delay?: number) => void): void {
+function resultCues(result: HandResult, me: Seat, cue: (id: SoundId, delay?: number) => void): void {
   switch (result.type) {
     case 'win': {
       if (!result.wins.length) return;
-      cue(result.wins.some((w) => w.from === null) ? 'callTsumo' : 'callRon');
+      const call = result.wins.some((w) => w.from === null) ? 'callTsumo' : 'callRon';
+      // A double ron we are part of counts as our win.
+      cue(result.wins.some((w) => w.seat === me) ? call : `${call}Other`);
       const best = result.wins.reduce((a, b) => (b.value.basePoints > a.value.basePoints ? b : a));
       const limit = best.value.limit;
       cue(limit === 'yakuman' ? 'winYakuman' : limit === 'none' ? 'winHand' : 'winLimit', WIN_DELAY);
