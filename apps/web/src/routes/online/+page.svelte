@@ -97,6 +97,7 @@
     {maxHints}
     onhints={setHints}
     players={game.info?.players ?? null}
+    timed
     deadlineAt={game.deadlineAt}
     bank={game.bank}
     countdownUntil={game.countdownUntil}

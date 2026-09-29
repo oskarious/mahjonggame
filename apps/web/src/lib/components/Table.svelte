@@ -24,6 +24,8 @@
     onhints: (level: HintLevel) => void;
     /** Online: seat info (ratings). */
     players?: PlayerInfo[] | null;
+    /** Online: the table has a decision timer (its slot is reserved for the whole game). */
+    timed?: boolean;
     /** Online: own decision countdown. */
     deadlineAt?: number | null;
     bank?: number | null;
@@ -44,6 +46,7 @@
     maxHints = 'full',
     onhints,
     players = null,
+    timed = false,
     deadlineAt = null,
     bank = null,
     countdownUntil = null,
@@ -144,7 +147,7 @@
 
   {#if game.error}<p class="error" role="alert">{game.error}</p>{/if}
 
-  <TimerBar {deadlineAt} bank={bank ?? 0} />
+  {#if timed}<TimerBar {deadlineAt} bank={bank ?? 0} />{/if}
 
   <PlayerArea
     {view}
@@ -163,6 +166,7 @@
     names={game.names}
     {red}
     nextLabel={view.phase === 'gameOver' ? 'Final results' : 'Next hand'}
+    waiting={view.phase === 'handOver' && (game.waitingNext ?? false)}
     onnext={() => (view.phase === 'gameOver' ? (showFinal = true) : game.next())}
   />
 {/if}

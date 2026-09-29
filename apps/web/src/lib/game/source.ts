@@ -12,6 +12,8 @@ export interface GameSource {
   act(action: Action): void;
   /** Continue after a hand result: the next hand locally, "ready" online. */
   next(): void;
+  /** Online: confirmed the hand result, waiting for the others before the next deal. */
+  readonly waitingNext?: boolean;
   /** Subscribe to live steps (not replayed history or resyncs); returns the unsubscribe function. */
   listen(fn: StepListener): () => void;
 }

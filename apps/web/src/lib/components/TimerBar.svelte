@@ -1,6 +1,7 @@
 <script lang="ts">
   // Countdown for the player's own decision: a bar that drains over the base time, then over the time bank
-  // (gold). Seconds are only shown once the bank is in use.
+  // (gold). Seconds are only shown once the bank is in use. The track is always rendered (hidden when nothing is
+  // pending) so the timer never shifts the table layout.
   import { sound } from '$lib/audio/player';
 
   interface Props {
@@ -39,12 +40,10 @@
   const fraction = $derived(inBank ? (bank ? remaining / bank : 0) : base ? (remaining - bank) / base : 0);
 </script>
 
-{#if deadlineAt !== null}
-  <div class="timer" class:bank={inBank} aria-hidden="true">
-    <div class="fill" style:width="{Math.max(0, Math.min(1, fraction)) * 100}%"></div>
-    {#if inBank}<span class="secs">{Math.ceil(remaining / 1000)}</span>{/if}
-  </div>
-{/if}
+<div class="timer" class:bank={inBank} class:idle={deadlineAt === null} aria-hidden="true">
+  <div class="fill" style:width="{Math.max(0, Math.min(1, fraction)) * 100}%"></div>
+  {#if inBank}<span class="secs">{Math.ceil(remaining / 1000)}</span>{/if}
+</div>
 
 <style>
   .timer {
@@ -53,6 +52,9 @@
     margin: 0 8px;
     border-radius: 2px;
     background: rgba(255, 255, 255, 0.08);
+  }
+  .timer.idle {
+    visibility: hidden;
   }
   .fill {
     height: 100%;

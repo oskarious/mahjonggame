@@ -58,6 +58,7 @@
 - [x] 6.2 `RemoteGame`: set `countdownUntil` from `update.countdown` (null when absent); clear it on `game.end`
 - [x] 6.3 `Table`: while `countdownUntil` is in the future, show the remaining whole seconds as one large number centred over the board (no label); hides at 0
 - [x] 6.4 Browser check on localhost: start an online game against bots, see the 5 s countdown with a locked hand, then the dealer's 10 s timer; finish a hand and see the 3 s countdown after ready; stop the dev servers afterwards
+- [x] 6.5 `RemoteGame.waitingNext` (set on `next()`, cleared when the view leaves `handOver`); `ResultSheet` shows a disabled "Waiting…" button meanwhile
 
 ## 7. Docs and checks
 

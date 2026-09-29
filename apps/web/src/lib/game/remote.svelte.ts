@@ -42,6 +42,8 @@ export class RemoteGame implements GameSource {
   bank: number | null = $state(null);
   /** Absolute time (Date.now based) at which play starts after a deal; null when no countdown runs. */
   countdownUntil: number | null = $state(null);
+  /** Confirmed the hand result; the next deal waits for the others (cleared when the hand result is gone). */
+  waitingNext = $state(false);
   end: { final: FinalStanding[]; ratings: RatingChange[] } | null = $state.raw(null);
   error: string | null = $state(null);
   /** In riichi, discard the drawn tile automatically when nothing else is possible (as offline). */
@@ -153,7 +155,9 @@ export class RemoteGame implements GameSource {
 
   next(): void {
     const info = this.info as GameInfo | null;
-    if (info) this.#send({ type: 'ready', gameId: info.gameId });
+    if (!info || this.waitingNext) return;
+    this.#send({ type: 'ready', gameId: info.gameId });
+    this.waitingNext = true;
   }
 
   setHints(level: HintLevel): void {
@@ -173,6 +177,7 @@ export class RemoteGame implements GameSource {
     this.deadlineAt = null;
     this.bank = null;
     this.countdownUntil = null;
+    this.waitingNext = false;
     if (this.status === 'ended') this.status = 'idle';
   }
 
@@ -245,6 +250,7 @@ export class RemoteGame implements GameSource {
         this.deadlineAt = msg.deadline !== undefined ? Date.now() + msg.deadline : null;
         this.bank = msg.bank ?? null;
         this.countdownUntil = msg.countdown !== undefined ? Date.now() + msg.countdown : null;
+        if (msg.view.phase !== 'handOver') this.waitingNext = false;
         this.error = null;
         if (this.status !== 'ended') this.status = 'playing';
         this.#automate(msg.view);

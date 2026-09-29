@@ -12,8 +12,10 @@
     red: RedFives;
     nextLabel: string;
     onnext: () => void;
+    /** Confirmed; waiting for the other players before the next deal (online). */
+    waiting?: boolean;
   }
-  let { result, view, names, red, nextLabel, onnext }: Props = $props();
+  let { result, view, names, red, nextLabel, onnext, waiting = false }: Props = $props();
 
   const title = $derived.by(() => {
     if (result.type === 'exhaustive') return 'Exhaustive draw';
@@ -101,7 +103,7 @@
       </tbody>
     </table>
 
-    <button class="btn primary next" onclick={onnext}>{nextLabel}</button>
+    <button class="btn primary next" class:waiting disabled={waiting} onclick={onnext}>{waiting ? 'Waiting…' : nextLabel}</button>
   </div>
 </div>
 

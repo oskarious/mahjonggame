@@ -127,6 +127,10 @@ disconnected humans (played by takeover bots) are not waited for, as today.
 - **WHEN** a human confirms a hand result 1 s after it is shown and a bot player at the table draws a 4 s confirm delay
 - **THEN** the next hand is dealt about 4 s after the result, not at the human's confirm
 
+#### Scenario: Waiting after confirming
+- **WHEN** a human confirms the hand result and the others have not all confirmed yet
+- **THEN** the result stays visible with the confirm button disabled and marked as waiting, until the next hand is dealt
+
 #### Scenario: Slow human
 - **WHEN** every bot player has confirmed and the human confirms after 7 s
 - **THEN** the next hand is dealt at the human's confirm
