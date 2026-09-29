@@ -29,13 +29,26 @@ The DB schema is owned by apps/web (migrations there): `0002_game_server` = rati
   awaited) → `applyAction` → reschedule timers → send each connected human `viewFor` + `redactEvent`s (skipped
   for seats with no events and an unchanged view; see fair-play.md). Persist before send is what makes crashes safe;
   the tests plant that bug to check it stays.
-- **Timers:** base 8 s (own turn) / 5 s (call), time bank 15 s reset every hand; deadline = base + bank, sent as
-  remaining ms only to the deciding seat; expiry applies `timeoutAction`. A decision is identified by its step
-  (`decisionKey`) so other seats' responses in a call window don't reset it. Bots (bot players and takeover bots)
-  act after a human-like `thinkDelay` (pacing.ts: quick when forced, longer with more options, ~5 % long thinks into
-  their own bank, never within 1 s of the deadline; × `thinkScale`; 0 when fast-forwarding). With `timeoutPercent`
-  (0.5 %) a bot player at a table with a human times out instead (full time, `timeoutAction`, bank emptied). Between
-  hands: `ready` from every connected human, or 12 s; rooms without humans pause 3–9 s.
+- **Timers:** base 5 s (own turn) / 5 s (call), 10 s for the dealer's opening decision (`#baseMs`: dealer on turn,
+  no dealer discard yet this hand), time bank 20 s reset every hand; deadline = base + bank, sent as remaining ms
+  only to the deciding seat; expiry applies `timeoutAction`. A decision is identified by its step (`decisionKey`) so
+  other seats' responses in a call window don't reset it. Bots (bot players and takeover bots) act after a
+  human-like `thinkDelay` against the same base + bank (pacing.ts: quick when forced, longer with more options,
+  ×1.8 on the opening, ~5 % long thinks into their own bank, never within 1 s of the deadline; × `thinkScale`; 0
+  when fast-forwarding). With `timeoutPercent` (0.5 %) a bot player at a table with a human times out instead (full
+  base + bank, `timeoutAction`, bank emptied).
+- **Countdowns:** after a deal the room *holds* (`#holdUntil`, room-level, not in the engine or the log): 5 s after a
+  new game's first deal, 3 s after every later deal (`startCountdownMs` / `handCountdownMs`). While held no decision
+  is scheduled (humans, bots, takeover bots), `act` is rejected, and updates carry `countdown` (ms left, every seat)
+  and a view with `actions: []`; when it ends the room schedules and sends the dealer its actions + deadline.
+  Recovered games get no start countdown; fast rooms none at all. The client shows it (Countdown.svelte).
+  Before the start countdown a new game *joins* (held, no countdown sent): connected humans count as joined, each bot
+  joins after its own `joinDelay` (median ~1.5 s), at most `joinMaxMs` (10 s), so the countdown doesn't always start
+  at the human's arrival.
+- **Between hands:** the next hand is dealt once every connected human *and every bot* has sent/drawn `ready`, or
+  after 12 s (`readyMs`). Each bot confirms after its own `readyDelay` (median ~2.5 s, ~8 % slow up to 12 s,
+  × `thinkScale`, 0 when fast), so the deal doesn't always follow the human's click (that timing would give the
+  bots away). Bot-only rooms use the same rule; disconnected humans are not waited for.
 - **Disconnects:** 10 s grace (timeouts keep running), then a bot at `skillForElo(rating)` plays the seat until the
   human reconnects; the newest connection of a user wins (`takenOver` to the old one). No human connected for 5 min →
   bots finish the game without delays; it is rated as normal.
@@ -53,7 +66,8 @@ The DB schema is owned by apps/web (migrations there): `0002_game_server` = rati
     join time. Bots whose human left or was seated without them are withdrawn. No fit after 30 s → a bot is created
     at `skillForElo(rating)`.
   - *Background games*: every ~45 s (±50 %) 4 close idle bots play a normal room (persisted, rated, recovered) if
-    `idleReserve` (30) idle bots remain. Rooms without humans skip the abandon fast-forward. *Warm-up* (fewer than
+    `idleReserve` (30) idle bots remain. They pace, count down and confirm results like tables with humans.
+    Rooms without humans skip the abandon fast-forward. *Warm-up* (fewer than
     half the bots have 20 games): fast rooms every 2 s, at most `warmupTables`.
   - Pool size: `botPoolMin` 120 active bots are created at start (ratings uniform over `botElo(0..1)`); `botPoolMax`
     caps active bots (growth, admin creation, reactivation); retired bots count for neither. All knobs are

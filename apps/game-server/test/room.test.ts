@@ -14,7 +14,7 @@ import {
 import { rig } from '../../../packages/engine/test/helpers.ts';
 import type { Config } from '../src/config.ts';
 import { anonymousBot, type SeatInit } from '../src/matchmaking.ts';
-import { thinkDelay } from '../src/pacing.ts';
+import { joinDelay, readyDelay, thinkDelay } from '../src/pacing.ts';
 import { Room } from '../src/room.ts';
 import { MemoryStore, type RatingUpdate } from '../src/store.ts';
 import { FakeClient, TEST_CONFIG, botSeat, seeded } from './helpers.ts';
@@ -77,33 +77,34 @@ describe('Room timers', () => {
     const { room, clients } = await build([human('a'), bot, bot, bot], turnState());
     const c = clients[0]!;
     const u = c.last('update')!;
-    expect(u.deadline).toBe(8_000 + 15_000);
-    expect(u.bank).toBe(15_000);
+    // The dealer's opening decision: 10 s base plus the bank.
+    expect(u.deadline).toBe(10_000 + 20_000);
+    expect(u.bank).toBe(20_000);
     expect(u.view.actions.length).toBeGreaterThan(0);
-    await vi.advanceTimersByTimeAsync(3_000);
+    await vi.advanceTimersByTimeAsync(9_000);
     room.act(0, u.seq, discardOf(c), c);
     await room.idle();
     expect(room.state.seq).toBe(1);
-    expect(room.humanAt(0).bank).toBe(15_000);
+    expect(room.humanAt(0).bank).toBe(20_000);
   });
 
   it('charges the bank for time beyond the base', async () => {
     const { room, clients } = await build([human('a'), bot, bot, bot], turnState());
     const c = clients[0]!;
-    await vi.advanceTimersByTimeAsync(10_000);
+    await vi.advanceTimersByTimeAsync(13_000);
     room.act(0, 0, discardOf(c), c);
     await room.idle();
     expect(room.state.seq).toBe(1);
-    expect(room.humanAt(0).bank).toBe(13_000);
+    expect(room.humanAt(0).bank).toBe(17_000);
     // The next own turn starts from the remaining bank.
     const next = c.all('update').at(-1)!;
-    expect(next.bank).toBe(13_000);
+    expect(next.bank).toBe(17_000);
   });
 
   it('discards the drawn tile when base time and bank are gone', async () => {
     const { room, clients, store } = await build([human('a'), bot, bot, bot], turnState());
     const drawn = room.state.hand.players[0].drawn!;
-    await vi.advanceTimersByTimeAsync(22_999);
+    await vi.advanceTimersByTimeAsync(29_999);
     expect(room.state.seq).toBe(0);
     await vi.advanceTimersByTimeAsync(1);
     await room.idle();
@@ -122,8 +123,8 @@ describe('Room timers', () => {
     const { room, clients } = await build([human('a'), bot, bot, bot], g);
     const u = clients[0]!.last('update')!;
     expect(u.view.actions.map((a) => a.type).sort()).toEqual(['pass', 'pon']);
-    expect(u.deadline).toBe(5_000 + 15_000);
-    await vi.advanceTimersByTimeAsync(20_000);
+    expect(u.deadline).toBe(5_000 + 20_000);
+    await vi.advanceTimersByTimeAsync(25_000);
     await room.idle();
     expect(room.state.seq).toBe(1);
     expect(room.state.hand.step).toMatchObject({ type: 'turn', seat: 0 });
@@ -137,7 +138,7 @@ describe('Room timers', () => {
     await room.idle();
     expect(room.state.seq).toBe(1); // discard → (no calls) → seat 1's turn
     expect(pendingSeats(room.state)).toEqual([1]);
-    const delay = thinkDelay(room.state, 1, { turnMs: 8_000, callMs: 5_000, bank: 15_000, scale: 1 }, () => 0);
+    const delay = thinkDelay(room.state, 1, { base: 5_000, bank: 20_000, scale: 1 }, () => 0);
     expect(delay).toBeGreaterThan(200);
     await vi.advanceTimersByTimeAsync(delay - 1);
     expect(room.state.seq).toBe(1);
@@ -148,7 +149,9 @@ describe('Room timers', () => {
 
   it('waits for ready between hands, at most the ready time', async () => {
     // One live-wall tile: the dealer draws it, discards, and the hand ends in an exhaustive draw.
-    const built = await build([human('a'), bot, bot, bot], rig({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 }));
+    const built = await build([human('a'), bot, bot, bot], rig({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 }), { readyMs: 12_000 }, true, {
+      random: () => 0.5,
+    });
     const { room, clients } = built;
     const c = clients[0]!;
     room.act(0, 0, discardOf(c), c);
@@ -163,17 +166,251 @@ describe('Room timers', () => {
     await vi.advanceTimersByTimeAsync(1_100);
     await room.idle();
     expect(room.state.phase).toBe('playing');
-    expect(room.humanAt(0).bank).toBe(15_000);
+    expect(room.humanAt(0).bank).toBe(20_000);
+  });
 
-    // Same again, but the human is ready right away.
-    const b2 = await build([human('a'), bot, bot, bot], rig({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 }));
-    b2.room.act(0, 0, discardOf(b2.clients[0]!), b2.clients[0]!);
+  it('deals once the human and every bot have confirmed, so the human is not always the one who starts the hand', async () => {
+    const wallOfOne = () => rig({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 });
+    /** Plays the dealer's discard and runs until the hand is over; returns the time the result appeared. */
+    const toHandOver = async (b: Built) => {
+      b.room.act(0, 0, discardOf(b.clients[0]!), b.clients[0]!);
+      await b.room.idle();
+      for (let i = 0; i < 100 && b.room.state.phase !== 'handOver'; i++) {
+        await vi.advanceTimersByTimeAsync(10);
+        await b.room.idle();
+      }
+      expect(b.room.state.phase).toBe('handOver');
+      return Date.now();
+    };
+    const botDelay = readyDelay(() => 0.5, { readyMs: 12_000, scale: 1 });
+    expect(botDelay).toBeGreaterThan(1_000);
+
+    // The human confirms at once: the deal waits for the bots' confirms.
+    const b = await build([human('a'), bot, bot, bot], wallOfOne(), {}, true, { random: () => 0.5 });
+    const shown = await toHandOver(b);
+    b.room.ready(0);
+    await b.room.idle();
+    expect(b.room.state.phase).toBe('handOver');
+    await vi.advanceTimersByTimeAsync(shown + botDelay - Date.now() - 1);
+    await b.room.idle();
+    expect(b.room.state.phase).toBe('handOver');
+    await vi.advanceTimersByTimeAsync(1);
+    await b.room.idle();
+    expect(b.room.state.phase).toBe('playing');
+
+    // A slow human: the bots have long confirmed, the deal follows the human's click.
+    const b2 = await build([human('a'), bot, bot, bot], wallOfOne(), {}, true, { random: () => 0.5 });
+    await toHandOver(b2);
+    await vi.advanceTimersByTimeAsync(7_000);
     await b2.room.idle();
-    await vi.advanceTimersByTimeAsync(1_000);
     expect(b2.room.state.phase).toBe('handOver');
     b2.room.ready(0);
     await b2.room.idle();
     expect(b2.room.state.phase).toBe('playing');
+  });
+
+  it('varies the deal time from hand to hand', async () => {
+    const seats = [human('a'), botSeat('x'), botSeat('y'), botSeat('z')];
+    const b = await build(seats, undefined, { turnMs: 50, callMs: 50, openingTurnMs: 50, bankMs: 0 }, true, { random: seeded('deal-times') });
+    const waits: number[] = [];
+    let overAt: number | null = null;
+    // The human never acts (every decision times out) but confirms every result at once.
+    for (let i = 0; i < 20_000 && !b.room.finished && waits.length < 3; i++) {
+      await vi.advanceTimersByTimeAsync(50);
+      await b.room.idle();
+      const phase = b.room.state.phase;
+      if (phase === 'handOver' && overAt === null) {
+        overAt = Date.now();
+        b.room.ready(0);
+        await b.room.idle();
+      } else if (phase === 'playing' && overAt !== null) {
+        waits.push(Date.now() - overAt);
+        overAt = null;
+      }
+    }
+    expect(waits.length).toBe(3);
+    expect(waits.every((w) => w >= 800 && w <= 12_050)).toBe(true);
+    expect(new Set(waits.map((w) => Math.round(w / 100))).size).toBeGreaterThan(1);
+  });
+});
+
+describe('Room countdowns', () => {
+  const COUNTDOWNS = { startCountdownMs: 5_000, handCountdownMs: 3_000 };
+
+  it('counts down 5 s after the first deal: everyone sees their hand, nobody can act, then the dealer gets 10 s', async () => {
+    // Seat 0 (human a) is the dealer of a new game.
+    const { room, clients } = await build([human('a'), bot, human('c'), bot], undefined, COUNTDOWNS);
+    const [a, , c] = clients as FakeClient[];
+    for (const x of [a, c]) {
+      const u = x.last('update')!;
+      expect(u.countdown).toBe(5_000);
+      expect(u.view.actions).toEqual([]);
+      expect(u.deadline).toBeUndefined();
+      expect(u.view.hand.length).toBeGreaterThanOrEqual(13);
+    }
+    // A (modified) client acting anyway is turned away.
+    a.clear();
+    room.act(0, 0, { type: 'discard', seat: 0, tile: room.state.hand.players[0].drawn! }, a);
+    await room.idle();
+    expect(a.sent[0]).toEqual({ type: 'error', code: 'illegal', requestSeq: 0 });
+    expect(a.last('update')!.countdown).toBe(5_000);
+    expect(room.state.seq).toBe(0);
+
+    await vi.advanceTimersByTimeAsync(4_999);
+    await room.idle();
+    expect(a.last('update')!.view.actions).toEqual([]);
+    await vi.advanceTimersByTimeAsync(1);
+    await room.idle();
+    const u = a.last('update')!;
+    expect(u.countdown).toBeUndefined();
+    expect(u.view.actions.length).toBeGreaterThan(0);
+    expect(u.deadline).toBe(10_000 + 20_000);
+    // Now it's a normal decision.
+    room.act(0, u.seq, discardOf(a), a);
+    await room.idle();
+    expect(room.state.seq).toBe(1);
+  });
+
+  it('counts down 3 s after the next deal; a bot dealer waits for it too', async () => {
+    const g = rig({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 });
+    const { room, clients } = await build([human('a'), bot, bot, bot], g, COUNTDOWNS, true, { random: () => 0.5 });
+    const a = clients[0]!;
+    // No start countdown for a game that didn't start here (rigged / recovered state).
+    expect(a.last('update')!.countdown).toBeUndefined();
+    room.act(0, 0, discardOf(a), a);
+    await room.idle();
+    for (let i = 0; i < 100 && room.state.phase !== 'handOver'; i++) {
+      await vi.advanceTimersByTimeAsync(10);
+      await room.idle();
+    }
+    room.ready(0);
+    await room.idle();
+    for (let i = 0; i < 1_300 && room.state.phase !== 'playing'; i++) {
+      await vi.advanceTimersByTimeAsync(10);
+      await room.idle();
+    }
+    expect(room.state.phase).toBe('playing');
+    const dealt = a.last('update')!;
+    expect(dealt.events.some((e) => e.type === 'handStart')).toBe(true);
+    expect(dealt.countdown).toBe(3_000);
+    // Noten dealer: the deal passed to seat 1, a bot. It doesn't act during the countdown.
+    expect(room.state.dealer).toBe(1);
+    const seq = room.state.seq;
+    await vi.advanceTimersByTimeAsync(3_000);
+    await room.idle();
+    expect(room.state.seq).toBe(seq);
+    // Its think time runs from the end of the countdown.
+    const think = thinkDelay(room.state, 1, { base: 10_000, bank: 20_000, scale: 1, opening: true }, () => 0.5);
+    await vi.advanceTimersByTimeAsync(think - 1);
+    await room.idle();
+    expect(room.state.seq).toBe(seq);
+    await vi.advanceTimersByTimeAsync(1);
+    await room.idle();
+    expect(room.state.seq).toBe(seq + 1);
+  });
+
+  it('holds a takeover bot and sends a reconnecting player the remaining countdown', async () => {
+    const { room, clients } = await build([human('a'), bot, bot, bot], undefined, { ...COUNTDOWNS, graceMs: 1_000 });
+    room.detach(clients[0]!);
+    await vi.advanceTimersByTimeAsync(2_000);
+    await room.idle();
+    expect(room.humanAt(0).botControlled).toBe(true);
+    const back = new FakeClient('a');
+    room.attach(0, back);
+    await room.idle();
+    const u = back.last('update')!;
+    expect(u.countdown).toBe(3_000);
+    expect(u.view.actions).toEqual([]);
+    room.detach(back);
+    await vi.advanceTimersByTimeAsync(2_999);
+    await room.idle();
+    expect(room.state.seq).toBe(0);
+    await vi.advanceTimersByTimeAsync(10_000);
+    await room.idle();
+    expect(room.state.seq).toBeGreaterThan(0);
+  });
+
+  it('counts down in games of bot players too, but not in fast rooms', async () => {
+    const seats = [botSeat('w'), botSeat('x'), botSeat('y'), botSeat('z')];
+    const b = await build(seats, undefined, COUNTDOWNS, false, { random: seeded('bot-countdown') });
+    const times: { at: number; action: Action }[] = [];
+    const append = b.store.appendAction.bind(b.store);
+    b.store.appendAction = (id, seq, action) => {
+      times.push({ at: Date.now(), action });
+      return append(id, seq, action);
+    };
+    const start = Date.now();
+    await vi.advanceTimersByTimeAsync(4 * 60_000);
+    await b.room.idle();
+    expect(times[0].at - start).toBeGreaterThanOrEqual(5_000);
+    const deals = times.flatMap((t, i) => (t.action.type === 'nextHand' ? [i] : []));
+    expect(deals.length).toBeGreaterThan(0);
+    for (const i of deals) if (times[i + 1]) expect(times[i + 1].at - times[i].at).toBeGreaterThanOrEqual(3_000);
+
+    const f = await build(seats, undefined, COUNTDOWNS, false, { random: seeded('fast-countdown'), fast: true });
+    await vi.advanceTimersByTimeAsync(5);
+    await f.room.idle();
+    expect(f.room.state.seq).toBeGreaterThan(0);
+  });
+});
+
+describe('Room joining', () => {
+  const JOIN = { startCountdownMs: 5_000, handCountdownMs: 3_000, joinMaxMs: 10_000 };
+
+  it('starts the countdown when the last bot has joined, not when the human arrives', async () => {
+    const random = seeded('join-room');
+    // The room draws the three bots' delays from the same sequence first.
+    const expected = seeded('join-room');
+    const delays = [0, 1, 2].map(() => joinDelay(expected, { maxMs: 10_000, scale: 1 }));
+    const last = Math.max(...delays);
+    const { room, clients } = await build([human('a'), bot, bot, bot], undefined, JOIN, true, { random });
+    const a = clients[0]!;
+    let u = a.last('update')!;
+    expect(u.countdown).toBeUndefined();
+    expect(u.view.actions).toEqual([]);
+    expect(u.deadline).toBeUndefined();
+    // Nobody can act while players join.
+    room.act(0, 0, { type: 'discard', seat: 0, tile: room.state.hand.players[0].drawn! }, a);
+    await room.idle();
+    expect(a.last('error')).toEqual({ type: 'error', code: 'illegal', requestSeq: 0 });
+    expect(room.state.seq).toBe(0);
+
+    await vi.advanceTimersByTimeAsync(last - 1);
+    await room.idle();
+    expect(a.last('update')!.countdown).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(1);
+    await room.idle();
+    u = a.last('update')!;
+    expect(u.countdown).toBe(5_000);
+    expect(u.view.actions).toEqual([]);
+    await vi.advanceTimersByTimeAsync(5_000);
+    await room.idle();
+    u = a.last('update')!;
+    expect(u.countdown).toBeUndefined();
+    expect(u.deadline).toBe(10_000 + 20_000);
+    expect(u.view.actions.length).toBeGreaterThan(0);
+  });
+
+  it('waits at most the join cap', async () => {
+    // Slow bots: every draw near 1 gives the longest delays; the cap decides.
+    const { clients } = await build([human('a'), bot, bot, bot], undefined, { ...JOIN, joinMaxMs: 2_000 }, true, { random: () => 0.999 });
+    const a = clients[0]!;
+    await vi.advanceTimersByTimeAsync(1_999);
+    expect(a.last('update')!.countdown).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(a.last('update')!.countdown).toBe(5_000);
+  });
+
+  it('has no joining phase in fast or recovered rooms, nor among humans only', async () => {
+    const humans = await build([human('a'), human('b'), human('c'), human('d')], undefined, JOIN);
+    expect(humans.clients[0]!.last('update')!.countdown).toBe(5_000);
+    const rigged = await build([human('a'), bot, bot, bot], turnState(), JOIN);
+    expect(rigged.clients[0]!.last('update')!.deadline).toBe(10_000 + 20_000);
+    const seats = [botSeat('w'), botSeat('x'), botSeat('y'), botSeat('z')];
+    const f = await build(seats, undefined, JOIN, false, { random: seeded('fast-join'), fast: true });
+    await vi.advanceTimersByTimeAsync(5);
+    await f.room.idle();
+    expect(f.room.state.seq).toBeGreaterThan(0);
   });
 });
 
@@ -182,7 +419,7 @@ describe('Room disconnects', () => {
     const { room, clients } = await build([human('a'), bot, bot, bot], turnState());
     const c = clients[0]!;
     room.detach(c);
-    const think = thinkDelay(room.state, 0, { turnMs: 8_000, callMs: 5_000, bank: 15_000, scale: 1 }, () => 0);
+    const think = thinkDelay(room.state, 0, { base: 10_000, bank: 20_000, scale: 1, opening: true }, () => 0);
     await vi.advanceTimersByTimeAsync(9_999);
     expect(room.state.seq).toBe(0);
     // Grace over: a bot decides for seat 0 after its think time.
@@ -215,7 +452,7 @@ describe('Room disconnects', () => {
   it('keeps timeouts running during the grace period', async () => {
     const { room, clients } = await build([human('a'), bot, bot, bot], turnState(), { graceMs: 60_000 });
     room.detach(clients[0]!);
-    await vi.advanceTimersByTimeAsync(23_000);
+    await vi.advanceTimersByTimeAsync(30_000);
     await room.idle();
     expect(room.state.seq).toBe(1);
     expect(room.humanAt(0).botControlled).toBe(false);
@@ -275,7 +512,15 @@ describe('Room authority', () => {
 
   it('never reveals other hands, the wall, or who is deciding', async () => {
     // Two humans that never act: every decision times out; two bots. Check every message sent.
-    const { room, clients } = await build([human('a'), bot, human('c'), bot], undefined, { turnMs: 100, callMs: 100, bankMs: 0, readyMs: 10 });
+    const { room, clients } = await build([human('a'), bot, human('c'), bot], undefined, {
+      turnMs: 100,
+      callMs: 100,
+      openingTurnMs: 100,
+      bankMs: 0,
+      readyMs: 10,
+      startCountdownMs: 500,
+      handCountdownMs: 300,
+    });
     await vi.runAllTimersAsync();
     await room.idle();
     expect(room.state.phase).toBe('gameOver');
@@ -314,7 +559,7 @@ describe('Room authority', () => {
     g = applyAction(g, { type: 'discard', seat: 3, tile: g.hand.players[3].drawn! }).state;
     g.seq = 0;
     const { clients } = await build([human('a'), bot, human('c'), bot], g);
-    expect(clients[0]!.last('update')!.deadline).toBe(20_000);
+    expect(clients[0]!.last('update')!.deadline).toBe(25_000);
     expect(clients[2]!.last('update')!.deadline).toBeUndefined();
     expect(clients[2]!.last('update')!.view.actions).toEqual([]);
   });
@@ -378,7 +623,7 @@ describe('Room hidden information', () => {
   });
 
   it('bot think times do not depend on what the seat cannot see', async () => {
-    const pace = { turnMs: 8_000, callMs: 5_000, bank: 15_000, scale: 1 };
+    const pace = { base: 5_000, bank: 20_000, scale: 1 };
     const scramble = seeded('scramble-pace');
     let g = createGame(DEFAULT_RULES, 'pace').state;
     const random = seeded('pace-bots');
@@ -449,7 +694,7 @@ describe('Room bot players', () => {
     expect(pendingSeats(room.state)).toEqual([1]);
     const drawn = room.state.hand.players[1].drawn!;
     // The full base time plus the whole bank passes, then the automatic move (discard the drawn tile) is played.
-    await vi.advanceTimersByTimeAsync(8_000 + 15_000 - 1);
+    await vi.advanceTimersByTimeAsync(5_000 + 20_000 - 1);
     expect(room.state.seq).toBe(1);
     await vi.advanceTimersByTimeAsync(1);
     await room.idle();

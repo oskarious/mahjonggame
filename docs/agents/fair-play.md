@@ -30,6 +30,8 @@ A client is assumed to be modified: it reads every byte and every timing it gets
 - **Accepted, documented tells** (like Tenhou / Mahjong Soul): a discard nobody can call is followed by the next draw
   at once; if someone can, the window stays open until they answer, so the table sees that *someone* could call
   (not who, and not what). Think times of humans (and bots, by design) are visible. Hiding these would need a pause
-  after every discard; decided against for pace.
+  after every discard; decided against for pace. Countdowns after a deal start on the (public) deal, last a fixed
+  time and are sent to every seat alike; bots' result confirms are pure randomness, so the deal time doesn't reveal
+  which seats are bots.
 - **Not preventable by code:** collusion between accounts at one table and outside AI assistance. Possible later:
   keep same-IP accounts apart in matchmaking, statistics on agreement with the bot's best move.

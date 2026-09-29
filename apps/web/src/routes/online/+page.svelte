@@ -99,6 +99,7 @@
     players={game.info?.players ?? null}
     deadlineAt={game.deadlineAt}
     bank={game.bank}
+    countdownUntil={game.countdownUntil}
     ratings={game.end?.ratings ?? null}
     onagain={again}
     onhome={() => goto('/')}

@@ -7,7 +7,15 @@ import type { SeatInit } from '../src/matchmaking.ts';
 import type { BotRow, MemoryStore } from '../src/store.ts';
 
 /** Background games off unless a test turns them on. */
-export const TEST_CONFIG: Config = { ...DEFAULT_CONFIG, databaseUrl: 'memory', botsBackground: false };
+/** Countdowns and the joining phase off, so tests control timing; tests of those set them. */
+export const TEST_CONFIG: Config = {
+  ...DEFAULT_CONFIG,
+  databaseUrl: 'memory',
+  botsBackground: false,
+  startCountdownMs: 0,
+  handCountdownMs: 0,
+  joinMaxMs: 0,
+};
 
 /** Deterministic `random` for tests. */
 export function seeded(seed: string): () => number {

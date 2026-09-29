@@ -10,6 +10,7 @@
   import type { GameSource } from '$lib/game/source';
   import { tileset } from '$lib/tileset.svelte';
   import Board from './Board.svelte';
+  import Countdown from './Countdown.svelte';
   import FinalSheet from './FinalSheet.svelte';
   import PlayerArea from './PlayerArea.svelte';
   import ResultSheet from './ResultSheet.svelte';
@@ -26,6 +27,8 @@
     /** Online: own decision countdown. */
     deadlineAt?: number | null;
     bank?: number | null;
+    /** Online: when play starts after a deal (nobody can act until then). */
+    countdownUntil?: number | null;
     /** Online: rating changes for the final sheet. */
     ratings?: RatingChange[] | null;
     /** Debug: every seat's concealed tiles. */
@@ -43,6 +46,7 @@
     players = null,
     deadlineAt = null,
     bank = null,
+    countdownUntil = null,
     ratings = null,
     revealed = null,
     onagain,
@@ -135,6 +139,7 @@
 <div class="screen">
   <div class="board-wrap">
     <Board {view} names={game.names} {red} {revealed} {players} />
+    <Countdown until={countdownUntil} />
   </div>
 
   {#if game.error}<p class="error" role="alert">{game.error}</p>{/if}
@@ -197,6 +202,7 @@
     padding-top: calc(6px + env(safe-area-inset-top));
   }
   .board-wrap {
+    position: relative;
     flex: 1;
     min-height: 0;
     display: flex;

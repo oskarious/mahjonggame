@@ -11,5 +11,6 @@ features.
   a running game (fair-play.md).
 - One game server instance holds all live games (in-memory rooms and queue); horizontal scaling would need sticky
   routing or a shared queue. Private rooms, invites, spectating and chat are out of scope so far.
-- Timer defaults (8 s / 5 s / 15 s bank) and the bot anchor (skill 0.15 = 1000) are guesses until humans have played;
-  both are config/constants, and re-anchoring the bots is a constant shift for everyone.
+- Timer defaults (5 s turn / 10 s opening / 5 s call / 20 s bank, 5 s / 3 s countdowns) and the bot anchor
+  (skill 0.15 = 1000) are guesses until humans have played; both are config/constants, and re-anchoring the bots is a
+  constant shift for everyone.

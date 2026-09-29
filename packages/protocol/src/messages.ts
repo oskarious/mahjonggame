@@ -94,6 +94,11 @@ export type ServerMessage =
       deadline?: number;
       /** Milliseconds left in the player's time bank. */
       bank?: number;
+      /**
+       * Milliseconds until play starts, while the countdown after a deal runs (same for every seat). Nobody can act
+       * meanwhile: `view.actions` is empty until it ends.
+       */
+      countdown?: number;
     }
   | { type: 'error'; code: ErrorCode; message?: string; requestSeq?: number }
   /** Another connection of the same account took over; this one is done and must not reconnect. */

@@ -40,6 +40,8 @@ export class RemoteGame implements GameSource {
   deadlineAt: number | null = $state(null);
   /** Remaining time bank, ms. */
   bank: number | null = $state(null);
+  /** Absolute time (Date.now based) at which play starts after a deal; null when no countdown runs. */
+  countdownUntil: number | null = $state(null);
   end: { final: FinalStanding[]; ratings: RatingChange[] } | null = $state.raw(null);
   error: string | null = $state(null);
   /** In riichi, discard the drawn tile automatically when nothing else is possible (as offline). */
@@ -170,6 +172,7 @@ export class RemoteGame implements GameSource {
     this.end = null;
     this.deadlineAt = null;
     this.bank = null;
+    this.countdownUntil = null;
     if (this.status === 'ended') this.status = 'idle';
   }
 
@@ -241,6 +244,7 @@ export class RemoteGame implements GameSource {
         this.#view = msg.view;
         this.deadlineAt = msg.deadline !== undefined ? Date.now() + msg.deadline : null;
         this.bank = msg.bank ?? null;
+        this.countdownUntil = msg.countdown !== undefined ? Date.now() + msg.countdown : null;
         this.error = null;
         if (this.status !== 'ended') this.status = 'playing';
         this.#automate(msg.view);
@@ -250,6 +254,7 @@ export class RemoteGame implements GameSource {
       case 'game.end':
         this.end = { final: msg.final, ratings: msg.ratings };
         this.deadlineAt = null;
+        this.countdownUntil = null;
         this.status = 'ended';
         return;
       case 'error':

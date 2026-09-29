@@ -22,7 +22,7 @@ import {
 import type { ErrorCode, Format, GameInfo, RatingChange, ServerMessage } from '@mahjong/protocol';
 import type { Config } from './config.ts';
 import type { SeatInit } from './matchmaking.ts';
-import { thinkDelay } from './pacing.ts';
+import { joinDelay, readyDelay, thinkDelay } from './pacing.ts';
 import { clampHints, hintLevelForRating, ratingChanges } from './rating.ts';
 import type { RatingUpdate, SeatResult, Store } from './store.ts';
 
@@ -48,6 +48,7 @@ export interface HumanSeat {
   /** Most help this player's rating allows; `hints` is what they get (they may lower it). */
   maxHints: HintLevel;
   hints: HintLevel;
+  /** Confirmed the hand result (between hands). */
   ready: boolean;
 }
 
@@ -61,6 +62,8 @@ export interface BotSeat {
   games: number;
   /** Time bank left this hand, ms (bots dip into it like humans do). */
   bank: number;
+  /** Confirmed the hand result (after a random delay, like a human). */
+  ready: boolean;
 }
 
 export type RoomSeat = HumanSeat | BotSeat;
@@ -104,8 +107,27 @@ export interface RoomDeps {
 
 type RoomConfig = Pick<
   Config,
-  'turnMs' | 'callMs' | 'bankMs' | 'botHandPauseMs' | 'readyMs' | 'graceMs' | 'abandonMs' | 'hintThresholds' | 'k' | 'kNew' | 'newGames'
+  | 'turnMs'
+  | 'callMs'
+  | 'openingTurnMs'
+  | 'startCountdownMs'
+  | 'handCountdownMs'
+  | 'joinMaxMs'
+  | 'bankMs'
+  | 'readyMs'
+  | 'graceMs'
+  | 'abandonMs'
+  | 'hintThresholds'
+  | 'k'
+  | 'kNew'
+  | 'newGames'
 >;
+
+/** The dealer's first decision of a hand: nobody has discarded yet (public). */
+function isOpening(g: GameState): boolean {
+  const s = g.hand.step;
+  return s.type === 'turn' && s.seat === g.dealer && g.hand.players[g.dealer].discards.length === 0;
+}
 
 function decisionKey(g: GameState): string {
   const s = g.hand.step;
@@ -142,6 +164,16 @@ export class Room {
   #lastSent = new Map<Seat, string>();
   #graceTimers = new Map<Seat, Timer>();
   #readyTimer: Timer | null = null;
+  /** Bot seats confirming the hand result. */
+  #botReadyTimers: Timer[] = [];
+  /** Countdown after a deal: until then nobody can act and no decision timer runs (Date.now based; 0 = none). */
+  #holdUntil = 0;
+  #holdTimer: Timer | null = null;
+  /** A new game (not recovered): the first deal gets the joining phase and the start countdown. */
+  #fresh: boolean;
+  /** Before the start countdown: waiting for the bots to "connect" (humans are connected when matched). */
+  #joining = false;
+  #joinTimers: Timer[] = [];
   #abandonTimer: Timer | null = null;
   /** No human has been connected for the abandon period: bots finish the game without delays. */
   #fast = false;
@@ -164,7 +196,16 @@ export class Room {
     this.#fast = init.fast ?? false;
     this.seats = init.seats.map((s) =>
       s.kind === 'bot'
-        ? { kind: 'bot', skill: s.skill, userId: s.userId, name: s.name, rating: s.rating, games: s.games, bank: this.#config.bankMs }
+        ? {
+            kind: 'bot',
+            skill: s.skill,
+            userId: s.userId,
+            name: s.name,
+            rating: s.rating,
+            games: s.games,
+            bank: this.#config.bankMs,
+            ready: false,
+          }
         : {
             kind: 'human',
             userId: s.userId,
@@ -180,6 +221,7 @@ export class Room {
             ready: false,
           },
     );
+    this.#fresh = !init.state;
     if (init.state) {
       this.state = init.state;
       this.#initialEvents = [];
@@ -229,6 +271,7 @@ export class Room {
     }
     this.#checkAbandoned();
     this.#run(async () => {
+      if (this.#fresh) this.#startJoining();
       this.#schedule(null);
       this.#broadcast(this.#initialEvents);
       if (this.state.phase === 'gameOver') await this.#finish();
@@ -269,6 +312,11 @@ export class Room {
     this.#run(async () => {
       if (this.#closed || this.#finished) return;
       const g = this.state;
+      if (this.#held()) {
+        this.#error(client, 'illegal', seq);
+        this.#sendUpdate(seat, []);
+        return;
+      }
       // Clients only know the public sequence number (see GameState.publicSeq).
       if (seq !== g.publicSeq) {
         this.#error(client, 'staleSeq', seq);
@@ -289,7 +337,7 @@ export class Room {
     });
   }
 
-  /** Between hands: the next hand starts when every connected human is ready (or the timer runs out). */
+  /** Between hands: the next hand starts when every connected human and every bot is ready (or the timer runs out). */
   ready(seat: Seat): void {
     this.#run(() => {
       if (this.state.phase !== 'handOver') return;
@@ -318,6 +366,9 @@ export class Room {
     if (this.#readyTimer) clearTimeout(this.#readyTimer);
     if (this.#abandonTimer) clearTimeout(this.#abandonTimer);
     this.#readyTimer = this.#abandonTimer = null;
+    this.#clearBotReady();
+    this.#clearHold();
+    this.#clearJoining();
   }
 
   /** Resolves once the queue is empty, including inputs queued by the ones it processed (tests). */
@@ -351,8 +402,9 @@ export class Room {
     if (t.events.some((e) => e.type === 'handStart')) {
       for (const s of this.seats) {
         s.bank = this.#config.bankMs;
-        if (s.kind === 'human') s.ready = false;
+        s.ready = false;
       }
+      this.#startHold(this.#config.handCountdownMs);
     }
     this.#schedule(actor);
     this.#broadcast(t.events);
@@ -383,24 +435,20 @@ export class Room {
     }
     if (g.phase === 'handOver') {
       if (!this.#readyTimer) {
-        const wait = this.#fast
-          ? 0
-          : !this.hasHumans
-            ? this.#between(this.#config.botHandPauseMs)
-            : !this.#anyConnected()
-              ? 0
-              : this.#config.readyMs;
-        this.#readyTimer = setTimeout(() => this.#nextHand(), wait);
+        this.#readyTimer = setTimeout(() => this.#nextHand(), this.#fast ? 0 : this.#config.readyMs);
+        this.#armBotReady();
+        // Nobody to wait for (every human disconnected, no bots).
+        if (this.#allReady()) this.#nextHand();
       }
       return;
     }
-    if (g.phase !== 'playing') return;
+    if (g.phase !== 'playing' || this.#held()) return;
     const now = Date.now();
     for (const seat of pending) {
       if (this.#pending.has(seat)) continue;
       if (this.#botPlays(seat) && !this.#fast && this.#botTimesOut(seat)) {
         // Like a distracted human: the full time runs out and the automatic move is played.
-        const base = g.hand.step.type === 'turn' ? this.#config.turnMs : this.#config.callMs;
+        const base = this.#baseMs(g);
         const total = base + this.seats[seat].bank;
         const timer = setTimeout(() => this.#timeout(seat, key), total);
         this.#pending.set(seat, { mode: 'bot', key, startedAt: now, base, deadlineAt: now + total, timer });
@@ -409,7 +457,7 @@ export class Room {
         const timer = setTimeout(() => this.#botMove(seat, key), delay);
         this.#pending.set(seat, { mode: 'bot', key, startedAt: now, base: delay, deadlineAt: now + delay, timer });
       } else {
-        const base = g.hand.step.type === 'turn' ? this.#config.turnMs : this.#config.callMs;
+        const base = this.#baseMs(g);
         const total = base + this.humanAt(seat).bank;
         const timer = setTimeout(() => this.#timeout(seat, key), total);
         this.#pending.set(seat, { mode: 'human', key, startedAt: now, base, deadlineAt: now + total, timer });
@@ -429,15 +477,104 @@ export class Room {
   #think(seat: Seat): number {
     const g = this.state;
     const s = this.seats[seat];
-    const { turnMs, callMs } = this.#config;
-    const delay = thinkDelay(g, seat, { turnMs, callMs, bank: s.bank, scale: this.#thinkScale() }, this.#random);
-    const base = g.hand.step.type === 'turn' ? turnMs : callMs;
+    const base = this.#baseMs(g);
+    const delay = thinkDelay(g, seat, { base, bank: s.bank, scale: this.#thinkScale(), opening: isOpening(g) }, this.#random);
     s.bank = Math.max(0, s.bank - Math.max(0, delay - base));
     return delay;
   }
 
-  #between([lo, hi]: [number, number]): number {
-    return lo + Math.floor(this.#random() * (hi - lo));
+  /** Base time of the current decision: longer for the dealer's opening, so everyone can look at their hand. */
+  #baseMs(g: GameState): number {
+    if (g.hand.step.type !== 'turn') return this.#config.callMs;
+    return isOpening(g) ? this.#config.openingTurnMs : this.#config.turnMs;
+  }
+
+  #held(): boolean {
+    return this.#joining || Date.now() < this.#holdUntil;
+  }
+
+  /**
+   * A new game waits for every seat to join before the start countdown: connected humans have (they were matched from
+   * the queue), each bot joins after its own random delay, so the countdown doesn't always start at the human's arrival.
+   */
+  #startJoining(): void {
+    const bots = new Set(this.seats.flatMap((s, i) => (s.kind === 'bot' ? [i] : [])));
+    if (this.#fast || this.#config.joinMaxMs <= 0 || !bots.size) {
+      this.#startHold(this.#config.startCountdownMs);
+      return;
+    }
+    this.#joining = true;
+    this.#joinTimers.push(setTimeout(() => this.#run(() => this.#endJoining()), this.#config.joinMaxMs));
+    for (const seat of bots) {
+      const delay = joinDelay(this.#random, { maxMs: this.#config.joinMaxMs, scale: this.#thinkScale() });
+      this.#joinTimers.push(
+        setTimeout(() => {
+          this.#run(() => {
+            bots.delete(seat);
+            if (!bots.size) this.#endJoining();
+          });
+        }, delay),
+      );
+    }
+  }
+
+  /** Everyone is here (or the wait is over): the start countdown begins. Sent to everyone, though views are unchanged. */
+  #endJoining(): void {
+    if (!this.#joining || this.#closed || this.#finished) return;
+    this.#clearJoining();
+    this.#startHold(this.#config.startCountdownMs);
+    this.#schedule(null);
+    for (let seat = 0; seat < 4; seat++) this.#sendUpdate(seat, []);
+  }
+
+  #clearJoining(): void {
+    for (const t of this.#joinTimers) clearTimeout(t);
+    this.#joinTimers = [];
+    this.#joining = false;
+  }
+
+  /** Starts the countdown after a deal (not in fast rooms). When it ends, decisions are scheduled and shown. */
+  #startHold(ms: number): void {
+    this.#clearHold();
+    if (this.#fast || ms <= 0) return;
+    this.#holdUntil = Date.now() + ms;
+    this.#holdTimer = setTimeout(() => {
+      this.#holdTimer = null;
+      this.#run(() => {
+        if (this.#closed || this.#finished) return;
+        this.#schedule(null);
+        this.#broadcast([]);
+      });
+    }, ms);
+  }
+
+  #clearHold(): void {
+    if (this.#holdTimer) clearTimeout(this.#holdTimer);
+    this.#holdTimer = null;
+    this.#holdUntil = 0;
+  }
+
+  /** Each bot confirms the hand result after its own random delay, so the deal doesn't always follow a human's click. */
+  #armBotReady(): void {
+    this.#clearBotReady();
+    for (const s of this.seats) {
+      if (s.kind !== 'bot') continue;
+      const delay = this.#fast ? 0 : readyDelay(this.#random, { readyMs: this.#config.readyMs, scale: this.#thinkScale() });
+      this.#botReadyTimers.push(
+        setTimeout(() => {
+          this.#run(() => {
+            if (this.#closed || this.#finished || this.state.phase !== 'handOver') return;
+            s.ready = true;
+            if (this.#allReady()) this.#nextHand();
+          });
+        }, delay),
+      );
+    }
+  }
+
+  #clearBotReady(): void {
+    for (const t of this.#botReadyTimers) clearTimeout(t);
+    this.#botReadyTimers = [];
   }
 
   #botPlays(seat: Seat): boolean {
@@ -471,13 +608,14 @@ export class Room {
     this.#run(async () => {
       if (this.#readyTimer) clearTimeout(this.#readyTimer);
       this.#readyTimer = null;
+      this.#clearBotReady();
       if (this.#closed || this.#finished || this.state.phase !== 'handOver') return;
       await this.#apply({ type: 'nextHand' }, null);
     });
   }
 
   #allReady(): boolean {
-    return this.seats.every((s) => s.kind !== 'human' || s.client === null || s.ready);
+    return this.seats.every((s) => s.ready || (s.kind === 'human' && s.client === null));
   }
 
   #anyConnected(): boolean {
@@ -519,6 +657,9 @@ export class Room {
         clearTimeout(this.#readyTimer);
         this.#readyTimer = null;
       }
+      this.#clearBotReady();
+      this.#clearHold();
+      this.#clearJoining();
       this.#run(() => {
         // Existing bot timers keep their delay; new ones are immediate.
         for (const p of this.#pending.values()) clearTimeout(p.timer);
@@ -535,7 +676,10 @@ export class Room {
   #sendUpdate(seat: Seat, events: GameEvent[], force = true): void {
     const s = this.seats[seat];
     if (s.kind !== 'human' || !s.client) return;
-    const view = viewFor(this.state, seat, { hints: s.hints });
+    const full = viewFor(this.state, seat, { hints: s.hints });
+    // During a countdown nobody can act: the view carries no actions.
+    const held = this.#held();
+    const view = held ? { ...full, actions: [] } : full;
     const sent = JSON.stringify([view, s.bank]);
     if (!force && !events.length && this.#lastSent.get(seat) === sent) return;
     this.#lastSent.set(seat, sent);
@@ -549,6 +693,7 @@ export class Room {
       bank: s.bank,
     };
     if (p && p.mode === 'human') msg.deadline = Math.max(0, p.deadlineAt - Date.now());
+    if (held && !this.#joining) msg.countdown = this.#holdUntil - Date.now();
     s.client.send(msg);
   }
 
