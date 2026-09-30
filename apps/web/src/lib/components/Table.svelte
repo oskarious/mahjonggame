@@ -24,7 +24,7 @@
     onhints: (level: HintLevel) => void;
     /** Online: seat info (ratings). */
     players?: PlayerInfo[] | null;
-    /** Online: the table has a decision timer (its slot is reserved for the whole game). */
+    /** Online: the table has a decision timer (shown on the own panel's tile slot). */
     timed?: boolean;
     /** Online: own decision countdown. */
     deadlineAt?: number | null;
@@ -147,8 +147,6 @@
 
   {#if game.error}<p class="error" role="alert">{game.error}</p>{/if}
 
-  {#if timed}<TimerBar {deadlineAt} bank={bank ?? 0} />{/if}
-
   <PlayerArea
     {view}
     {red}
@@ -156,8 +154,11 @@
     bind:focusKind
     onact={(a) => game.act(a)}
     onsettings={() => (showSettings = true)}
+    timer={timed ? ownTimer : undefined}
   />
 </div>
+
+{#snippet ownTimer()}<TimerBar {deadlineAt} bank={bank ?? 0} />{/snippet}
 
 {#if view.result && (view.phase === 'handOver' || (view.phase === 'gameOver' && !showFinal))}
   <ResultSheet

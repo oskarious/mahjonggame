@@ -1,7 +1,7 @@
 <script lang="ts">
-  // Countdown for the player's own decision: a bar that drains over the base time, then over the time bank
-  // (gold). Seconds are only shown once the bank is in use. The track is always rendered (hidden when nothing is
-  // pending) so the timer never shifts the table layout.
+  // Countdown for the player's own decision, in whole seconds: the base time in ink with the bank beside it (small,
+  // gold), then the bank alone in gold once the base time is used up. Rendered by PlayerArea just below the
+  // tile-to-act slot (above the hand), out of flow, so it never shifts the table layout.
   import { sound } from '$lib/audio/player';
 
   interface Props {
@@ -15,16 +15,10 @@
   let now = $state(Date.now());
   $effect(() => {
     if (deadlineAt === null) return;
+    now = Date.now();
     const id = setInterval(() => (now = Date.now()), 100);
     return () => clearInterval(id);
   });
-  /** Total time and base time are fixed when the deadline arrives. */
-  const start = $derived.by(() => {
-    void deadlineAt;
-    return Date.now();
-  });
-  const total = $derived(deadlineAt === null ? 0 : Math.max(0, deadlineAt - start));
-  const base = $derived(Math.max(0, total - bank));
   const remaining = $derived(deadlineAt === null ? 0 : Math.max(0, deadlineAt - now));
   const inBank = $derived(deadlineAt !== null && remaining <= bank);
   // A tick for each of the last 5 seconds, once per second and deadline; stops when the deadline goes (we acted).
@@ -37,40 +31,44 @@
     warned = { deadline: deadlineAt, secs };
     sound().play('timeWarning');
   });
-  const fraction = $derived(inBank ? (bank ? remaining / bank : 0) : base ? (remaining - bank) / base : 0);
+  const mainSecs = $derived(Math.ceil((inBank ? remaining : remaining - bank) / 1000));
+  const bankSecs = $derived(inBank ? 0 : Math.ceil(bank / 1000));
 </script>
 
-<div class="timer" class:bank={inBank} class:idle={deadlineAt === null} aria-hidden="true">
-  <div class="fill" style:width="{Math.max(0, Math.min(1, fraction)) * 100}%"></div>
-  {#if inBank}<span class="secs">{Math.ceil(remaining / 1000)}</span>{/if}
-</div>
+{#if deadlineAt !== null}
+  <span class="timer" class:bank={inBank} aria-hidden="true">
+    <span class="main">{mainSecs}</span>{#if !inBank}<span class="reserve">{bankSecs}</span>{/if}
+  </span>
+{/if}
 
 <style>
+  /* Centred just below the tile slot (positioned parent), in the space above the hand, out of flow: takes no
+     layout space. */
   .timer {
-    position: relative;
-    height: 3px;
-    margin: 0 8px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.08);
-  }
-  .timer.idle {
-    visibility: hidden;
-  }
-  .fill {
-    height: 100%;
-    border-radius: 2px;
-    background: var(--ink-dim);
-    transition: width 100ms linear;
-  }
-  .timer.bank .fill {
-    background: var(--accent);
-  }
-  .secs {
     position: absolute;
-    right: 0;
-    bottom: 5px;
-    font-size: 0.7rem;
+    top: 100%;
+    left: 50%;
+    translate: -50% 2px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    line-height: 1;
+    white-space: nowrap;
     font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  .main {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .timer.bank .main {
+    color: var(--accent);
+  }
+  .reserve {
+    font-size: 0.7rem;
+    font-weight: 600;
     color: var(--accent);
   }
 </style>

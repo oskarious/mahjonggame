@@ -16,7 +16,7 @@ bank seconds left, as the main number in gold. When no decision is pending no nu
 
 #### Scenario: Empty bank
 - **WHEN** a deadline arrives and the player's bank is 0
-- **THEN** only the base seconds are shown, with no bank number
+- **THEN** the base seconds are shown with a small gold `0` beside them
 
 #### Scenario: Player acts
 - **WHEN** the player discards or calls and the deadline is cleared
@@ -29,8 +29,9 @@ bank seconds left, as the main number in gold. When no decision is pending no nu
 ## MODIFIED Requirements
 
 ### Requirement: Timer bar does not shift the layout
-On a timed (online) table the player's own decision timer SHALL occupy a slot of constant size for the whole game,
-whether or not a deadline is pending. The slot SHALL be sized for the numeric display. Appearing, counting down,
+On a timed (online) table the player's own decision timer SHALL NOT change the table layout for the whole game,
+whether or not a deadline is pending; the numeric timer SHALL take no layout space of its own (it sits in the space
+between the tile-to-act slot and the hand), so no row is reserved for it. Appearing, counting down,
 changing digit count (e.g. `20` → `9`), entering the time bank (gold) and disappearing SHALL NOT change the size or
 position of the board, the hand or any other table element.
 

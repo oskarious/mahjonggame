@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import {
     type Action,
     type Kind,
@@ -22,8 +23,10 @@
     onact: (a: Action) => void;
     /** Open the settings sheet (the play screen has no header; the cog lives in this panel). */
     onsettings: () => void;
+    /** Online: the own decision timer, shown just below the tile-to-act slot. */
+    timer?: Snippet;
   }
-  let { view, red, quickDiscard, focusKind = $bindable(null), onact, onsettings }: Props = $props();
+  let { view, red, quickDiscard, focusKind = $bindable(null), onact, onsettings, timer }: Props = $props();
 
   let selected: TileId | null = $state(null);
   let riichiMode = $state(false);
@@ -378,6 +381,7 @@
     </div>
 
     <span class="middle">
+      {@render timer?.()}
       {#if inCall}
         <span class="claim">
           <Tile tile={view.claimable?.tile ?? null} {red} />
@@ -640,6 +644,7 @@
      every tileset: the tile in it is as tall as a 44 px Classic tile (narrower with a taller ratio). All panel and
      magnifier tiles are sized like this (Classic width × 4/3 ÷ ratio), so switching tilesets never resizes the panel. */
   .middle {
+    position: relative;
     --slot-h: calc(44px * 4 / 3);
     display: flex;
     align-items: center;

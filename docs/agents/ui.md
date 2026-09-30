@@ -15,9 +15,11 @@ sounds, theme. Structure of the web app: [web.md](web.md).
   left info hides and the choices (Tsumo/Riichi/Kan, Ron/Pon/Chii/Kan, kan/chii options) show two per row; the right
   info hides and Pass (or Back) fills that side. Overlays anchor to the bottom and grow upward over the board if they
   need more room. The play screen has no header and no round bar: leaving the game is a button in the settings sheet.
-- **Nothing that comes and goes may resize the board.** The online table (`timed`) reserves the own-timer slot
-  (TimerBar, above the own panel) for the whole game and only hides the bar while no deadline is pending; offline
-  tables have no slot.
+- **Nothing that comes and goes may resize the board.** Transient things overlay instead of taking a row.
+- **Own timer = seconds counting down** (online only, `timed`), no bar and no row of its own: bare numbers just
+  below the tile-to-act slot, in the empty space above the hand strip (TimerBar, passed to PlayerArea as the `timer`
+  snippet, absolutely positioned). Base seconds in ink with the bank as a small gold number beside it (`0` when
+  empty); once the base is used up the main number shows the bank seconds in gold (gold = spending the bank).
 
 ## Hand
 
