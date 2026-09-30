@@ -24,8 +24,30 @@ export interface BotSettings {
   growAfterMs: number;
   /** Rest after a game before a bot is picked again. */
   botRestMs: [number, number];
-  /** Multiplier for bot think times in live games. */
+  /** Multiplier for every bot delay in live games (think, join, ready). */
   thinkScale: number;
+  /** Think time when only one move is possible (random in range). */
+  thinkForcedMs: [number, number];
+  /** Think time for a call decision (pon/chii/ron or pass; random in range). */
+  thinkCallMs: [number, number];
+  /** Median think time on an own turn, plus `thinkPerTileMs` for every distinct tile kind it could discard. */
+  thinkTurnMs: number;
+  thinkPerTileMs: number;
+  /** Median multiplier when the turn offers riichi, kan, tsumo or an abortive draw. */
+  thinkSpecialScale: number;
+  /** Median multiplier for the dealer's first decision of a hand. */
+  thinkOpeningScale: number;
+  /** Chance in percent, per own turn with a choice, of a long think into the time bank. */
+  longThinkPercent: number;
+  /** Time for a bot to join a new game: median and floor (capped by the server's JOIN_MAX_MS). */
+  joinMedianMs: number;
+  joinMinMs: number;
+  /** Time for a bot to confirm a hand result: median and floor (capped by the server's READY_MS). */
+  readyMedianMs: number;
+  readyMinMs: number;
+  /** Chance in percent of a slow confirm, drawn from `readySlowFromMs` up to READY_MS. */
+  readySlowPercent: number;
+  readySlowFromMs: number;
   /** Chance in percent, per decision, that a bot player lets its timer run out in a game with humans. */
   timeoutPercent: number;
 }

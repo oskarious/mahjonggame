@@ -46,7 +46,7 @@
     refreshing = false;
   }
 
-  const sec = (ms: number) => +(ms / 1000).toFixed(1);
+  const sec = (ms: number) => +(ms / 1000).toFixed(3);
   const ago = (t: number) => {
     const s = Math.round((Date.now() - t) / 1000);
     return s < 60 ? `${s} s ago` : s < 3600 ? `${Math.round(s / 60)} min ago` : `${Math.round(s / 3600)} h ago`;
@@ -154,12 +154,12 @@
 
     <details open={msg('settings') !== null}>
       <summary>Settings</summary>
-      {#snippet range(k: 'summonAfterMs' | 'botArrivalMs' | 'botRestMs', label: string, hint: string)}
+      {#snippet range(k: 'summonAfterMs' | 'botArrivalMs' | 'botRestMs' | 'thinkForcedMs' | 'thinkCallMs', label: string, hint: string)}
         <fieldset class="field range">
           <legend>{label}</legend>
-          <input name="{k}.lo" type="number" min="0" step="0.1" value={sec(s[k][0])} aria-label="{label} from" />
+          <input name="{k}.lo" type="number" min="0" step="0.01" value={sec(s[k][0])} aria-label="{label} from" />
           <span>–</span>
-          <input name="{k}.hi" type="number" min="0" step="0.1" value={sec(s[k][1])} aria-label="{label} to" />
+          <input name="{k}.hi" type="number" min="0" step="0.01" value={sec(s[k][1])} aria-label="{label} to" />
           <small class="hint">{hint}</small>
         </fieldset>
       {/snippet}
@@ -238,14 +238,75 @@
 
         <section>
           <h3>Bot pace</h3>
+          <p class="intro">
+            How long bots take per move in live games, so they can't be told apart from players by their timing. Single
+            values are typical times: real ones vary, most between about half and double. Bots never act within 1 s of
+            the deadline. Warm-up games and games nobody is watching run without delays.
+          </p>
           <div class="grid">
             <label class="field">
               Think time × <input name="thinkScale" type="number" min="0" max="5" step="0.05" value={s.thinkScale} />
-              <small class="hint">Multiplies how long bots take per move in live games: 1 = human-like, 0.5 = twice as fast, 0 = instant. Default 1.</small>
+              <small class="hint">Multiplies every delay below: 1 = as set, 0.5 = twice as fast, 0 = instant. Default 1.</small>
+            </label>
+            {@render range('thinkForcedMs', 'Only one move (s)', 'Draws with nothing to decide and other forced moves. Default 0.3–0.8.')}
+            {@render range('thinkCallMs', 'Call or pass (s)', 'Deciding on a pon, chii, kan or ron after a discard. Default 0.8–2.5.')}
+            <label class="field">
+              Own turn (s) <input name="thinkTurnMs" type="number" min="0" step="0.01" value={sec(s.thinkTurnMs)} />
+              <small class="hint">Typical time to pick a discard. Default 0.9.</small>
+            </label>
+            <label class="field">
+              + per tile choice (s) <input name="thinkPerTileMs" type="number" min="0" step="0.01" value={sec(s.thinkPerTileMs)} />
+              <small class="hint">Added to the own-turn time for every different tile it could discard (usually 6–13). Default 0.06.</small>
+            </label>
+            <label class="field">
+              Big decision × <input name="thinkSpecialScale" type="number" min="0" max="5" step="0.05" value={s.thinkSpecialScale} />
+              <small class="hint">Own-turn time when riichi, kan, tsumo or an abortive draw is possible. Default 1.6.</small>
+            </label>
+            <label class="field">
+              First move × <input name="thinkOpeningScale" type="number" min="0" max="5" step="0.05" value={s.thinkOpeningScale} />
+              <small class="hint">The dealer's first decision of a hand, looking over the fresh hand. Default 1.8.</small>
+            </label>
+            <label class="field">
+              Long think (%) <input name="longThinkPercent" type="number" min="0" max="100" step="0.5" value={s.longThinkPercent} />
+              <small class="hint">Chance per own turn with a choice to take 60–100 % of the base time plus up to 60 % of the time bank. Default 5.</small>
             </label>
             <label class="field">
               Timeout chance (%) <input name="timeoutPercent" type="number" min="0" max="10" step="0.1" value={s.timeoutPercent} />
               <small class="hint">Chance per decision that a bot lets its timer run out, like a distracted player: it waits the full time plus its time bank, then the automatic move is played and its bank is empty for the rest of the hand. Only in games with players. Three bots make about 180 decisions a game, so 0.5 means roughly one timeout per game. Default 0.5.</small>
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <h3>Joining and results</h3>
+          <p class="intro">
+            A new game's countdown starts once every bot has joined, and the next hand is dealt once every bot has
+            confirmed the result, so neither always follows the player's own click. Also scaled by think time ×.
+          </p>
+          <div class="grid">
+            <label class="field">
+              Join a game (s) <input name="joinMedianMs" type="number" min="0" step="0.1" value={sec(s.joinMedianMs)} />
+              <small class="hint">Typical time for a bot to join a new game. Never more than the server's join wait (JOIN_MAX_MS, 10 s). Default 1.5.</small>
+            </label>
+            <label class="field">
+              Join at least (s) <input name="joinMinMs" type="number" min="0" step="0.1" value={sec(s.joinMinMs)} />
+              <small class="hint">No bot joins faster. Default 0.4.</small>
+            </label>
+            <label class="field">
+              Confirm result (s) <input name="readyMedianMs" type="number" min="0" step="0.1" value={sec(s.readyMedianMs)} />
+              <small class="hint">Typical time for a bot to confirm a hand result. Never more than the server's ready wait (READY_MS, 12 s). Default 2.5.</small>
+            </label>
+            <label class="field">
+              Confirm at least (s) <input name="readyMinMs" type="number" min="0" step="0.1" value={sec(s.readyMinMs)} />
+              <small class="hint">No bot confirms faster. Default 0.8.</small>
+            </label>
+            <label class="field">
+              Slow confirm (%) <input name="readySlowPercent" type="number" min="0" max="100" step="0.5" value={s.readySlowPercent} />
+              <small class="hint">Chance a bot looks at the result for a while instead. Default 8.</small>
+            </label>
+            <label class="field">
+              Slow confirm from (s) <input name="readySlowFromMs" type="number" min="0" step="0.1" value={sec(s.readySlowFromMs)} />
+              <small class="hint">A slow confirm takes between this and the ready wait. Default 6.</small>
             </label>
           </div>
         </section>

@@ -17,6 +17,19 @@ export const DEFAULT_BOT_SETTINGS: BotSettings = {
   growAfterMs: 30_000,
   botRestMs: [10_000, 90_000],
   thinkScale: 1,
+  thinkForcedMs: [300, 800],
+  thinkCallMs: [800, 2_500],
+  thinkTurnMs: 900,
+  thinkPerTileMs: 60,
+  thinkSpecialScale: 1.6,
+  thinkOpeningScale: 1.8,
+  longThinkPercent: 5,
+  joinMedianMs: 1_500,
+  joinMinMs: 400,
+  readyMedianMs: 2_500,
+  readyMinMs: 800,
+  readySlowPercent: 8,
+  readySlowFromMs: 6_000,
   timeoutPercent: 0.5,
 };
 
@@ -36,12 +49,25 @@ const NUMBERS: Record<NumberKey, { min: number; max: number; int: boolean }> = {
   warmupTables: { min: 0, max: 100, int: true },
   growAfterMs: { min: 0, max: DAY, int: true },
   thinkScale: { min: 0, max: 5, int: false },
+  thinkTurnMs: { min: 0, max: 60_000, int: true },
+  thinkPerTileMs: { min: 0, max: 5_000, int: true },
+  thinkSpecialScale: { min: 0, max: 5, int: false },
+  thinkOpeningScale: { min: 0, max: 5, int: false },
+  longThinkPercent: { min: 0, max: 100, int: false },
+  joinMedianMs: { min: 0, max: 60_000, int: true },
+  joinMinMs: { min: 0, max: 60_000, int: true },
+  readyMedianMs: { min: 0, max: 60_000, int: true },
+  readyMinMs: { min: 0, max: 60_000, int: true },
+  readySlowPercent: { min: 0, max: 100, int: false },
+  readySlowFromMs: { min: 0, max: 60_000, int: true },
   timeoutPercent: { min: 0, max: 10, int: false },
 };
 const RANGES: Record<RangeKey, { max: number }> = {
   summonAfterMs: { max: 10 * 60_000 },
   botArrivalMs: { max: 10 * 60_000 },
   botRestMs: { max: DAY },
+  thinkForcedMs: { max: 60_000 },
+  thinkCallMs: { max: 60_000 },
 };
 
 /**

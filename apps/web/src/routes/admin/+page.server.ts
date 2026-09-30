@@ -20,16 +20,29 @@ const ms = (v: FormDataEntryValue | null): number | undefined => {
   return n === undefined ? undefined : Math.round(n * 1000);
 };
 
-const SECONDS = ['backgroundEveryMs', 'warmupEveryMs', 'growAfterMs'] as const;
-const RANGES = ['summonAfterMs', 'botArrivalMs', 'botRestMs'] as const;
+const SECONDS = [
+  'backgroundEveryMs',
+  'warmupEveryMs',
+  'growAfterMs',
+  'thinkTurnMs',
+  'thinkPerTileMs',
+  'joinMedianMs',
+  'joinMinMs',
+  'readyMedianMs',
+  'readyMinMs',
+  'readySlowFromMs',
+] as const;
+const RANGES = ['summonAfterMs', 'botArrivalMs', 'botRestMs', 'thinkForcedMs', 'thinkCallMs'] as const;
 const COUNTS = ['botPoolMin', 'botPoolMax', 'idleReserve', 'warmupTables'] as const;
+/** Plain numbers (multipliers, percents). */
+const NUMBERS = ['thinkScale', 'thinkSpecialScale', 'thinkOpeningScale', 'longThinkPercent', 'readySlowPercent', 'timeoutPercent'] as const;
 
 export const actions: Actions = {
   settings: async ({ locals, request }) => {
     requireAdmin(locals);
     const f = await request.formData();
     const patch: Partial<BotSettings> = { backgroundEnabled: f.get('backgroundEnabled') === 'on' };
-    for (const k of COUNTS) {
+    for (const k of [...COUNTS, ...NUMBERS]) {
       const v = num(f.get(k));
       if (v !== undefined) patch[k] = v;
     }
@@ -42,10 +55,6 @@ export const actions: Actions = {
       const hi = ms(f.get(`${k}.hi`));
       if (lo !== undefined && hi !== undefined) patch[k] = [lo, hi];
     }
-    const scale = num(f.get('thinkScale'));
-    if (scale !== undefined) patch.thinkScale = scale;
-    const timeouts = num(f.get('timeoutPercent'));
-    if (timeouts !== undefined) patch.timeoutPercent = timeouts;
     const r = await internalApi<{ settings: BotSettings }>('PUT', '/settings', patch);
     if (!r.ok) return fail(400, { form: 'settings', error: r.error });
     return { form: 'settings', ok: 'Saved' };

@@ -15,6 +15,7 @@ import { rig } from '../../../packages/engine/test/helpers.ts';
 import type { Config } from '../src/config.ts';
 import { anonymousBot, type SeatInit } from '../src/matchmaking.ts';
 import { joinDelay, readyDelay, thinkDelay } from '../src/pacing.ts';
+import { DEFAULT_BOT_SETTINGS as PACE } from '../src/settings.ts';
 import { Room } from '../src/room.ts';
 import { MemoryStore, type RatingUpdate } from '../src/store.ts';
 import { FakeClient, TEST_CONFIG, botSeat, seeded } from './helpers.ts';
@@ -138,7 +139,7 @@ describe('Room timers', () => {
     await room.idle();
     expect(room.state.seq).toBe(1); // discard → (no calls) → seat 1's turn
     expect(pendingSeats(room.state)).toEqual([1]);
-    const delay = thinkDelay(room.state, 1, { base: 5_000, bank: 20_000, scale: 1 }, () => 0);
+    const delay = thinkDelay(room.state, 1, { base: 5_000, bank: 20_000 }, PACE, () => 0);
     expect(delay).toBeGreaterThan(200);
     await vi.advanceTimersByTimeAsync(delay - 1);
     expect(room.state.seq).toBe(1);
@@ -182,7 +183,7 @@ describe('Room timers', () => {
       expect(b.room.state.phase).toBe('handOver');
       return Date.now();
     };
-    const botDelay = readyDelay(() => 0.5, { readyMs: 12_000, scale: 1 });
+    const botDelay = readyDelay(() => 0.5, 12_000, PACE);
     expect(botDelay).toBeGreaterThan(1_000);
 
     // The human confirms at once: the deal waits for the bots' confirms.
@@ -300,7 +301,7 @@ describe('Room countdowns', () => {
     await room.idle();
     expect(room.state.seq).toBe(seq);
     // Its think time runs from the end of the countdown.
-    const think = thinkDelay(room.state, 1, { base: 10_000, bank: 20_000, scale: 1, opening: true }, () => 0.5);
+    const think = thinkDelay(room.state, 1, { base: 10_000, bank: 20_000, opening: true }, PACE, () => 0.5);
     await vi.advanceTimersByTimeAsync(think - 1);
     await room.idle();
     expect(room.state.seq).toBe(seq);
@@ -361,7 +362,7 @@ describe('Room joining', () => {
     const random = seeded('join-room');
     // The room draws the three bots' delays from the same sequence first.
     const expected = seeded('join-room');
-    const delays = [0, 1, 2].map(() => joinDelay(expected, { maxMs: 10_000, scale: 1 }));
+    const delays = [0, 1, 2].map(() => joinDelay(expected, 10_000, PACE));
     const last = Math.max(...delays);
     const { room, clients } = await build([human('a'), bot, bot, bot], undefined, JOIN, true, { random });
     const a = clients[0]!;
@@ -419,7 +420,7 @@ describe('Room disconnects', () => {
     const { room, clients } = await build([human('a'), bot, bot, bot], turnState());
     const c = clients[0]!;
     room.detach(c);
-    const think = thinkDelay(room.state, 0, { base: 10_000, bank: 20_000, scale: 1, opening: true }, () => 0);
+    const think = thinkDelay(room.state, 0, { base: 10_000, bank: 20_000, opening: true }, PACE, () => 0);
     await vi.advanceTimersByTimeAsync(9_999);
     expect(room.state.seq).toBe(0);
     // Grace over: a bot decides for seat 0 after its think time.
@@ -623,7 +624,7 @@ describe('Room hidden information', () => {
   });
 
   it('bot think times do not depend on what the seat cannot see', async () => {
-    const pace = { base: 5_000, bank: 20_000, scale: 1 };
+    const pace = { base: 5_000, bank: 20_000 };
     const scramble = seeded('scramble-pace');
     let g = createGame(DEFAULT_RULES, 'pace').state;
     const random = seeded('pace-bots');
@@ -634,7 +635,7 @@ describe('Room hidden information', () => {
       }
       for (const seat of pendingSeats(g)) {
         const hidden = scrambleHidden(g, seat, scramble);
-        expect(thinkDelay(hidden, seat, pace, seeded(`t${i}`))).toBe(thinkDelay(g, seat, pace, seeded(`t${i}`)));
+        expect(thinkDelay(hidden, seat, pace, PACE, seeded(`t${i}`))).toBe(thinkDelay(g, seat, pace, PACE, seeded(`t${i}`)));
       }
       g = applyAction(g, botAction(g, pendingSeats(g)[0], { random })!).state;
     }

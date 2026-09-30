@@ -35,7 +35,7 @@ The DB schema is owned by apps/web (migrations there): `0002_game_server` = rati
   other seats' responses in a call window don't reset it. Bots (bot players and takeover bots) act after a
   human-like `thinkDelay` against the same base + bank (pacing.ts: quick when forced, longer with more options,
   ×1.8 on the opening, ~5 % long thinks into their own bank, never within 1 s of the deadline; × `thinkScale`; 0
-  when fast-forwarding). With `timeoutPercent` (0.5 %) a bot player at a table with a human times out instead (full
+  when fast-forwarding). All pacing numbers (think, join, ready) are runtime bot settings (`Pace` in pacing.ts). With `timeoutPercent` (0.5 %) a bot player at a table with a human times out instead (full
   base + bank, `timeoutAction`, bank emptied).
 - **Countdowns:** after a deal the room *holds* (`#holdUntil`, room-level, not in the engine or the log): 5 s after a
   new game's first deal, 3 s after every later deal (`startCountdownMs` / `handCountdownMs`). While held no decision

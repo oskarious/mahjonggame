@@ -22,8 +22,9 @@ import {
 import type { ErrorCode, Format, GameInfo, RatingChange, ServerMessage } from '@mahjong/protocol';
 import type { Config } from './config.ts';
 import type { SeatInit } from './matchmaking.ts';
-import { joinDelay, readyDelay, thinkDelay } from './pacing.ts';
+import { type Pace, joinDelay, readyDelay, thinkDelay } from './pacing.ts';
 import { clampHints, hintLevelForRating, ratingChanges } from './rating.ts';
+import { DEFAULT_BOT_SETTINGS } from './settings.ts';
 import type { RatingUpdate, SeatResult, Store } from './store.ts';
 
 /** What the room needs from a connection. */
@@ -99,8 +100,8 @@ export interface RoomDeps {
   onEnd: (room: Room, ratings: RatingUpdate[]) => void;
   random?: () => number;
   log?: (msg: string, err?: unknown) => void;
-  /** Current multiplier for bot think times (a runtime setting). Default 1. */
-  thinkScale?: () => number;
+  /** Current bot pacing (runtime settings). Default: the default settings. */
+  pace?: () => Pace;
   /** Chance in percent that a bot player lets a decision time out in a game with humans (a runtime setting). Default 0. */
   timeoutPercent?: () => number;
 }
@@ -156,7 +157,7 @@ export class Room {
   #onEnd: RoomDeps['onEnd'];
   #random: () => number;
   #log: (msg: string, err?: unknown) => void;
-  #thinkScale: () => number;
+  #pace: () => Pace;
   #timeoutPercent: () => number;
   #chain: Promise<void> = Promise.resolve();
   #pending = new Map<Seat, Pending>();
@@ -191,7 +192,7 @@ export class Room {
     this.#onEnd = deps.onEnd;
     this.#random = deps.random ?? Math.random;
     this.#log = deps.log ?? ((msg, err) => console.error(`[room ${init.id}] ${msg}`, err ?? ''));
-    this.#thinkScale = deps.thinkScale ?? (() => 1);
+    this.#pace = deps.pace ?? (() => DEFAULT_BOT_SETTINGS);
     this.#timeoutPercent = deps.timeoutPercent ?? (() => 0);
     this.#fast = init.fast ?? false;
     this.seats = init.seats.map((s) =>
@@ -478,7 +479,7 @@ export class Room {
     const g = this.state;
     const s = this.seats[seat];
     const base = this.#baseMs(g);
-    const delay = thinkDelay(g, seat, { base, bank: s.bank, scale: this.#thinkScale(), opening: isOpening(g) }, this.#random);
+    const delay = thinkDelay(g, seat, { base, bank: s.bank, opening: isOpening(g) }, this.#pace(), this.#random);
     s.bank = Math.max(0, s.bank - Math.max(0, delay - base));
     return delay;
   }
@@ -506,7 +507,7 @@ export class Room {
     this.#joining = true;
     this.#joinTimers.push(setTimeout(() => this.#run(() => this.#endJoining()), this.#config.joinMaxMs));
     for (const seat of bots) {
-      const delay = joinDelay(this.#random, { maxMs: this.#config.joinMaxMs, scale: this.#thinkScale() });
+      const delay = joinDelay(this.#random, this.#config.joinMaxMs, this.#pace());
       this.#joinTimers.push(
         setTimeout(() => {
           this.#run(() => {
@@ -559,7 +560,7 @@ export class Room {
     this.#clearBotReady();
     for (const s of this.seats) {
       if (s.kind !== 'bot') continue;
-      const delay = this.#fast ? 0 : readyDelay(this.#random, { readyMs: this.#config.readyMs, scale: this.#thinkScale() });
+      const delay = this.#fast ? 0 : readyDelay(this.#random, this.#config.readyMs, this.#pace());
       this.#botReadyTimers.push(
         setTimeout(() => {
           this.#run(() => {

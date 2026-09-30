@@ -221,7 +221,7 @@ export class Hub {
         config: this.#config,
         random: this.#random,
         log: this.#log,
-        thinkScale: () => this.bots.settings.thinkScale,
+        pace: () => this.bots.settings,
         timeoutPercent: () => this.bots.settings.timeoutPercent,
         onEnd: (r, ratings) => this.#onEnd(r, ratings),
       },
