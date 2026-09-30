@@ -232,10 +232,16 @@ export class RemoteGame implements GameSource {
           this.status = 'idle';
         }
         return;
-      case 'queue.status':
-        this.queue = { format: msg.format, waitedMs: msg.waitedMs, since: Date.now() - msg.waitedMs };
+      case 'queue.status': {
+        // Keep our own anchor while it agrees with the server: re-anchoring on every status (each late by its
+        // network latency) makes the shown wait step backwards.
+        const since = Date.now() - msg.waitedMs;
+        const prev = this.queue;
+        const keep = prev !== null && prev.format === msg.format && Math.abs(prev.since - since) < 3000;
+        this.queue = { format: msg.format, waitedMs: msg.waitedMs, since: keep ? prev.since : since };
         if (this.status !== 'playing') this.status = 'queued';
         return;
+      }
       case 'game.start':
         if (this.status === 'queued') sound().play('matchFound');
         this.info = msg.game;

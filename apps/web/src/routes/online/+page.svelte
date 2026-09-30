@@ -64,7 +64,8 @@
   let now = $state(Date.now());
   $effect(() => {
     if (game.status !== 'queued') return;
-    const id = setInterval(() => (now = Date.now()), 1000);
+    now = Date.now();
+    const id = setInterval(() => (now = Date.now()), 250);
     return () => clearInterval(id);
   });
   const waited = $derived(game.queue ? Math.max(0, Math.floor((now - game.queue.since) / 1000)) : 0);
