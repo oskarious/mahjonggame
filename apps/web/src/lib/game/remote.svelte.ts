@@ -11,6 +11,11 @@ import {
 import { sound } from '$lib/audio/player';
 import { type GameSource, type StepListener, StepListeners } from './source';
 
+/** Ask the server for a sign of life after this long without a message, ms. */
+const PING_AFTER_MS = 1_000;
+/** A socket silent for this long is dead even if the browser hasn't noticed (sleep, network switch): reconnect. */
+const STALE_MS = 3_000;
+
 export type RemoteStatus =
   /** Socket not open yet (first connection or reconnecting). */
   | 'connecting'
@@ -62,6 +67,9 @@ export class RemoteGame implements GameSource {
   #attempt = 0;
   #retry: ReturnType<typeof setTimeout> | null = null;
   #auto: ReturnType<typeof setTimeout> | null = null;
+  #watchdog: ReturnType<typeof setInterval>;
+  /** Date.now of the last message on the current socket. */
+  #lastMessageAt = 0;
   #destroyed = false;
   #url: string;
   #listeners = new StepListeners();
@@ -69,6 +77,9 @@ export class RemoteGame implements GameSource {
   constructor(hints: HintLevel = 'full', url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`) {
     this.#hints = hints;
     this.#url = url;
+    this.#watchdog = setInterval(this.#checkAlive, 500);
+    document.addEventListener('visibilitychange', this.#checkAlive);
+    window.addEventListener('online', this.#checkAlive);
     this.connect();
   }
 
@@ -91,11 +102,14 @@ export class RemoteGame implements GameSource {
     this.status = 'connecting';
     const ws = new WebSocket(this.#url);
     this.#ws = ws;
+    this.#lastMessageAt = Date.now();
     ws.onopen = () => {
       this.#attempt = 0;
+      this.#lastMessageAt = Date.now();
       this.#send({ type: 'hello', version: PROTOCOL_VERSION });
     };
     ws.onmessage = (e) => {
+      this.#lastMessageAt = Date.now();
       let msg: ServerMessage;
       try {
         msg = JSON.parse(e.data as string);
@@ -130,6 +144,9 @@ export class RemoteGame implements GameSource {
 
   destroy(): void {
     this.#destroyed = true;
+    clearInterval(this.#watchdog);
+    document.removeEventListener('visibilitychange', this.#checkAlive);
+    window.removeEventListener('online', this.#checkAlive);
     if (this.#retry) clearTimeout(this.#retry);
     if (this.#auto) clearTimeout(this.#auto);
     this.#ws?.close();
@@ -204,6 +221,25 @@ export class RemoteGame implements GameSource {
   #send(msg: ClientMessage): void {
     if (this.#ws?.readyState === WebSocket.OPEN) this.#ws.send(JSON.stringify(msg));
   }
+
+  /**
+   * A dead connection can look open to the browser for minutes, freezing the table until a reload: ping when the
+   * socket has gone quiet (the server answers `pong`), and reconnect at once when nothing arrives.
+   */
+  #checkAlive = (): void => {
+    const ws = this.#ws;
+    if (!ws || this.#destroyed || document.visibilityState === 'hidden') return;
+    const quiet = Date.now() - this.#lastMessageAt;
+    if (quiet > STALE_MS) {
+      ws.onopen = ws.onmessage = ws.onclose = ws.onerror = null;
+      ws.close();
+      this.#ws = null;
+      this.#attempt = 0;
+      this.connect();
+    } else if (quiet > PING_AFTER_MS && ws.readyState === WebSocket.OPEN) {
+      this.#send({ type: 'ping' });
+    }
+  };
 
   #scheduleReconnect(): void {
     const delay = Math.min(15_000, 1000 * 2 ** Math.min(this.#attempt, 4)) * (0.8 + Math.random() * 0.4);

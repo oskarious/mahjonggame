@@ -10,7 +10,7 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
   src/lib/game/source.ts         GameSource: what the table needs (view, names, red, act, next)
   src/lib/game/local.svelte.ts   LocalGame: engine + bots in the browser (offline play, debug controls)
   src/lib/game/saved.ts          the offline game in localStorage (rules, seed, seat, settings, action log)
-  src/lib/game/remote.svelte.ts  RemoteGame: same-origin /ws client, auto-reconnect, takeover, deadline state
+  src/lib/game/remote.svelte.ts  RemoteGame: same-origin /ws client, auto-reconnect (+ ping watchdog: a socket silent 3 s is replaced), takeover, deadline state
   src/lib/server/       db.ts (Kysely + pg pool), schema.ts (table types incl. rating/game tables), auth.ts, migrate.ts,
                         admin.ts (calls the game server's /internal API), game-server.ts (is the game server up? →
                         "Play online" on the home page)
