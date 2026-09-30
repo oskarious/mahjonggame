@@ -52,7 +52,11 @@ sounds, theme. Structure of the web app: [web.md](web.md).
   glyphs are SVG text in the device's fonts ('Malgun Gothic', else sans-serif), never a shipped font.
 - Tiles show a Latin corner index (1-9 in suit colour, E/S/W/N, Wh/G/R); hidden on tiles < 16 px; toggle in settings
   (the toggle only affects corner labels, never the compact face).
-- Dark neutral theme (tokens in `src/app.css`); no green felt.
+- Dark theme on the table green `--bg` (#48754d) with a faint drifting pattern (`BgPattern.svelte`); surfaces and
+  panels are `--bg` mixed toward `--tint`, so changing `--bg` re-tints everything (tokens in `src/app.css`).
+- **Typeface:** Bricolage Grotesque, the logo's face, self-hosted (`@fontsource-variable/bricolage-grotesque`, the
+  opsz file: weight 200–800 plus optical size), imported in `+layout.svelte` and set on `:root`. Keep a weight
+  hierarchy: text 400, labels/buttons 500–600, numbers/emphasis 700; 800 is the wordmark's (and the seat winds').
 
 ## Hints
 

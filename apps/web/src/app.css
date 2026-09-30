@@ -37,7 +37,9 @@
   --tile-back: #2c6e8f;
   --radius: 12px;
   color-scheme: dark;
+  /* The logo's typeface, self-hosted (+layout.svelte imports it); variable weight and optical size. */
   font-family:
+    "Bricolage Grotesque Variable",
     system-ui,
     -apple-system,
     "Segoe UI",

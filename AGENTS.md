@@ -76,6 +76,9 @@ Calibration: engine.md. Docker images: deployment.md.
 - **Re-run bot calibration after any bot change** and commit the generated `bot-ratings.ts`.
 - **The `user` table contains bot players**: anything that counts, lists or emails users must join `bot`.
 - **UI:** portrait one-handed; minimal text, visual cues with one meaning each; never hard-code the 4/3 tile ratio.
+- **Follow the design system** ([Riichi Arena Design System](https://claude.ai/artifact/DwEQduBX3mYVKbfkuYhnvp): tokens,
+  type, components, brand marks; read its README first) by default. Deviate only when explicitly decided, and then
+  update the design system or note the deviation.
 - **Keep DB types in sync:** a migration touching game-server tables also updates `apps/game-server/src/db.ts`.
 - **Stop the dev servers you started** once your browser check is done; reuse the existing launch configs.
 - When a new test suite passes first time, sanity-check it by planting bugs (mutation check) — we did this for the

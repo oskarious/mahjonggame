@@ -1,4 +1,5 @@
 <script lang="ts">
+  import '@fontsource-variable/bricolage-grotesque/opsz.css';
   import '../app.css';
   import { page } from '$app/state';
   import BgPattern from '$lib/components/BgPattern.svelte';
