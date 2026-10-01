@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
-  import type { HintLevel } from '@mahjong/engine';
   import type { Format } from '@mahjong/protocol';
   import { RemoteGame } from '$lib/game/remote.svelte';
   import { WINDS } from '$lib/labels';
@@ -9,28 +8,7 @@
   import Table from '$lib/components/Table.svelte';
   import Title from '$lib/components/Title.svelte';
 
-  const HINTS_KEY = 'riichi:onlineHints';
-  function readHints(): HintLevel {
-    try {
-      const v = localStorage.getItem(HINTS_KEY);
-      return v === 'off' || v === 'distance' || v === 'full' ? v : 'full';
-    } catch {
-      return 'full';
-    }
-  }
-  let hints: HintLevel = $state(readHints());
-  function setHints(level: HintLevel) {
-    hints = level;
-    game.setHints(level);
-    try {
-      localStorage.setItem(HINTS_KEY, level);
-    } catch {
-      /* storage unavailable */
-    }
-  }
-
-  // Initial level only; later changes go through setHints.
-  const game = new RemoteGame(readHints());
+  const game = new RemoteGame();
   const AUTO_KEY = 'riichi:autoRiichi';
   const SKIP_KEY = 'riichi:skipCalls';
   function readFlag(key: string, fallback: boolean) {
@@ -72,12 +50,6 @@
   const waited = $derived(game.queue ? Math.max(0, Math.floor((now - game.queue.since) / 1000)) : 0);
   const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-  // The server clamps hints to what the rating allows; mirror that in the settings choices.
-  const maxHints = $derived.by((): HintLevel => {
-    const r = game.rating?.rating ?? 1000;
-    return r < 1300 ? 'distance' : 'off';
-  });
-
   function again() {
     game.clearGame();
     table?.reset();
@@ -95,9 +67,6 @@
   <Table
     bind:this={table}
     {game}
-    {hints}
-    {maxHints}
-    onhints={setHints}
     players={game.info?.players ?? null}
     timed
     deadlineAt={game.deadlineAt}

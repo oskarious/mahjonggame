@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { type HintLevel, nextUint32, seedRng } from '@mahjong/engine';
+import { nextUint32, seedRng } from '@mahjong/engine';
 import type { RatingInfo, ServerMessage } from '@mahjong/protocol';
 import { DEFAULT_CONFIG, type Config } from '../src/config.ts';
 import type { Hub, HubClient } from '../src/hub.ts';
@@ -59,7 +59,6 @@ export async function tickUntil(hub: Hub, done: () => boolean, maxSeconds = 120)
 export class FakeClient implements HubClient {
   readonly user: { id: string; name: string };
   rating: RatingInfo = { rating: 1000, games: 0 };
-  hints: HintLevel = 'full';
   sent: ServerMessage[] = [];
   closedWith: { code: number; reason: string } | null = null;
 

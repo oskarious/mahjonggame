@@ -3,7 +3,7 @@
 import type { Action, FinalStanding, GameEvent, HintLevel, PlayerView } from '@mahjong/engine';
 
 /** Bumped when a change is not backwards compatible; the server refuses other versions. */
-export const PROTOCOL_VERSION = 4;
+export const PROTOCOL_VERSION = 5;
 
 /** Game length. Both use the online default rules (DEFAULT_RULES with this length). */
 export type Format = 'east' | 'south';
@@ -28,7 +28,6 @@ export type ClientMessage =
   /** Ask for the full current view (after missed updates). */
   | { type: 'resync' }
   /** Lower the hint level below what the rating allows (never raises it). */
-  | { type: 'hints'; level: HintLevel }
   | { type: 'ping' };
 
 // ---------------------------------------------------------------------------

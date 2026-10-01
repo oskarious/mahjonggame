@@ -56,7 +56,7 @@ async function build(
     { id: 'g1', format: 'east', rules, seed, seats, state, fast: opts.fast },
   );
   const clients = seats.map((s) => (s.kind === 'human' ? new FakeClient(s.userId) : null));
-  if (attach) clients.forEach((c, i) => c && room.attach(i, c, 'full', true));
+  if (attach) clients.forEach((c, i) => c && room.attach(i, c, true));
   room.start();
   await room.idle();
   return { room, store, clients, ended };
@@ -565,17 +565,11 @@ describe('Room authority', () => {
     expect(clients[2]!.last('update')!.view.actions).toEqual([]);
   });
 
-  it('applies the hint level and lets the client lower it', async () => {
-    const { room, clients } = await build([human('a', 1000), human('b', 1200), human('c', 1400), bot], turnState());
+  it('applies the hint level of the rating', async () => {
+    const { clients } = await build([human('a', 1000), human('b', 1200), human('c', 1400), bot], turnState());
     expect(clients[0]!.last('update')!.view.hints?.level).toBe('distance');
     expect(clients[1]!.last('update')!.view.hints?.level).toBe('distance');
     expect(clients[2]!.last('update')!.view.hints).toBeNull();
-    room.setHints(0, 'off');
-    await room.idle();
-    expect(clients[0]!.last('update')!.view.hints).toBeNull();
-    room.setHints(1, 'full');
-    await room.idle();
-    expect(clients[1]!.last('update')!.view.hints?.level).toBe('distance');
   });
 
   it('persists an action before anyone sees the result', async () => {

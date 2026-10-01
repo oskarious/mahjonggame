@@ -19,7 +19,7 @@ A client is assumed to be modified: it reads every byte and every timing it gets
   it, and the room sends no update to anyone but the responder (an update alone would say "someone else could call
   and answered"). `act` is validated against `publicSeq`. Keep new messages to that standard: no per-seat info about
   others, no messages whose mere existence or timing depends on hidden state.
-- **Hint levels are enforced server-side** (`clampHints`, only ever lowered by the client). `view.tenpai` is
+- **Hint levels are enforced server-side** (from the rating; online games have no hint setting). `view.tenpai` is
   deliberately ungated (own hand + public tiles only). The engine is open, so hints are a convenience, not a secret.
 - **Wall RNG is cryptographic** (ChaCha20 keyed with SHA-256 of the secret `randomUUID` seed, `src/rng.ts`): revealed
   tiles don't let anyone reconstruct the generator and predict later walls. Never send the seed or the RNG state to a

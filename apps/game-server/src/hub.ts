@@ -1,6 +1,6 @@
 // Everything that is not one game: connected users, the queue, the bot players, the rooms, and routing of client
 // messages.
-import { DEFAULT_RULES, type HintLevel, makeRules } from '@mahjong/engine';
+import { DEFAULT_RULES, makeRules } from '@mahjong/engine';
 import type { ClientMessage, Format, GameInfo, RatingInfo, ServerMessage } from '@mahjong/protocol';
 import { randomUUID } from 'node:crypto';
 import { BotPool } from './bots.ts';
@@ -13,8 +13,6 @@ import type { RatingUpdate, Store, StoredGame } from './store.ts';
 export interface HubClient extends Client {
   readonly user: { id: string; name: string };
   rating: RatingInfo;
-  /** Hint level the client asked for (never more than the rating allows). */
-  hints: HintLevel;
   /** Ends the connection; `takenOver` marks the reason for the client. */
   close(code: number, reason: string): void;
 }
@@ -85,7 +83,7 @@ export class Hub {
       activeGame: active ? active.room.info(active.seat) : null,
       queued: this.matchmaker.formatOf(id),
     });
-    if (active) active.room.attach(active.seat, client, client.hints);
+    if (active) active.room.attach(active.seat, client);
     if (old && old !== client) {
       old.send({ type: 'takenOver' });
       old.close(4000, 'takenOver');
@@ -142,10 +140,6 @@ export class Hub {
         if (format) client.send({ type: 'queue.status', format, waitedMs: this.matchmaker.waitedMs(id, this.#now()) ?? 0 });
         return;
       }
-      case 'hints':
-        client.hints = msg.level;
-        if (active) active.room.setHints(active.seat, msg.level);
-        return;
     }
   }
 
@@ -177,7 +171,7 @@ export class Hub {
       const client = this.#clients.get(s.userId);
       if (client) {
         client.send({ type: 'game.start', game: room.info(seat) });
-        room.attach(seat, client, client.hints, true);
+        room.attach(seat, client, true);
       }
     }
     room.start();

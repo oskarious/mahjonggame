@@ -5,10 +5,9 @@
   import { setTileset, tileset } from '$lib/tileset.svelte';
 
   interface Props {
-    hints: HintLevel;
-    /** Highest level allowed (online: decided by the server from the rating). */
-    maxHints?: HintLevel;
-    onhints: (level: HintLevel) => void;
+    /** Offline only: online, the server decides hints from the rating. */
+    hints?: HintLevel;
+    onhints?: (level: HintLevel) => void;
     quickDiscard: boolean;
     onquick: (v: boolean) => void;
     tileLabels: boolean;
@@ -26,7 +25,6 @@
   }
   let {
     hints,
-    maxHints = 'full',
     onhints,
     quickDiscard,
     onquick,
@@ -46,8 +44,6 @@
     { value: 'distance', label: 'Distance ("3 away")' },
     { value: 'full', label: '+ Discard advice' },
   ];
-  const ORDER: HintLevel[] = ['off', 'distance', 'full'];
-  const allowed = $derived(LEVELS.filter((l) => ORDER.indexOf(l.value) <= ORDER.indexOf(maxHints)));
 </script>
 
 <div class="backdrop" onclick={onclose} role="presentation">
@@ -62,12 +58,14 @@
   >
     <h2>Settings</h2>
 
-    <label>
-      <span>Hand hints</span>
-      <select value={hints} onchange={(e) => onhints(e.currentTarget.value as HintLevel)}>
-        {#each allowed as l (l.value)}<option value={l.value}>{l.label}</option>{/each}
-      </select>
-    </label>
+    {#if onhints}
+      <label>
+        <span>Hand hints</span>
+        <select value={hints} onchange={(e) => onhints(e.currentTarget.value as HintLevel)}>
+          {#each LEVELS as l (l.value)}<option value={l.value}>{l.label}</option>{/each}
+        </select>
+      </label>
+    {/if}
 
     <label>
       <span>Tiles</span>

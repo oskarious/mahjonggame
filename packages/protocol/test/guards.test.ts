@@ -20,8 +20,6 @@ describe('client message guards', () => {
       { type: 'act', gameId: 'g1', seq: 3, action: { type: 'kyuushu', seat: 3 } },
       { type: 'ready', gameId: 'g1' },
       { type: 'resync' },
-      { type: 'hints', level: 'off' },
-      { type: 'hints', level: 'full' },
       { type: 'ping' },
     ];
     for (const m of ok) expect(isClientMessage(m), JSON.stringify(m)).toBe(true);
@@ -52,7 +50,7 @@ describe('client message guards', () => {
       { type: 'act', gameId: 'g', seq: 1, action: { type: 'pon', seat: 0, tiles: [1, 2, 3, 4] } },
       { type: 'act', gameId: 'g', seq: 1, action: { type: 'pon', seat: 0, tiles: ['1m'] } },
       { type: 'ready' },
-      { type: 'hints', level: 'all' },
+      { type: 'hints', level: 'off' },
     ];
     for (const m of bad) expect(isClientMessage(m), JSON.stringify(m)).toBe(false);
   });

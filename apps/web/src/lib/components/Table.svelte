@@ -19,9 +19,9 @@
 
   interface Props {
     game: GameSource;
-    hints: HintLevel;
-    maxHints?: HintLevel;
-    onhints: (level: HintLevel) => void;
+    /** Offline only (see SettingsSheet). */
+    hints?: HintLevel;
+    onhints?: (level: HintLevel) => void;
     /** Online: seat info (ratings). */
     players?: PlayerInfo[] | null;
     /** Online: the table has a decision timer (shown on the own panel's tile slot). */
@@ -43,7 +43,6 @@
   let {
     game,
     hints,
-    maxHints = 'full',
     onhints,
     players = null,
     timed = false,
@@ -179,7 +178,6 @@
 {#if showSettings}
   <SettingsSheet
     {hints}
-    {maxHints}
     {onhints}
     {quickDiscard}
     onquick={setQuick}

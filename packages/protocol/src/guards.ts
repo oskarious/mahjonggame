@@ -1,6 +1,6 @@
 // Hand-written validation of incoming client messages: shape only. Whether an action is legal is the engine's call.
 import type { Action } from '@mahjong/engine';
-import { type ClientMessage, type Format, FORMATS, HINT_LEVELS, MAX_MESSAGE_BYTES } from './messages.ts';
+import { type ClientMessage, type Format, FORMATS, MAX_MESSAGE_BYTES } from './messages.ts';
 
 type Obj = Record<string, unknown>;
 
@@ -64,8 +64,6 @@ export function isClientMessage(v: unknown): v is ClientMessage {
       return isId(v.gameId) && isInt(v.seq, 0, 1_000_000_000) && isAction(v.action);
     case 'ready':
       return isId(v.gameId);
-    case 'hints':
-      return typeof v.level === 'string' && (HINT_LEVELS as readonly string[]).includes(v.level);
     default:
       return false;
   }

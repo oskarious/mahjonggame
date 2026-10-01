@@ -1,5 +1,4 @@
 // One WebSocket: handshake (`hello`), message validation, rate limit, heartbeat. Game logic lives in the hub.
-import { type HintLevel } from '@mahjong/engine';
 import { MAX_MESSAGE_BYTES, PROTOCOL_VERSION, type RatingInfo, type ServerMessage, parseClientMessage } from '@mahjong/protocol';
 import type { WebSocket } from 'ws';
 import type { AuthUser } from './auth.ts';
@@ -12,7 +11,6 @@ const RATE_PER_SECOND = 20;
 export class Connection implements HubClient {
   readonly user: AuthUser;
   rating: RatingInfo = { rating: 1000, games: 0 };
-  hints: HintLevel = 'full';
   #ws: WebSocket;
   #hub: Hub;
   #ready = false;

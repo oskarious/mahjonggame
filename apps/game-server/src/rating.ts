@@ -35,15 +35,8 @@ export function ratingChanges(seats: RatedSeat[], config: RatingConfig): number[
   });
 }
 
-const ORDER: HintLevel[] = ['off', 'distance', 'full'];
-
 /** The most help a player of this rating gets online. */
 export function hintLevelForRating(rating: number, config: Pick<Config, 'hintThresholds'>): HintLevel {
   if (rating < config.hintThresholds.distance) return 'distance';
   return 'off';
-}
-
-/** A client may lower its hint level, never raise it. */
-export function clampHints(allowed: HintLevel, wanted: HintLevel): HintLevel {
-  return ORDER[Math.min(ORDER.indexOf(allowed), ORDER.indexOf(wanted))];
 }

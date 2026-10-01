@@ -23,7 +23,7 @@ import type { ErrorCode, Format, GameInfo, RatingChange, ServerMessage } from '@
 import type { Config } from './config.ts';
 import type { SeatInit } from './matchmaking.ts';
 import { type Pace, joinDelay, readyDelay, thinkDelay } from './pacing.ts';
-import { clampHints, hintLevelForRating, ratingChanges } from './rating.ts';
+import { hintLevelForRating, ratingChanges } from './rating.ts';
 import { DEFAULT_BOT_SETTINGS } from './settings.ts';
 import type { RatingUpdate, SeatResult, Store } from './store.ts';
 
@@ -46,8 +46,7 @@ export interface HumanSeat {
   botControlled: boolean;
   /** Time bank left this hand, ms. */
   bank: number;
-  /** Most help this player's rating allows; `hints` is what they get (they may lower it). */
-  maxHints: HintLevel;
+  /** Decided by the rating. */
   hints: HintLevel;
   /** Confirmed the hand result (between hands). */
   ready: boolean;
@@ -217,7 +216,6 @@ export class Room {
             disconnectedAt: null,
             botControlled: false,
             bank: this.#config.bankMs,
-            maxHints: hintLevelForRating(s.rating, this.#config),
             hints: hintLevelForRating(s.rating, this.#config),
             ready: false,
           },
@@ -280,12 +278,11 @@ export class Room {
   }
 
   /** Connects (or reconnects) the human at `seat`. Sends the current view unless `silent`. */
-  attach(seat: Seat, client: Client, hints: HintLevel = 'full', silent = false): void {
+  attach(seat: Seat, client: Client, silent = false): void {
     const h = this.humanAt(seat);
     h.client = client;
     h.disconnectedAt = null;
     h.botControlled = false;
-    h.hints = clampHints(h.maxHints, hints);
     const grace = this.#graceTimers.get(seat);
     if (grace) clearTimeout(grace);
     this.#graceTimers.delete(seat);
@@ -345,12 +342,6 @@ export class Room {
       this.humanAt(seat).ready = true;
       if (this.#allReady()) this.#nextHand();
     });
-  }
-
-  setHints(seat: Seat, level: HintLevel): void {
-    const h = this.humanAt(seat);
-    h.hints = clampHints(h.maxHints, level);
-    this.#run(() => this.#sendUpdate(seat, []));
   }
 
   resync(seat: Seat): void {

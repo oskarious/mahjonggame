@@ -1,4 +1,4 @@
-import { type Action, DEFAULT_RULES, type FinalStanding, type HintLevel, type PlayerView, type RedFives } from '@mahjong/engine';
+import { type Action, DEFAULT_RULES, type FinalStanding, type PlayerView, type RedFives } from '@mahjong/engine';
 import {
   type ClientMessage,
   type Format,
@@ -63,7 +63,6 @@ export class RemoteGame implements GameSource {
   });
 
   #ws: WebSocket | null = null;
-  #hints: HintLevel;
   #attempt = 0;
   #retry: ReturnType<typeof setTimeout> | null = null;
   #auto: ReturnType<typeof setTimeout> | null = null;
@@ -74,8 +73,7 @@ export class RemoteGame implements GameSource {
   #url: string;
   #listeners = new StepListeners();
 
-  constructor(hints: HintLevel = 'full', url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`) {
-    this.#hints = hints;
+  constructor(url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`) {
     this.#url = url;
     this.#watchdog = setInterval(this.#checkAlive, 500);
     document.addEventListener('visibilitychange', this.#checkAlive);
@@ -177,11 +175,6 @@ export class RemoteGame implements GameSource {
     this.waitingNext = true;
   }
 
-  setHints(level: HintLevel): void {
-    this.#hints = level;
-    this.#send({ type: 'hints', level });
-  }
-
   resync(): void {
     this.#send({ type: 'resync' });
   }
@@ -256,7 +249,6 @@ export class RemoteGame implements GameSource {
         this.user = msg.user;
         this.rating = msg.rating;
         this.error = null;
-        if (this.#hints !== 'full') this.#send({ type: 'hints', level: this.#hints });
         if (msg.activeGame) {
           this.info = msg.activeGame;
           this.end = null;
