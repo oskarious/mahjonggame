@@ -15,6 +15,14 @@ export interface Tileset {
 }
 export type TilesetId = 'classic' | 'slim';
 
+// Tile artwork is bundled by Vite: content-hashed, immutable URLs (small files inlined as data URIs).
+const FILES = import.meta.glob<string>('./assets/tiles/**/*.svg', { query: '?url', import: 'default', eager: true });
+
+/** The URL of a file under assets/tiles/. */
+function file(path: string): string {
+  return FILES[`./assets/tiles/${path}`];
+}
+
 const SLIM_SUITS = ['man', 'pin', 'sou'];
 const SLIM_HONORS = ['e', 's', 'w', 'n', 'wh', 'g', 'r'];
 
@@ -25,9 +33,9 @@ export const TILESETS: Record<TilesetId, Tileset> = {
     ratio: 4 / 3,
     margin: { y: 7, x: 8 },
     image(k, red) {
-      if (k >= 27) return `/tiles/${HONORS[k - 27]}.svg`;
+      if (k >= 27) return file(`${HONORS[k - 27]}.svg`);
       const n = (k % 9) + 1;
-      return `/tiles/${SUITS[Math.floor(k / 9)]}${n}${red && n === 5 ? '-Dora' : ''}.svg`;
+      return file(`${SUITS[Math.floor(k / 9)]}${n}${red && n === 5 ? '-Dora' : ''}.svg`);
     },
   },
   // Drawn for this project, about 1:2, artwork edge to edge.
@@ -36,9 +44,9 @@ export const TILESETS: Record<TilesetId, Tileset> = {
     ratio: 119 / 60,
     margin: { y: 0, x: 0 },
     image(k, red) {
-      if (k >= 27) return `/tiles/slim/hon/${SLIM_HONORS[k - 27]}.svg`;
+      if (k >= 27) return file(`slim/hon/${SLIM_HONORS[k - 27]}.svg`);
       const n = (k % 9) + 1;
-      return `/tiles/slim/${SLIM_SUITS[Math.floor(k / 9)]}/${n}${red && n === 5 ? 'r' : ''}.svg`;
+      return file(`slim/${SLIM_SUITS[Math.floor(k / 9)]}/${n}${red && n === 5 ? 'r' : ''}.svg`);
     },
   },
 };

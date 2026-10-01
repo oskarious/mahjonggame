@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 const src = process.argv[2];
 if (!src) throw new Error('usage: node slim-tiles.mjs <source dir>');
-const out = fileURLToPath(new URL('../static/tiles/slim', import.meta.url));
+const out = fileURLToPath(new URL('../src/lib/assets/tiles/slim', import.meta.url));
 const DIRS = ['man', 'pin', 'sou', 'hon'];
 
 const files = () => DIRS.flatMap((d) => readdirSync(join(out, d)).map((f) => join(out, d, f)));
