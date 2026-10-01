@@ -35,11 +35,10 @@ export function ratingChanges(seats: RatedSeat[], config: RatingConfig): number[
   });
 }
 
-const ORDER: HintLevel[] = ['off', 'distance', 'waits', 'full'];
+const ORDER: HintLevel[] = ['off', 'distance', 'full'];
 
 /** The most help a player of this rating gets online. */
 export function hintLevelForRating(rating: number, config: Pick<Config, 'hintThresholds'>): HintLevel {
-  if (rating < config.hintThresholds.waits) return 'waits';
   if (rating < config.hintThresholds.distance) return 'distance';
   return 'off';
 }

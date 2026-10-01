@@ -12,7 +12,7 @@
   function readHints(): HintLevel {
     try {
       const v = localStorage.getItem(HINTS_KEY);
-      return v === 'off' || v === 'distance' || v === 'waits' || v === 'full' ? v : 'full';
+      return v === 'off' || v === 'distance' || v === 'full' ? v : 'full';
     } catch {
       return 'full';
     }
@@ -74,7 +74,7 @@
   // The server clamps hints to what the rating allows; mirror that in the settings choices.
   const maxHints = $derived.by((): HintLevel => {
     const r = game.rating?.rating ?? 1000;
-    return r < 1100 ? 'waits' : r < 1300 ? 'distance' : 'off';
+    return r < 1300 ? 'distance' : 'off';
   });
 
   function again() {

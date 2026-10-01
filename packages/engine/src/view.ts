@@ -63,10 +63,10 @@ export interface PlayerView {
  * player's rating or the table settings); anything above it is never sent, so the client cannot peek.
  *   off      nothing
  *   distance how far from winning: "5 away", "tenpai", "complete"
- *   waits    + winning tiles (with copies left) and furiten, between turns
- *   full     + tiles that improve the hand and a ranked list of discards
+ *   full     + tiles that improve the hand and a ranked list of discards (with the waits after each)
+ * Waits and furiten are not a hint level: `PlayerView.tenpai` always carries them.
  */
-export type HintLevel = 'off' | 'distance' | 'waits' | 'full';
+export type HintLevel = 'off' | 'distance' | 'full';
 
 export interface HandHints {
   level: HintLevel;
@@ -76,10 +76,8 @@ export interface HandHints {
   shanten: number;
   tenpai: boolean;
   complete: boolean;
-  /** 'waits' and up; between turns only (empty on own turn). */
+  /** 'full' only. On own turn: after the best discard. */
   waits?: TileCount[];
-  furiten?: boolean;
-  /** 'full' only. */
   ukeire?: TileCount[];
   total?: number;
   discards?: DiscardOption[] | null;
@@ -93,7 +91,6 @@ export interface ViewOptions {
 export function handHints(g: GameState, seat: Seat, level: HintLevel): HandHints | null {
   if (level === 'off' || g.phase !== 'playing') return null;
   const a = analyzeSeat(g, seat);
-  const onTurn = a.discards !== null;
   const hints: HandHints = {
     level,
     tilesAway: a.complete ? 0 : a.shanten + 1,
@@ -102,9 +99,6 @@ export function handHints(g: GameState, seat: Seat, level: HintLevel): HandHints
     complete: a.complete,
   };
   if (level === 'distance') return hints;
-  hints.waits = onTurn ? [] : a.waits;
-  hints.furiten = a.furiten;
-  if (level === 'waits') return hints;
   return { ...hints, waits: a.waits, ukeire: a.ukeire, total: a.total, discards: a.discards };
 }
 

@@ -62,17 +62,15 @@ describe('ratingChanges', () => {
 
 describe('hints by rating', () => {
   it('follows the thresholds', () => {
-    expect(hintLevelForRating(1000, TEST_CONFIG)).toBe('waits');
-    expect(hintLevelForRating(1099, TEST_CONFIG)).toBe('waits');
-    expect(hintLevelForRating(1100, TEST_CONFIG)).toBe('distance');
+    expect(hintLevelForRating(1000, TEST_CONFIG)).toBe('distance');
     expect(hintLevelForRating(1299, TEST_CONFIG)).toBe('distance');
     expect(hintLevelForRating(1300, TEST_CONFIG)).toBe('off');
   });
 
   it('can only be lowered by the client', () => {
-    expect(clampHints('waits', 'full')).toBe('waits');
-    expect(clampHints('waits', 'off')).toBe('off');
-    expect(clampHints('off', 'waits')).toBe('off');
+    expect(clampHints('distance', 'full')).toBe('distance');
+    expect(clampHints('distance', 'off')).toBe('off');
+    expect(clampHints('off', 'full')).toBe('off');
     expect(clampHints('distance', 'distance')).toBe('distance');
   });
 });

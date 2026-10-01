@@ -44,10 +44,9 @@
   const LEVELS: { value: HintLevel; label: string }[] = [
     { value: 'off', label: 'Off' },
     { value: 'distance', label: 'Distance ("3 away")' },
-    { value: 'waits', label: '+ Waiting tiles' },
     { value: 'full', label: '+ Discard advice' },
   ];
-  const ORDER: HintLevel[] = ['off', 'distance', 'waits', 'full'];
+  const ORDER: HintLevel[] = ['off', 'distance', 'full'];
   const allowed = $derived(LEVELS.filter((l) => ORDER.indexOf(l.value) <= ORDER.indexOf(maxHints)));
 </script>
 

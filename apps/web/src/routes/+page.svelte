@@ -11,7 +11,7 @@
   let preset = $state("default");
   let length = $state("east");
   let bots = $state(DEFAULT_BOT_ELO);
-  let hints = $state("waits");
+  let hints = $state("distance");
   /** Read on mount: the page is server-rendered and the save lives in the browser. */
   let saved: SavedGame | null = $state(null);
 
@@ -99,7 +99,6 @@
       <select bind:value={hints}>
         <option value="off">Off</option>
         <option value="distance">Distance ("3 away")</option>
-        <option value="waits">+ Waiting tiles</option>
         <option value="full">+ Discard advice</option>
       </select>
     </fieldset>

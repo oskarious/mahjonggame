@@ -25,7 +25,7 @@ import {
 import { chacha20Block, nextUint32, sha256, utf8 } from '../src/rng.ts';
 import { rig } from './helpers.ts';
 
-const LEVELS: HintLevel[] = ['off', 'distance', 'waits', 'full'];
+const LEVELS: HintLevel[] = ['off', 'distance', 'full'];
 const hex = (words: number[]) => words.map((w) => w.toString(16).padStart(8, '0')).join('');
 
 function seededRandom(seed: string): () => number {

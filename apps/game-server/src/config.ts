@@ -30,8 +30,8 @@ export interface Config {
   windowBase: number;
   windowPerSecond: number;
   windowMax: number;
-  /** Hint level by rating: below `waits` → waits, below `distance` → distance, otherwise off. */
-  hintThresholds: { waits: number; distance: number };
+  /** Hint level by rating: below `distance` → distance, otherwise off. Waits are always shown. */
+  hintThresholds: { distance: number };
   /** Heartbeat ping interval, ms; two missed pongs close the connection. */
   heartbeatMs: number;
   /** Rating K factor: `kNew` for the first `newGames` rated games, then `k`. */
@@ -63,7 +63,7 @@ export const DEFAULT_CONFIG: Config = {
   windowBase: 150,
   windowPerSecond: 20,
   windowMax: 800,
-  hintThresholds: { waits: 1100, distance: 1300 },
+  hintThresholds: { distance: 1300 },
   heartbeatMs: 20_000,
   kNew: 40,
   k: 20,

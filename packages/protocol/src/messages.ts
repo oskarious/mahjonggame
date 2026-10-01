@@ -3,14 +3,14 @@
 import type { Action, FinalStanding, GameEvent, HintLevel, PlayerView } from '@mahjong/engine';
 
 /** Bumped when a change is not backwards compatible; the server refuses other versions. */
-export const PROTOCOL_VERSION = 3;
+export const PROTOCOL_VERSION = 4;
 
 /** Game length. Both use the online default rules (DEFAULT_RULES with this length). */
 export type Format = 'east' | 'south';
 export const FORMATS: readonly Format[] = ['east', 'south'];
 
 export type { HintLevel };
-export const HINT_LEVELS: readonly HintLevel[] = ['off', 'distance', 'waits', 'full'];
+export const HINT_LEVELS: readonly HintLevel[] = ['off', 'distance', 'full'];
 
 /** Largest client message the server accepts, in bytes. */
 export const MAX_MESSAGE_BYTES = 16 * 1024;

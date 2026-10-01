@@ -143,19 +143,6 @@ describe('hint levels in the player view', () => {
     expect(viewFor(complete, 0, { hints: 'distance' }).hints).toMatchObject({ tilesAway: 0, shanten: -1, complete: true });
   });
 
-  it('waits: adds winning tiles and furiten between turns, but no discard advice', () => {
-    const h = viewFor(tenpai, 1, { hints: 'waits' }).hints!;
-    expect(h.waits!.map((w) => kindToString(w.kind))).toEqual(['1s', '4s']);
-    expect(h.furiten).toBe(false);
-    expect(h.discards).toBeUndefined();
-    expect(h.ukeire).toBeUndefined();
-
-    const onTurn = rig({ hands: ['123m456p789s55m23s'], draws: '1z' });
-    const t = viewFor(onTurn, 0, { hints: 'waits' }).hints!;
-    expect(t.waits).toEqual([]); // would reveal which discard keeps tenpai
-    expect(t.tenpai).toBe(true);
-  });
-
   it('full: improving tiles and ranked discards', () => {
     const onTurn = rig({ hands: ['123m456p789s55m23s'], draws: '1z' });
     const h = viewFor(onTurn, 0, { hints: 'full' }).hints!;

@@ -14,6 +14,7 @@ import {
   skillForElo,
   viewFor,
 } from '@mahjong/engine';
+import { HINT_LEVELS } from '@mahjong/protocol';
 import { DEFAULT_BOT_ELO } from '$lib/bots';
 import { type GameSource, type StepListener, StepListeners } from './source';
 import { type SavedGame, clearSave, writeSave } from './saved';
@@ -42,7 +43,7 @@ export interface LocalSettings {
 }
 
 export const DEFAULT_SETTINGS: LocalSettings = {
-  hints: 'waits',
+  hints: 'distance',
   botElo: DEFAULT_BOT_ELO,
   botDelay: 450,
   autoRiichiDiscard: true,
@@ -82,6 +83,8 @@ export class LocalGame implements GameSource {
     this.human = human;
     this.names = [0, 1, 2, 3].map((s) => (s === human ? 'You' : `Bot ${'ABC'[(s - human + 3) % 4]}`));
     Object.assign(this.settings, settings);
+    // From a URL or an older save (the former 'waits' level).
+    if (!HINT_LEVELS.includes(this.settings.hints)) this.settings.hints = DEFAULT_SETTINGS.hints;
     let state = createGame(rules, seed).state;
     for (const a of options.actions ?? []) {
       state = applyAction(state, a).state;

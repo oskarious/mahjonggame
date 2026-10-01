@@ -33,7 +33,7 @@
     }
     const base = q.get('preset') === 'ema' ? EMA_2025 : DEFAULT_RULES;
     const rules = makeRules(base, { length: q.get('length') === 'south' ? 'south' : 'east' });
-    const settings = { botElo: parseBotElo(q.get('bots')), hints: (q.get('hints') as HintLevel) ?? 'waits' };
+    const settings = { botElo: parseBotElo(q.get('bots')), hints: (q.get('hints') as HintLevel) ?? 'distance' };
     return newGame(rules, settings, q.get('seed') ?? undefined);
   }
 

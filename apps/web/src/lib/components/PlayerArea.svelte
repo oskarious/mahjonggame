@@ -75,6 +75,17 @@
     return t !== null ? (hints?.discards?.find((o) => o.kind === kindOf(t)) ?? null) : null;
   });
 
+  /**
+   * The current waits, never gated by the hint level: between turns, or on own turn in riichi (the drawn tile goes).
+   */
+  const current = $derived.by(() => {
+    if (!onTurn) return view.tenpai.find((o) => o.kind === null) ?? null;
+    if (!view.players[view.seat].riichi || view.drawn === null) return null;
+    return view.tenpai.find((o) => o.kind === kindOf(view.drawn!)) ?? null;
+  });
+  /** Winning tiles for the panel: the inspected discard's (full hints), else the current ones, else the best discard's. */
+  const panelWaits = $derived(preview ? preview.waits : (current?.waits ?? hints?.waits ?? []));
+
   const canDiscard = (t: TileId) => (riichiMode ? riichiable.has(t) : discardable.has(t));
 
   function discard(t: TileId) {
@@ -324,24 +335,24 @@
             {:else}
               <span class="chip">{away(hints.tilesAway)}</span>
             {/if}
-            {#if hints.furiten}<span class="chip bad">Furiten</span>{/if}
-            {#if preview}
-              <span class="preview">
-                → {preview.tenpai ? 'tenpai' : `${preview.shanten + 1} away`}
-                {#if preview.furiten}<span class="chip bad">furiten</span>{/if}
-              </span>
-            {/if}
-            {#if (preview ?? hints).waits?.length}
-              <span class="waits" aria-label="Winning tiles">
-                {#each (preview ?? hints).waits! as w (w.kind)}
-                  <span class="wait" title={kindName(w.kind)}>
-                    <Tile tile={w.kind * 4 + 1} {red} plain /><small>×{w.remaining}</small>
-                  </span>
-                {/each}
-              </span>
-            {:else if preview && preview.ukeire.length}
-              <span class="sub">{preview.total} useful tiles</span>
-            {/if}
+          {/if}
+          {#if current?.furiten}<span class="chip bad">Furiten</span>{/if}
+          {#if preview}
+            <span class="preview">
+              → {preview.tenpai ? 'tenpai' : `${preview.shanten + 1} away`}
+              {#if preview.furiten}<span class="chip bad">furiten</span>{/if}
+            </span>
+          {/if}
+          {#if panelWaits.length}
+            <span class="waits" aria-label="Winning tiles">
+              {#each panelWaits as w (w.kind)}
+                <span class="wait" title={kindName(w.kind)}>
+                  <Tile tile={w.kind * 4 + 1} {red} plain /><small>×{w.remaining}</small>
+                </span>
+              {/each}
+            </span>
+          {:else if preview && preview.ukeire.length}
+            <span class="sub">{preview.total} useful tiles</span>
           {/if}
         </div>
       </div>

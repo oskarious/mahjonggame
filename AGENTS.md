@@ -81,6 +81,9 @@ Calibration: engine.md. Docker images: deployment.md.
   update the design system or note the deviation.
 - **Keep DB types in sync:** a migration touching game-server tables also updates `apps/game-server/src/db.ts`.
 - **Stop the dev servers you started** once your browser check is done; reuse the existing launch configs.
+- **Leave no dead code behind.** When a change makes something unused or redundant (a function, field, setting,
+  option, hint level, config key, test, doc line), remove it in the same change, across all workspaces. Before
+  finishing, ask what the change made obsolete and grep for it.
 - When a new test suite passes first time, sanity-check it by planting bugs (mutation check) — we did this for the
   rules and it found a real coverage gap.
 - No email server yet, will be added later: no verification, password reset or email change.

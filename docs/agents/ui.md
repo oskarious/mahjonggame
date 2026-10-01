@@ -62,11 +62,13 @@ sounds, theme. Structure of the web app: [web.md](web.md).
 
 ## Hints
 
-**Hint levels are server-decided** (`viewFor(..., { hints: 'off' | 'distance' | 'waits' | 'full' })`, default off),
+**Hint levels are server-decided** (`viewFor(..., { hints: 'off' | 'distance' | 'full' })`, default off),
 intended to depend on Elo; anything above the level is never sent. **Tenpai waits are never gated:** `view.tenpai`
 (every level) holds, on the own turn, the waits (and furiten) after each discard that leaves the hand tenpai, and
 between turns the current waits; the magnifier shows them under the inspected tile (on turn only for tiles that
-can be discarded now, so riichi mode shows riichi discards only). The hint levels add the passive panel display.
+can be discarded now, so riichi mode shows riichi discards only). The panel also always shows the current waits
+(and furiten) from `view.tenpai` between turns and on the own turn in riichi; the hint levels add the rest (tiles
+away, per-discard previews, ukeire); there is deliberately no 'waits' level.
 The magnifier is `width: max-content` and clamped by its measured width, so wide wait rows stay on screen.
 
 ## Sounds
