@@ -5,6 +5,7 @@
   import type { Format } from '@mahjong/protocol';
   import { RemoteGame } from '$lib/game/remote.svelte';
   import { WINDS } from '$lib/labels';
+  import RankBadge from '$lib/components/RankBadge.svelte';
   import Table from '$lib/components/Table.svelte';
   import Title from '$lib/components/Title.svelte';
 
@@ -132,7 +133,7 @@
       <button class="btn ghost big" onclick={() => game.leaveQueue()}>Cancel</button>
     {:else if game.status === 'idle' || game.status === 'ended'}
       {#if game.rating}
-        <p class="me"><strong>{game.user?.name}</strong><span class="elo">{game.rating.rating}</span></p>
+        <p class="me"><strong>{game.user?.name}</strong><span class="elo"><RankBadge rating={game.rating.rating} /></span></p>
       {/if}
       <fieldset>
         <legend>Length</legend>

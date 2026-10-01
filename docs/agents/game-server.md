@@ -81,6 +81,8 @@ The DB schema is owned by apps/web (migrations there): `0002_game_server` = rati
   account is rated** (bot players too; only the anonymous `userId: null` bots of pre-bot-player records are fixed at
   `botElo(skill)`), applied in one transaction with the result. Hint level: rating < 1300 → distance (waits are never gated),
   else off; a client can only lower it.
+- **Ranks** (Iron 1 … Master 5) are derived from the rating with `rankForRating` in `@mahjong/protocol`, never stored
+  or sent; spans are centred on the default `startRating` 1000 (Silver 3), so move them together.
 - **Auth:** the upgrade needs an allowed `Origin` (exact `ORIGIN`, or localhost/LAN in dev) and forwards the cookie
   to `{WEB_INTERNAL_URL}/api/auth/get-session`; the web app is the only thing that understands Better Auth cookies.
 - **Recovery:** on start, `status = 'running'` games are replayed from `game_action` and rebuilt with all humans

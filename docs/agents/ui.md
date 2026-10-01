@@ -79,3 +79,14 @@ calls, `call*Other` when an opponent does (the caller's seat is public, so this 
 seat plus the own view (`GameSource.listen`, via `cuesFor`), never from hidden state; replays and resyncs emit
 nothing. Generic stingers, no voice lines or music. On/off + volume in settings (`riichi:sound`, `riichi:volume`);
 audio starts on the first user gesture.
+
+## Ranks
+
+Ranks (Iron … Master, sub-ranks 1–5 with 1 lowest) come from `rankForRating` in `@mahjong/protocol`; always draw them
+with `RankBadge` (`rating`, optional `size`, default 1.6em): the rating number with the rank icon to its right, in the surrounding
+text style; `pill` puts it on a dark pill for light backgrounds (the yellow Play online button). Every rating shown to players uses it (home button, online lobby, table seats, final sheet, account,
+admin); bot difficulty Elo is not a player rating and stays a plain number. Icons are one set of shapes for all
+ranks: drop square SVGs into `src/lib/assets/ranks/` as `1.svg` … `5.svg` (the art shows the sub-rank). The badge
+inlines them and tints them per rank: their hex fills, sorted by lightness, become the rank's `colors`
+(`light`/`mid`/`dark` in `RANKS`), so draw them in any colours, 1–3 shades. No file = a label chip placeholder. The
+label ("Silver 3") is always the accessible name. Use `RANKS` colours for other rank-coloured UI too.

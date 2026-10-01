@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { BOT_PRESETS, DEFAULT_BOT_ELO } from "$lib/bots";
+  import RankBadge from "$lib/components/RankBadge.svelte";
   import Title, { SITE_NAME } from "$lib/components/Title.svelte";
   import { type SavedGame, loadSave } from "$lib/game/saved";
   import { WINDS } from "$lib/labels";
@@ -44,7 +45,7 @@
   {#if data.online}
     <a class="btn primary big online" href="/online">
       <span>Play online</span>
-      <span class="elo">{data.online.rating}</span>
+      <span class="elo"><RankBadge rating={data.online.rating} pill /></span>
     </a>
     <p class="or">or</p>
   {/if}

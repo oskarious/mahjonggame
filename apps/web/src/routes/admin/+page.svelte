@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
   import type { AdminBot, AdminBotState } from '@mahjong/protocol';
+  import RankBadge from '$lib/components/RankBadge.svelte';
   import Title from '$lib/components/Title.svelte';
 
   let { data, form } = $props();
@@ -125,7 +126,7 @@
           {#each rows as b (b.id)}
             <tr class:sel={b.id === selectedId} class:retired={!b.active} onclick={() => (selectedId = b.id)}>
               <td>{b.name}</td>
-              <td class="num">{b.rating}</td>
+              <td class="num"><RankBadge rating={b.rating} /></td>
               <td class="num">{b.games}</td>
               <td class="num">{b.skill.toFixed(2)}</td>
               <td><span class="state {b.state}">{b.state}</span></td>

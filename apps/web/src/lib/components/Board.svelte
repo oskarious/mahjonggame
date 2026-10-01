@@ -10,6 +10,7 @@
   import { sortTiles } from '$lib/tiles';
   import { tileset } from '$lib/tileset.svelte';
   import Melds from './Melds.svelte';
+  import RankBadge from './RankBadge.svelte';
   import Pond from './Pond.svelte';
   import Tile from './Tile.svelte';
 
@@ -110,7 +111,7 @@
           <span class="name">{names[seat]}</span>
           <span class="wind" class:dealer={p.seatWind === 0}>{WIND_SHORT[p.seatWind]}</span>
           <span class="score">{p.score}</span>
-          {#if players}<span class="rating">{players[seat].rating}</span>{/if}
+          {#if players}<span class="rating"><RankBadge rating={players[seat].rating} /></span>{/if}
           {#if p.riichi}<span class="stick" title="Riichi"></span>{/if}
         </div>
         <div class="main">
@@ -236,7 +237,6 @@
   .rating {
     font-size: 0.62rem;
     color: var(--ink-dim);
-    opacity: 0.8;
   }
   .hidden-hand {
     display: flex;

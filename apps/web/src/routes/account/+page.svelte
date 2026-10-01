@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { authClient } from '$lib/auth-client';
   import { authError } from '$lib/auth-errors';
+  import RankBadge from '$lib/components/RankBadge.svelte';
   import Title from '$lib/components/Title.svelte';
 
   let { data } = $props();
@@ -60,7 +61,7 @@
   <h1>{data.user?.name}</h1>
   <p class="email">{data.email}</p>
   <p class="rating">
-    <strong>{data.rating}</strong>
+    <strong><RankBadge rating={data.rating} /></strong>
     <span>{data.games} rated {data.games === 1 ? 'game' : 'games'}</span>
   </p>
 

@@ -2,6 +2,7 @@
   import type { FinalStanding } from '@mahjong/engine';
   import type { RatingChange } from '@mahjong/protocol';
   import { signed } from '$lib/labels';
+  import RankBadge from './RankBadge.svelte';
 
   interface Props {
     final: FinalStanding[];
@@ -35,7 +36,7 @@
             {#if ratings}
               {@const r = change(f.seat)}
               <td class="num rating">
-                {#if r}<span class:up={r.after > r.before} class:down={r.after < r.before}>{signed(r.after - r.before)}</span> → {r.after}{/if}
+                {#if r}<span class:up={r.after > r.before} class:down={r.after < r.before}>{signed(r.after - r.before)}</span> → <RankBadge rating={r.after} />{/if}
               </td>
             {/if}
           </tr>
