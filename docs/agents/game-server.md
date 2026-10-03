@@ -13,14 +13,14 @@ apps/game-server/       @mahjong/game-server: Node 22 + ws, no build step (type 
   src/matchmaking.ts    per-format queues; rating.ts: Elo + hint level; store.ts: PgStore/MemoryStore; recovery.ts
   src/bots.ts           BotPool: bot players' live state, summoning, background games, admin operations
   src/settings.ts       runtime bot settings (defaults, validation; stored in `setting`); pacing.ts: bot think times;
-                        names.ts: bot name generator
+                        names.ts: bot name generator; schedule.ts: bot time zones, free-time windows, session curve
   src/db.ts             Kysely table types — a copy of apps/web/src/lib/server/schema.ts; keep them in sync
   test/                 vitest (fake timers); server.test.ts runs a real socket against a stub session endpoint
 ```
 
 The DB schema is owned by apps/web (migrations there): `0002_game_server` = rating, game, game_seat, game_action
-(written by this server); `0003_bot_players` = bot, setting, user.role. The server refuses to start until
-`0003_bot_players` is applied.
+(written by this server); `0003_bot_players` = bot, setting, user.role; `0004_bot_schedules` = bot.schedule. The
+server refuses to start until `0004_bot_schedules` is applied.
 
 ## Rooms and timers
 
@@ -61,17 +61,27 @@ The DB schema is owned by apps/web (migrations there): `0002_game_server` = rati
 - **Bot players** (bots.ts): `user` rows without an `account` (can't sign in; `<id>@bot.invalid`) + a `bot` row
   (hidden fixed `skill`, `active`). Clients can't tell them from humans (`PlayerInfo` has no bot flag). The pool
   (in memory, loaded at start) tracks idle / queued / busy + a 10–90 s rest; a bot is in at most one queue or game.
-  - *Summoning*: a human waiting 3–9 s gets bots one at a time, 2–8 s apart; each is one of the 3 closest idle bots
-    that fit the human's group (preferring bots that didn't just play them); a bot's window counts from its human's
-    join time. Bots whose human left or was seated without them are withdrawn. No fit after 30 s → a bot is created
-    at `skillForElo(rating)`.
-  - *Background games*: every ~45 s (±50 %) 4 close idle bots play a normal room (persisted, rated, recovered) if
-    `idleReserve` (30) idle bots remain. They pace, count down and confirm results like tables with humans.
-    Rooms without humans skip the abandon fast-forward. *Warm-up* (fewer than
-    half the bots have 20 games): fast rooms every 2 s, at most `warmupTables`.
-  - Pool size: `botPoolMin` 120 active bots are created at start (ratings uniform over `botElo(0..1)`); `botPoolMax`
-    caps active bots (growth, admin creation, reactivation); retired bots count for neither. All knobs are
-    runtime settings (settings.ts, `setting` key `bots`), edited on `/admin`; env `BOTS=off` stops background games.
+  - *Active hours* (schedule.ts, `schedulesEnabled`): each bot has a stored `bot.schedule` — an IANA time zone
+    (weighted `regions`, mostly Asia/Tokyo), a weekday and a longer weekend free-time window in local time, and an
+    appetite (`appetiteMin`, 90–240 min/day, skewed low). Bots are online only in sessions (`sessionMin` 20–150,
+    log-uniform; `onlineUntil` in memory). Session starts follow a daily curve: peak mid-window, lower at the edges,
+    ~45 min exponential spill outside, near zero otherwise; the start rate is set so online time ≈ appetite. Only
+    online idle bots are summoned or seated in background games (and count for `idleReserve`); a bot whose session
+    ends mid-game finishes it. On load, bots without a schedule get one and each bot is online with its steady-state
+    chance for the current time. Off = every bot always online.
+  - *Summoning*: a human waiting 3–9 s gets bots one at a time, 2–8 s apart; each is one of the 3 closest idle online
+    bots that fit the human's group (preferring bots that didn't just play them); a bot's window counts from its
+    human's join time. If no online bot fits, a fitting offline bot logs on (starts a session) at the same arrival
+    time. Bots whose human left or was seated without them are withdrawn. No fit at all (online or offline) after
+    30 s → a bot is created at `skillForElo(rating)`.
+  - *Background games*: every ~45 s (±50 %) 4 close idle online bots play a normal room (persisted, rated,
+    recovered) if `idleReserve` (30) idle online bots remain. They pace, count down and confirm results like tables
+    with humans. Rooms without humans skip the abandon fast-forward. *Warm-up* (fewer than half the bots have 20
+    games): fast rooms every 2 s, at most `warmupTables`, ignoring active hours.
+  - Pool size: `botPoolMin` 400 active bots are created at start (ratings uniform over `botElo(0..1)`; only a share
+    is online at a time); `botPoolMax` caps active bots (growth, admin creation, reactivation); retired bots count
+    for neither. All knobs are runtime settings (settings.ts, `setting` key `bots`), edited on `/admin`; stored
+    values win over defaults (the admin form saves every field); env `BOTS=off` stops background games.
 - **The `user` table contains bot players.** Anything that counts, lists or emails users must join `bot` (bot users
   have `@bot.invalid` emails). Admins: `UPDATE "user" SET role = 'admin' WHERE username = '…'` (no UI, by design).
 

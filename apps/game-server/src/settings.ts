@@ -1,11 +1,12 @@
 // Runtime bot settings: defaults here, overrides stored in the `setting` table (key "bots"), changed by admins
 // through the internal API. Everything is validated before it is applied or saved.
-import type { BotSettings } from '@mahjong/protocol';
+import type { BotRegion, BotSettings } from '@mahjong/protocol';
+import { isValidTimeZone } from './schedule.ts';
 
 export type { BotSettings };
 
 export const DEFAULT_BOT_SETTINGS: BotSettings = {
-  botPoolMin: 120,
+  botPoolMin: 400,
   botPoolMax: 1000,
   idleReserve: 30,
   backgroundEnabled: true,
@@ -31,6 +32,27 @@ export const DEFAULT_BOT_SETTINGS: BotSettings = {
   readySlowPercent: 8,
   readySlowFromMs: 6_000,
   timeoutPercent: 0.5,
+  schedulesEnabled: true,
+  // Weighted towards Japan, riichi's home; then the rest of East Asia, Europe, the Americas and Oceania.
+  regions: [
+    { tz: 'Asia/Tokyo', weight: 55 },
+    { tz: 'Asia/Seoul', weight: 4 },
+    { tz: 'Asia/Shanghai', weight: 3 },
+    { tz: 'Asia/Taipei', weight: 3 },
+    { tz: 'Europe/London', weight: 4 },
+    { tz: 'Europe/Paris', weight: 4 },
+    { tz: 'Europe/Berlin', weight: 4 },
+    { tz: 'Europe/Stockholm', weight: 3 },
+    { tz: 'Europe/Warsaw', weight: 3 },
+    { tz: 'Europe/Moscow', weight: 2 },
+    { tz: 'America/New_York', weight: 5 },
+    { tz: 'America/Chicago', weight: 2 },
+    { tz: 'America/Los_Angeles', weight: 4 },
+    { tz: 'America/Sao_Paulo', weight: 1 },
+    { tz: 'Australia/Sydney', weight: 3 },
+  ],
+  appetiteMin: [90, 240],
+  sessionMin: [20, 150],
 };
 
 export const SETTINGS_KEY = 'bots';
@@ -62,13 +84,34 @@ const NUMBERS: Record<NumberKey, { min: number; max: number; int: boolean }> = {
   readySlowFromMs: { min: 0, max: 60_000, int: true },
   timeoutPercent: { min: 0, max: 10, int: false },
 };
-const RANGES: Record<RangeKey, { max: number }> = {
-  summonAfterMs: { max: 10 * 60_000 },
-  botArrivalMs: { max: 10 * 60_000 },
-  botRestMs: { max: DAY },
-  thinkForcedMs: { max: 60_000 },
-  thinkCallMs: { max: 60_000 },
+const RANGES: Record<RangeKey, { min?: number; max: number; unit: 'ms' | 'minutes' }> = {
+  summonAfterMs: { max: 10 * 60_000, unit: 'ms' },
+  botArrivalMs: { max: 10 * 60_000, unit: 'ms' },
+  botRestMs: { max: DAY, unit: 'ms' },
+  thinkForcedMs: { max: 60_000, unit: 'ms' },
+  thinkCallMs: { max: 60_000, unit: 'ms' },
+  appetiteMin: { max: 1440, unit: 'minutes' },
+  sessionMin: { min: 1, max: 720, unit: 'minutes' },
 };
+const MAX_REGIONS = 30;
+
+function validRegions(v: unknown): v is BotRegion[] {
+  return (
+    Array.isArray(v) &&
+    v.length >= 1 &&
+    v.length <= MAX_REGIONS &&
+    v.every(
+      (r) =>
+        typeof r === 'object' &&
+        r !== null &&
+        Object.keys(r).every((k) => k === 'tz' || k === 'weight') &&
+        isValidTimeZone(r.tz) &&
+        typeof r.weight === 'number' &&
+        r.weight > 0 &&
+        r.weight <= 1000,
+    )
+  );
+}
 
 /**
  * Applies a partial update to `base`. Returns the new settings, or an error naming the first bad field. Unknown keys
@@ -85,17 +128,22 @@ export function mergeSettings(base: BotSettings, patch: unknown): { settings: Bo
       }
       next[key as NumberKey] = v;
     } else if (key in RANGES) {
-      const { max } = RANGES[key as RangeKey];
+      const { min = 0, max, unit } = RANGES[key as RangeKey];
       const ok =
         Array.isArray(v) &&
         v.length === 2 &&
-        v.every((x) => typeof x === 'number' && Number.isInteger(x) && x >= 0 && x <= max) &&
+        v.every((x) => typeof x === 'number' && Number.isInteger(x) && x >= min && x <= max) &&
         v[0] <= v[1];
-      if (!ok) return { error: `${key} must be [low, high] in ms with 0 ≤ low ≤ high ≤ ${max}` };
+      if (!ok) return { error: `${key} must be [low, high] in ${unit} with ${min} ≤ low ≤ high ≤ ${max}` };
       next[key as RangeKey] = [v[0], v[1]];
-    } else if (key === 'backgroundEnabled') {
-      if (typeof v !== 'boolean') return { error: 'backgroundEnabled must be true or false' };
-      next.backgroundEnabled = v;
+    } else if (key === 'backgroundEnabled' || key === 'schedulesEnabled') {
+      if (typeof v !== 'boolean') return { error: `${key} must be true or false` };
+      next[key] = v;
+    } else if (key === 'regions') {
+      if (!validRegions(v)) {
+        return { error: `regions must be 1 to ${MAX_REGIONS} entries of { tz: a time zone such as Asia/Tokyo, weight > 0 }` };
+      }
+      next.regions = v.map((r) => ({ tz: r.tz, weight: r.weight }));
     } else {
       return { error: `Unknown setting ${key}` };
     }

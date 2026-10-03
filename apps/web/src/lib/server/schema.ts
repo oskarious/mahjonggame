@@ -1,5 +1,6 @@
 import type { ColumnType, Generated, Insertable, JSONColumnType, Selectable } from 'kysely';
 import type { Action, FinalStanding, RuleSet } from '@mahjong/engine';
+import type { BotSchedule } from '@mahjong/protocol';
 
 // Table types for Kysely. Keep in sync with migrations/ (auth tables are written by Better Auth; we mostly read them).
 type Timestamp = ColumnType<Date, Date | string | undefined, Date | string>;
@@ -107,6 +108,8 @@ export interface BotTable {
   skill: number;
   active: ColumnType<boolean, boolean | undefined, boolean>;
   createdAt: Timestamp;
+  /** Time zone, free-time windows and appetite (migration 0004_bot_schedules); null until the game server sets it. */
+  schedule: ColumnType<BotSchedule | null, string | null | undefined, string | null>;
 }
 
 export interface SettingTable {

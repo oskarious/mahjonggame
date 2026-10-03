@@ -26,7 +26,8 @@ beforeAll(async () => {
   const config = { ...TEST_CONFIG, internalToken: TOKEN };
   hub = new Hub({ store, config, random: seeded('admin'), log: () => {} });
   await hub.bots.load();
-  await hub.bots.updateSettings({ botPoolMin: 0 });
+  // Schedules off: these tests run on the wall clock.
+  await hub.bots.updateSettings({ botPoolMin: 0, schedulesEnabled: false });
   server = createGameServer(hub, config);
   base = await listen(server);
   closed = createGameServer(hub, { ...TEST_CONFIG, internalToken: null });
@@ -58,9 +59,17 @@ describe('/internal', () => {
     const res = await call('GET', '/internal/bots');
     expect(res.status).toBe(200);
     const body = (await res.json()) as AdminPoolSnapshot;
-    expect(body.counts).toMatchObject({ active: 3, retired: 0, idle: 3 });
+    expect(body.counts).toMatchObject({ active: 3, retired: 0, idle: 3, online: 3, offline: 0 });
     expect(body.bots).toHaveLength(3);
-    expect(body.bots[0]).toMatchObject({ name: 'mockbot1', rating: 1000, games: 30, state: 'idle', active: true });
+    expect(body.bots[0]).toMatchObject({
+      name: 'mockbot1',
+      rating: 1000,
+      games: 30,
+      state: 'idle',
+      active: true,
+      online: true,
+      schedule: { tz: 'Asia/Tokyo' },
+    });
     expect(body.live).toEqual({ rooms: 0, humanRooms: 0, humansQueued: 0 });
     expect(body.settings.botPoolMin).toBe(0);
   });

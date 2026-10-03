@@ -7,7 +7,7 @@ export interface BotSettings {
   botPoolMin: number;
   /** Most active bot players: on-demand growth, admin creation and reactivation stop here. */
   botPoolMax: number;
-  /** A background game only starts if at least this many idle bots remain for humans. */
+  /** A background game only starts if at least this many idle online bots remain for humans. */
   idleReserve: number;
   backgroundEnabled: boolean;
   /** Mean interval between background game starts (±50 % jitter). */
@@ -50,9 +50,35 @@ export interface BotSettings {
   readySlowFromMs: number;
   /** Chance in percent, per decision, that a bot player lets its timer run out in a game with humans. */
   timeoutPercent: number;
+  /** Bots play only in online sessions that follow their schedule; off = every active bot is always online. */
+  schedulesEnabled: boolean;
+  /** Home time zones (IANA) of new bots, picked by weight. Existing bots keep theirs. */
+  regions: BotRegion[];
+  /** Average play per day of new bots, in minutes (random in range, skewed low). */
+  appetiteMin: [number, number];
+  /** Length of one online session, in minutes (random in range, log-uniform). */
+  sessionMin: [number, number];
 }
 
-export type AdminBotState = 'idle' | 'resting' | 'queued' | 'busy' | 'retired';
+export interface BotRegion {
+  tz: string;
+  weight: number;
+}
+
+/**
+ * A bot player's habits. Windows are minutes after local midnight; the end may pass 1440 (a window running past
+ * midnight). The weekend window applies to windows starting on a Saturday or Sunday.
+ */
+export interface BotSchedule {
+  tz: string;
+  weekday: [number, number];
+  weekend: [number, number];
+  /** Average minutes of play per day. */
+  appetiteMin: number;
+}
+
+/** `offline`: idle and outside an online session (schedules on). */
+export type AdminBotState = 'idle' | 'offline' | 'resting' | 'queued' | 'busy' | 'retired';
 
 export interface AdminBot {
   id: string;
@@ -64,6 +90,9 @@ export interface AdminBot {
   state: AdminBotState;
   roomId: string | null;
   forUserId: string | null;
+  schedule: BotSchedule;
+  /** In an online session, queued or playing (always true while schedules are off). */
+  online: boolean;
 }
 
 export interface AdminPoolSnapshot {
@@ -71,7 +100,17 @@ export interface AdminPoolSnapshot {
   /** False when background games are disabled by the environment (BOTS=off). */
   backgroundAllowed: boolean;
   warmingUp: boolean;
-  counts: { active: number; retired: number; idle: number; resting: number; queued: number; busy: number };
+  /** `online`: active bots in a session, queued or playing; `offline`: the other active bots (state `offline`). */
+  counts: {
+    active: number;
+    retired: number;
+    online: number;
+    offline: number;
+    idle: number;
+    resting: number;
+    queued: number;
+    busy: number;
+  };
   /** Last time a bot was created on demand because nobody fitted a waiting human (ms epoch), or null. */
   lastGrownAt: number | null;
   bots: AdminBot[];

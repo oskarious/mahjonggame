@@ -19,7 +19,8 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
                         admin (bot pool; 404 unless `user.role = 'admin'`)
   migrations/           Kysely migrations (NNNN_name.ts, import only from kysely); bundled and run on server start;
                         0001_auth = Better Auth tables; 0002_game_server = rating, game, game_seat, game_action
-                        (written by the game server); 0003_bot_players = bot, setting, user.role
+                        (written by the game server); 0003_bot_players = bot, setting, user.role;
+                        0004_bot_schedules = bot.schedule
   src/lib/tiles.ts      TILESETS (ratio, artwork margin, image paths); tileset.svelte.ts: the chosen one (`riichi:tileset`)
   src/lib/components/   Table (the whole play screen, takes a GameSource), Board (4 seat rows), Pond, Melds, PlayerArea
                         (hand/actions/magnifier), Tile, TimerBar, Countdown (online, after a deal),

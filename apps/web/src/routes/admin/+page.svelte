@@ -9,7 +9,7 @@
 
   const pool = $derived(data.pool);
   const s = $derived(data.pool?.settings ?? null);
-  const STATES: AdminBotState[] = ['idle', 'resting', 'queued', 'busy', 'retired'];
+  const STATES: AdminBotState[] = ['idle', 'offline', 'resting', 'queued', 'busy', 'retired'];
 
   let query = $state('');
   let stateFilter = $state<AdminBotState | ''>('');
@@ -53,6 +53,18 @@
     return s < 60 ? `${s} s ago` : s < 3600 ? `${Math.round(s / 60)} min ago` : `${Math.round(s / 3600)} h ago`;
   };
   const msg = (name: string) => (form?.form === name ? form : null);
+
+  /** `Asia/Tokyo` → `Tokyo`. */
+  const city = (tz: string) => tz.slice(tz.lastIndexOf('/') + 1).replaceAll('_', ' ');
+  const clocks = new Map<string, Intl.DateTimeFormat>();
+  /** The bot's local time now (as of the last load), e.g. `21:04`. */
+  const localTime = (tz: string) => {
+    let f = clocks.get(tz);
+    if (!f) clocks.set(tz, (f = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })));
+    return f.format(data.loadedAt);
+  };
+  const hhmm = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  const win = ([a, b]: [number, number]) => `${hhmm(a)}–${hhmm(b)}`;
 </script>
 
 <Title page="Bots" />
@@ -69,6 +81,10 @@
   {:else}
     <section class="summary">
       <span class="chip">{pool.counts.active} active</span>
+      {#if pool.settings.schedulesEnabled}
+        <span class="chip">{pool.counts.online} online</span>
+        <span class="chip">{pool.counts.offline} offline</span>
+      {/if}
       <span class="chip">{pool.counts.idle} idle</span>
       <span class="chip">{pool.counts.resting} resting</span>
       <span class="chip">{pool.counts.queued} queued</span>
@@ -97,6 +113,10 @@
         <input type="hidden" name="id" value={selected.id} />
         <label class="field">Name <input name="name" value={selected.name} maxlength="20" /></label>
         <label class="field">Skill <input name="skill" type="number" min="0" max="1" step="0.01" value={selected.skill.toFixed(2)} /></label>
+        <p class="schedule">
+          {selected.schedule.tz} · {localTime(selected.schedule.tz)} now · weekdays {win(selected.schedule.weekday)} · weekends
+          {win(selected.schedule.weekend)} · about {selected.schedule.appetiteMin} min a day
+        </p>
         <div class="edit-buttons">
           <button class="btn primary small" type="submit">Save</button>
           <button class="btn ghost small" type="submit" name="active" value={selected.active ? 'false' : 'true'}>
@@ -120,6 +140,7 @@
                 </button>
               </th>
             {/each}
+            <th>Local</th>
           </tr>
         </thead>
         <tbody>
@@ -130,6 +151,9 @@
               <td class="num">{b.games}</td>
               <td class="num">{b.skill.toFixed(2)}</td>
               <td><span class="state {b.state}">{b.state}</span></td>
+              <td class="local" title="{b.schedule.tz} · weekdays {win(b.schedule.weekday)} · weekends {win(b.schedule.weekend)}">
+                {city(b.schedule.tz)} {localTime(b.schedule.tz)}
+              </td>
             </tr>
           {/each}
         </tbody>
@@ -164,6 +188,15 @@
           <small class="hint">{hint}</small>
         </fieldset>
       {/snippet}
+      {#snippet minutes(k: 'appetiteMin' | 'sessionMin', label: string, hint: string)}
+        <fieldset class="field range">
+          <legend>{label}</legend>
+          <input name="{k}.lo" type="number" min="0" step="1" value={s[k][0]} aria-label="{label} from" />
+          <span>–</span>
+          <input name="{k}.hi" type="number" min="0" step="1" value={s[k][1]} aria-label="{label} to" />
+          <small class="hint">{hint}</small>
+        </fieldset>
+      {/snippet}
       <form class="settings" method="POST" action="?/settings" use:enhance={() => ({ update }) => update({ reset: false })}>
         <section>
           <h3>Pool</h3>
@@ -171,7 +204,7 @@
           <div class="grid">
             <label class="field">
               Minimum pool <input name="botPoolMin" type="number" min="0" value={s.botPoolMin} />
-              <small class="hint">Active bots to keep. Raising it creates the missing ones right away, spread over the bot rating range (about 960–1310); lowering it removes none (retire bots for that). Default 120.</small>
+              <small class="hint">Active bots to keep. Raising it creates the missing ones right away, spread over the bot rating range (about 960–1310); lowering it removes none (retire bots for that). With active hours on, only some are online at a time. Default 400.</small>
             </label>
             <label class="field">
               Maximum pool <input name="botPoolMax" type="number" min="0" value={s.botPoolMax} />
@@ -191,7 +224,7 @@
             {@render range('botArrivalMs', 'Between bots (s)', 'Gap before the next bot joins the same player. A solo wait is about the first delay plus three gaps. Default 2–8.')}
             <label class="field">
               Grow after (s) <input name="growAfterMs" type="number" min="0" step="0.1" value={sec(s.growAfterMs)} />
-              <small class="hint">If no idle bot is close enough in rating after this long, a new bot is created near the player's rating. Default 30.</small>
+              <small class="hint">If no idle bot is close enough in rating after this long, a new bot is created near the player's rating. An offline bot that is close enough logs on first. Default 30.</small>
             </label>
             {@render range('botRestMs', 'Rest after a game (s)', "A bot isn't picked again right after a game, so the same opponents don't reappear instantly. Default 10–90.")}
           </div>
@@ -200,8 +233,8 @@
         <section>
           <h3>Background games</h3>
           <p class="intro">
-            Idle bots play each other so their ratings and game counts keep moving. These are normal games at human pace,
-            just without people.{#if !pool?.backgroundAllowed} They are switched off on this server (<code>BOTS=off</code>).{/if}
+            Idle online bots play each other so their ratings and game counts keep moving. These are normal games at human
+            pace, just without people.{#if !pool?.backgroundAllowed} They are switched off on this server (<code>BOTS=off</code>).{/if}
           </p>
           <div class="grid">
             <label class="field check">
@@ -214,7 +247,29 @@
             </label>
             <label class="field">
               Idle reserve <input name="idleReserve" type="number" min="0" value={s.idleReserve} />
-              <small class="hint">A bot-only game only starts if at least this many idle bots are left over for players. Default 30.</small>
+              <small class="hint">A bot-only game only starts if at least this many idle online bots are left over for players. Default 30.</small>
+            </label>
+          </div>
+        </section>
+
+        <section>
+          <h3>Active hours</h3>
+          <p class="intro">
+            Each bot lives in a time zone and has free time on weekdays and (longer) on weekends. It plays only in online
+            sessions, most likely mid-window, sometimes a little before or after, almost never at night. Changing the
+            regions or play per day only affects new bots.
+          </p>
+          <div class="grid">
+            <label class="field check">
+              <span><input name="schedulesEnabled" type="checkbox" checked={s.schedulesEnabled} /> Active hours</span>
+              <small class="hint">Off: every bot is online all the time.</small>
+            </label>
+            {@render minutes('appetiteMin', 'Play per day (min)', 'Average time a new bot spends online per day; most get the low end. Default 90–240.')}
+            {@render minutes('sessionMin', 'Session (min)', 'Length of one online session, usually a few games. Most are short. Default 20–150.')}
+            <label class="field">
+              Regions
+              <textarea name="regions" rows={Math.min(s.regions.length, 8)}>{s.regions.map((r) => `${r.tz} ${r.weight}`).join('\n')}</textarea>
+              <small class="hint">One time zone and weight per line. New bots get a zone in proportion to its weight. Default mostly Asia/Tokyo.</small>
             </label>
           </div>
         </section>
@@ -436,6 +491,31 @@
   }
   .state.retired {
     color: var(--danger);
+  }
+  .state.offline {
+    opacity: 0.6;
+  }
+  .local {
+    color: var(--ink-dim);
+  }
+  .schedule {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--ink-dim);
+  }
+  /* Like the global input style (app.css). */
+  .field textarea {
+    font: inherit;
+    font-size: 0.9rem;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--ink);
+    background: var(--panel-2);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 8px 10px;
+    resize: vertical;
   }
   .edit {
     display: grid;

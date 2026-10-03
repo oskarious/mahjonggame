@@ -2,6 +2,7 @@
 // these in sync with apps/web/src/lib/server/schema.ts. The server refuses to start until the migration it needs
 // has been applied.
 import type { Action, FinalStanding, RuleSet } from '@mahjong/engine';
+import type { BotSchedule } from '@mahjong/protocol';
 import { type ColumnType, type JSONColumnType, Kysely, PostgresDialect } from 'kysely';
 import pg from 'pg';
 
@@ -61,6 +62,8 @@ export interface BotTable {
   skill: number;
   active: ColumnType<boolean, boolean | undefined, boolean>;
   createdAt: Timestamp;
+  /** Null until this server generates one (on load or creation). */
+  schedule: ColumnType<BotSchedule | null, string | null | undefined, string | null>;
 }
 
 export interface SettingTable {
@@ -85,8 +88,8 @@ export interface DB {
   kysely_migration: MigrationTable;
 }
 
-/** The latest migration (in apps/web/migrations) this server needs: it creates the last of the tables above. */
-export const REQUIRED_MIGRATION = '0003_bot_players';
+/** The latest migration (in apps/web/migrations) this server needs: it adds the last of the columns above. */
+export const REQUIRED_MIGRATION = '0004_bot_schedules';
 
 export function createDb(connectionString: string): Kysely<DB> {
   const pool = new pg.Pool({ connectionString, max: 10 });

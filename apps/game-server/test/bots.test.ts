@@ -25,8 +25,9 @@ async function setup(
   await addBots(store, ratings, o.games ?? 30);
   const hub = new Hub({ store, config: { ...TEST_CONFIG, ...o.config }, random: seeded(o.seed ?? 'bots'), log: () => {} });
   await hub.bots.load();
-  // No automatic top-up to the default pool size: tests work with the bots they add.
-  const r = await hub.bots.updateSettings({ botPoolMin: 0, ...o.settings });
+  // No automatic top-up to the default pool size: tests work with the bots they add. Schedules off unless a test turns
+  // them on (every bot online).
+  const r = await hub.bots.updateSettings({ botPoolMin: 0, schedulesEnabled: false, ...o.settings });
   if ('error' in r) throw new Error(r.error);
   return { hub, store };
 }
@@ -246,6 +247,127 @@ describe('the pool', () => {
     expect(await hub.bots.updateSettings({ summonAfterMs: [5, 1] })).toMatchObject({ error: expect.stringContaining('summonAfterMs') });
     expect(await hub.bots.updateSettings({ nope: 1 })).toEqual({ error: 'Unknown setting nope' });
     expect(hub.bots.settings.botPoolMax).toBe(1000);
+  });
+});
+
+describe('schedules', () => {
+  // The test bots are Tokyo evening players (18:00–24:00).
+  const TOKYO_EVENING = Date.UTC(2026, 9, 7, 12); // 21:00 in Tokyo
+  const TOKYO_NIGHT = Date.UTC(2026, 9, 7, 19); // 04:00 in Tokyo
+  const on = { config: { botsBackground: true }, settings: { schedulesEnabled: true, idleReserve: 0 } };
+  const many = (n: number) => Array.from({ length: n }, (_, i) => 1000 + (i % 10) * 5);
+
+  it('at night bots are offline: no background games, but a waiting human is served by bots that log on', async () => {
+    vi.setSystemTime(TOKYO_NIGHT);
+    const { hub, store } = await setup(POOL, { ...on, seed: 'night' });
+    expect(hub.bots.snapshot().counts).toMatchObject({ active: 12, online: 0, offline: 12 });
+    await tickUntil(hub, () => false, 120).catch(() => {});
+    expect(hub.rooms.size).toBe(0);
+
+    await queue(hub, 'a');
+    await tickUntil(hub, () => !!hub.roomOf('a'));
+    expect(store.bots.size).toBe(12); // no new bots while offline ones fit
+    expect(botsOf(hub.roomOf('a')!.room)).toHaveLength(3);
+    expect(hub.bots.snapshot().counts).toMatchObject({ online: 3, offline: 9, busy: 3 });
+  });
+
+  it('in the evening some bots are online, and background games seat only those', async () => {
+    vi.setSystemTime(TOKYO_EVENING);
+    const { hub } = await setup(many(40), { ...on, seed: 'evening' });
+    const { online } = hub.bots.snapshot().counts;
+    expect(online).toBeGreaterThan(4);
+    expect(online).toBeLessThan(30);
+    const wasOnline = new Set([...hub.bots.bots.values()].filter((b) => b.onlineUntil > Date.now()).map((b) => b.id));
+    await hub.tick();
+    await flush();
+    expect(hub.rooms.size).toBe(1);
+    for (const id of botsOf([...hub.rooms.values()][0])) expect(wasOnline.has(id)).toBe(true);
+  });
+
+  it('offline bots start sessions over time in their evening', async () => {
+    vi.setSystemTime(TOKYO_EVENING);
+    const { hub } = await setup(many(40), { settings: { schedulesEnabled: true }, seed: 'sessions' });
+    for (const b of hub.bots.bots.values()) b.onlineUntil = 0;
+    await tickUntil(hub, () => hub.bots.snapshot().counts.online >= 5, 30 * 60);
+  });
+
+  it('a bot whose session ends mid-game plays it to the end, then goes offline', async () => {
+    vi.setSystemTime(TOKYO_NIGHT);
+    const { hub, store } = await setup([990, 1000, 1010], { settings: { schedulesEnabled: true } });
+    const a = await queue(hub, 'a');
+    await tickUntil(hub, () => !!hub.roomOf('a'));
+    const { room } = hub.roomOf('a')!;
+    const ids = botsOf(room);
+    for (const id of ids) hub.bots.bots.get(id)!.onlineUntil = Date.now() + 1_000;
+    await tickUntil(hub, () => false, 10).catch(() => {});
+    // Still playing, so still online.
+    for (const id of ids) expect(hub.bots.snapshot().bots.find((b) => b.id === id)).toMatchObject({ state: 'busy', online: true });
+    hub.detach(a);
+    await vi.advanceTimersByTimeAsync(5 * 60_000);
+    await vi.runAllTimersAsync();
+    await room.idle();
+    expect(room.finished).toBe(true);
+    for (const id of ids) {
+      expect(store.ratings.get(id)!.games).toBe(31);
+      expect(hub.bots.snapshot().bots.find((b) => b.id === id)).toMatchObject({ state: 'offline', online: false });
+    }
+  });
+
+  it('switched off, every bot plays at any hour', async () => {
+    vi.setSystemTime(TOKYO_NIGHT);
+    const { hub } = await setup(POOL, on);
+    await hub.tick();
+    await flush();
+    expect(hub.rooms.size).toBe(0);
+    await hub.bots.updateSettings({ schedulesEnabled: false });
+    expect(hub.bots.snapshot().counts).toMatchObject({ online: 12, offline: 0 });
+    vi.setSystemTime(Date.now() + 120_000);
+    await hub.tick();
+    await flush();
+    expect(hub.rooms.size).toBe(1);
+  });
+
+  it('warm-up ignores schedules', async () => {
+    vi.setSystemTime(TOKYO_NIGHT);
+    const { hub } = await setup(POOL, { ...on, games: 0 });
+    expect(hub.bots.warmingUp).toBe(true);
+    expect(hub.bots.snapshot().counts.online).toBe(0);
+    await hub.tick();
+    await flush();
+    expect(hub.rooms.size).toBe(1);
+  });
+
+  it('bots stored without a schedule get one, kept across restarts; new bots get one too', async () => {
+    const store = new MemoryStore();
+    await addBots(store, [1000, 1100]);
+    for (const b of store.bots.values()) b.schedule = null;
+    const hub = new Hub({ store, config: TEST_CONFIG, random: seeded('legacy'), log: () => {} });
+    await hub.bots.load();
+    const given = [...store.bots.values()].map((b) => b.schedule);
+    expect(given.every((s) => s !== null && typeof s.tz === 'string')).toBe(true);
+    const hub2 = new Hub({ store, config: TEST_CONFIG, random: seeded('legacy2'), log: () => {} });
+    await hub2.bots.load();
+    expect([...hub2.bots.bots.values()].map((b) => b.schedule)).toEqual(given);
+    const r = await hub2.bots.createBots({ name: 'NewHeron' });
+    if ('error' in r) throw new Error(r.error);
+    expect(r.created[0].schedule.appetiteMin).toBeGreaterThanOrEqual(90);
+    expect(store.bots.get(r.created[0].id)!.schedule).toEqual(r.created[0].schedule);
+  });
+
+  it('validates the schedule settings', async () => {
+    const { hub } = await setup([]);
+    expect(await hub.bots.updateSettings({ regions: [] })).toMatchObject({ error: expect.stringContaining('regions') });
+    expect(await hub.bots.updateSettings({ regions: [{ tz: 'Mars/Olympus', weight: 1 }] })).toMatchObject({
+      error: expect.stringContaining('regions'),
+    });
+    expect(await hub.bots.updateSettings({ regions: [{ tz: 'Asia/Tokyo', weight: 0 }] })).toMatchObject({
+      error: expect.stringContaining('regions'),
+    });
+    expect(await hub.bots.updateSettings({ sessionMin: [0, 60] })).toMatchObject({ error: expect.stringContaining('minutes') });
+    expect(await hub.bots.updateSettings({ appetiteMin: [200, 100] })).toMatchObject({ error: expect.stringContaining('appetiteMin') });
+    expect(await hub.bots.updateSettings({ schedulesEnabled: 'yes' })).toMatchObject({ error: expect.stringContaining('schedulesEnabled') });
+    const ok = await hub.bots.updateSettings({ regions: [{ tz: 'Europe/Paris', weight: 2 }], sessionMin: [30, 60] });
+    expect(ok).toMatchObject({ settings: { regions: [{ tz: 'Europe/Paris', weight: 2 }], sessionMin: [30, 60] } });
   });
 });
 

@@ -15,7 +15,7 @@ Read when touching Dockerfiles, `compose.production.yml`, env vars, migrations' 
   `ORIGIN=https://<domain>`, `ADDRESS_HEADER=X-Forwarded-For`, `XFF_DEPTH=1`; the compose file itself sets
   `WEB_INTERNAL_URL=http://web:3000` and `GAME_SERVER_URL=http://game-server:3001`, and passes `INTERNAL_TOKEN`
   (≥ 32 random chars; set it on the compose app) to both services for `/admin`. Migrations run when the web
-  container starts (fail → container exits); the game server refuses to start until `0003_bot_players` is applied.
+  container starts (fail → container exits); the game server refuses to start until `0004_bot_schedules` is applied.
 - The web image contains `apps/web/build` (engine + protocol bundled) plus production `node_modules`; the game server
   image runs the TS sources directly with production deps (ws, kysely, pg). Both answer `GET /healthz` without the DB.
 - Deploys don't lose games: actions are persisted before they are shown, the new game server resumes running games

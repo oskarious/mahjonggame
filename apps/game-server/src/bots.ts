@@ -1,12 +1,21 @@
 // The bot players: a persistent population of accounts with a hidden skill whose ratings move like anyone's. The pool
 // owns their live state (idle, queued for a human, busy in a room), summons them into the queue for waiting humans,
-// and starts background games among idle bots so ratings and game counts keep moving.
+// and starts background games among idle bots so ratings and game counts keep moving. Each bot has a schedule
+// (schedule.ts): it is online only in sessions that follow its local day, and only online bots are picked.
 import { botElo, skillForElo } from '@mahjong/engine';
-import { type AdminBot, type AdminCreateBots, type AdminPoolSnapshot, type Format, isValidUsername } from '@mahjong/protocol';
+import {
+  type AdminBot,
+  type AdminCreateBots,
+  type AdminPoolSnapshot,
+  type BotSchedule,
+  type Format,
+  isValidUsername,
+} from '@mahjong/protocol';
 import type { Config } from './config.ts';
 import { type Match, type Matchmaker, type QueueEntry, type SeatInit, shuffle } from './matchmaking.ts';
 import { botName } from './names.ts';
 import type { Room } from './room.ts';
+import { onlineChance, randomSchedule, sessionLength, sessionStartChance } from './schedule.ts';
 import { type BotSettings, mergeSettings, SETTINGS_KEY, settingsFromStored } from './settings.ts';
 import type { BotPatch, BotRow, RatingUpdate, Store } from './store.ts';
 
@@ -22,6 +31,9 @@ export interface PoolBot extends BotRow {
   restUntil: number;
   /** Humans from its last game; it is not summoned for them again right away if others fit. */
   lastOpponents: Set<string>;
+  schedule: BotSchedule;
+  /** End of its current online session (0 or past = offline). Only idle bots are held to it. */
+  onlineUntil: number;
 }
 
 /** The admin view of the pool; the hub adds `live` (rooms and queue). */
@@ -52,6 +64,8 @@ interface Demand {
 
 /** Most name collisions before a bot is given up on (names are random; collisions are rare). */
 const NAME_ATTEMPTS = 30;
+/** How often offline bots get a chance to start a session. */
+const SESSION_CHECK_MS = 15_000;
 
 export class BotPool {
   settings: BotSettings = settingsFromStored(null);
@@ -59,6 +73,7 @@ export class BotPool {
   #demand = new Map<string, Demand>();
   #fastRooms = new Set<string>();
   #nextBackgroundAt = 0;
+  #lastSessionsAt: number | null = null;
   #lastGrownAt: number | null = null;
   #stopped = false;
   #topUp: Promise<unknown> = Promise.resolve();
@@ -84,10 +99,21 @@ export class BotPool {
     return this.#bots;
   }
 
-  /** Loads settings and every bot player from the store. Call before recovering rooms. */
+  /**
+   * Loads settings and every bot player from the store, giving bots without a schedule one (stored), and puts about as
+   * many bots online as would be at this hour. Call before recovering rooms.
+   */
   async load(): Promise<void> {
     this.settings = settingsFromStored(await this.#store.loadSetting(SETTINGS_KEY), (m) => this.#log(m));
-    for (const row of await this.#store.loadBots()) this.#bots.set(row.id, this.#fresh(row));
+    for (const row of await this.#store.loadBots()) {
+      let schedule = row.schedule;
+      if (!schedule) {
+        schedule = randomSchedule(this.#random, this.settings);
+        await this.#store.setBotSchedule(row.id, schedule);
+      }
+      this.#bots.set(row.id, this.#fresh({ ...row, schedule }));
+    }
+    this.#seedSessions();
   }
 
   /**
@@ -148,6 +174,7 @@ export class BotPool {
     if (this.#stopped) return;
     const now = this.#now();
     this.#withdraw();
+    this.#sessions(now);
     this.#summon(now);
     this.#background(now);
   }
@@ -174,14 +201,18 @@ export class BotPool {
 
   snapshot(): PoolSnapshot {
     const now = this.#now();
-    const counts = { active: 0, retired: 0, idle: 0, resting: 0, queued: 0, busy: 0 };
+    const counts = { active: 0, retired: 0, online: 0, offline: 0, idle: 0, resting: 0, queued: 0, busy: 0 };
     const bots: BotSummary[] = [];
     for (const b of this.#bots.values()) {
       let state: BotSummary['state'] = b.state;
+      const online = b.state !== 'idle' || this.#online(b, now);
       if (b.state === 'idle' && !b.active) state = 'retired';
+      else if (!online) state = 'offline';
       else if (b.state === 'idle' && b.restUntil > now) state = 'resting';
-      if (b.active) counts.active++;
-      else counts.retired++;
+      if (b.active) {
+        counts.active++;
+        if (online) counts.online++;
+      } else counts.retired++;
       if (state !== 'retired') counts[state]++;
       bots.push({
         id: b.id,
@@ -193,6 +224,8 @@ export class BotPool {
         state,
         roomId: b.roomId,
         forUserId: b.forUserId,
+        schedule: structuredClone(b.schedule),
+        online,
       });
     }
     return {
@@ -226,9 +259,10 @@ export class BotPool {
       if (typeof skill !== 'number' || !(skill >= 0 && skill <= 1)) return { error: 'skill must be from 0 to 1' };
       if (req.name !== undefined) {
         if (!isValidUsername(req.name)) return { error: 'Not a valid username' };
-        const row = await this.#store.createBot({ name: req.name, skill, rating: Math.round(botElo(skill)) });
+        const schedule = randomSchedule(this.#random, this.settings);
+        const row = await this.#store.createBot({ name: req.name, skill, rating: Math.round(botElo(skill)), schedule });
         if (!row) return { error: 'That name is taken' };
-        out.push(this.#add(row));
+        out.push(this.#add({ ...row, schedule }));
       } else {
         const b = await this.#create(skill);
         if (!b) return { error: 'Could not find a free name' };
@@ -270,20 +304,56 @@ export class BotPool {
     const r = mergeSettings(this.settings, patch);
     if ('error' in r) return r;
     await this.#store.saveSetting(SETTINGS_KEY, r.settings);
-    const oldEvery = this.settings.backgroundEveryMs;
+    const old = this.settings;
     this.settings = r.settings;
-    if (r.settings.backgroundEveryMs < oldEvery) this.#nextBackgroundAt = 0;
+    if (r.settings.backgroundEveryMs < old.backgroundEveryMs) this.#nextBackgroundAt = 0;
+    if (r.settings.schedulesEnabled && !old.schedulesEnabled) this.#seedSessions();
     this.ensurePool().catch((e) => this.#log('could not grow the pool', e));
     return { settings: structuredClone(r.settings) };
   }
 
   // ---------------------------------------------------------------------------
 
-  #fresh(row: BotRow): PoolBot {
-    return { ...row, state: 'idle', forUserId: null, roomId: null, restUntil: 0, lastOpponents: new Set() };
+  #fresh(row: BotRow & { schedule: BotSchedule }): PoolBot {
+    return { ...row, state: 'idle', forUserId: null, roomId: null, restUntil: 0, lastOpponents: new Set(), onlineUntil: 0 };
   }
 
-  #add(row: BotRow): PoolBot {
+  #online(b: PoolBot, now: number): boolean {
+    return !this.settings.schedulesEnabled || b.onlineUntil > now;
+  }
+
+  #startSession(b: PoolBot, now: number): void {
+    b.onlineUntil = now + sessionLength(this.#random, this.settings.sessionMin);
+  }
+
+  /** Puts each bot online with the chance its schedule gives for now, part-way through a session (startup). */
+  #seedSessions(): void {
+    const now = this.#now();
+    for (const b of this.#bots.values()) {
+      if (b.active && this.#random() < onlineChance(b.schedule, now)) {
+        b.onlineUntil = now + Math.round(this.#random() * sessionLength(this.#random, this.settings.sessionMin));
+      }
+    }
+    this.#lastSessionsAt = now;
+  }
+
+  /**
+   * Bots outside a session may start one, with the chance their schedule gives for the time since the last check (a
+   * bot still finishing a game after its session ended may carry on into a new one).
+   */
+  #sessions(now: number): void {
+    if (!this.settings.schedulesEnabled) return;
+    const last = this.#lastSessionsAt ?? now - SESSION_CHECK_MS;
+    if (now - last < SESSION_CHECK_MS) return;
+    const dt = Math.min(now - last, 4 * SESSION_CHECK_MS);
+    this.#lastSessionsAt = now;
+    for (const b of this.#bots.values()) {
+      if (!b.active || b.onlineUntil > now) continue;
+      if (this.#random() < sessionStartChance(b.schedule, now, this.settings.sessionMin, dt)) this.#startSession(b, now);
+    }
+  }
+
+  #add(row: BotRow & { schedule: BotSchedule }): PoolBot {
     const b = this.#fresh(row);
     this.#bots.set(b.id, b);
     return b;
@@ -316,16 +386,19 @@ export class BotPool {
       let name = botName(this.#random);
       if (attempt >= 5) name = `${name.slice(0, 16)}${Math.floor(this.#random() * 1000)}`;
       if (!isValidUsername(name)) continue;
-      const row = await this.#store.createBot({ name, skill, rating: Math.round(botElo(skill)) });
-      if (row) return this.#add(row);
+      const schedule = randomSchedule(this.#random, this.settings);
+      const row = await this.#store.createBot({ name, skill, rating: Math.round(botElo(skill)), schedule });
+      if (row) return this.#add({ ...row, schedule });
     }
     this.#log(`gave up finding a free bot name after ${NAME_ATTEMPTS} attempts`);
     return null;
   }
 
-  /** Idle, active and rested: may be summoned or seated. */
-  #available(now: number): PoolBot[] {
-    return [...this.#bots.values()].filter((b) => b.active && b.state === 'idle' && b.restUntil <= now);
+  /** Idle, active, rested and online: may be summoned or seated. `anyHour` drops the online condition. */
+  #available(now: number, anyHour = false): PoolBot[] {
+    return [...this.#bots.values()].filter(
+      (b) => b.active && b.state === 'idle' && b.restUntil <= now && (anyHour || this.#online(b, now)),
+    );
   }
 
   /** Bot entries whose human left the queue (or was seated without them) go back to idle. */
@@ -361,7 +434,7 @@ export class BotPool {
         continue;
       }
       if (now < d.arrivalAt) continue;
-      const bot = this.#pickFor(entry, now);
+      const bot = this.#pickFor(entry, now) ?? this.#wakeFor(entry, now);
       if (bot) {
         this.#enqueue(bot, entry, format, now);
         d.arrivalAt = null;
@@ -372,9 +445,19 @@ export class BotPool {
     for (const id of this.#demand.keys()) if (!seen.has(id)) this.#demand.delete(id);
   }
 
+  /**
+   * No online bot fits a waiting human: an offline one that fits logs on outside its usual hours (a session starts
+   * now), so schedules never keep a human waiting and no bot is created while one fits.
+   */
+  #wakeFor(human: QueueEntry, now: number): PoolBot | null {
+    const bot = this.#pickFor(human, now, true);
+    if (bot) this.#startSession(bot, now);
+    return bot;
+  }
+
   /** Among fitting available bots (preferring ones that did not just play this human), one of the 3 closest. */
-  #pickFor(human: QueueEntry, now: number): PoolBot | null {
-    const fitting = this.#available(now).filter((b) => this.#mm.fits(human.userId, b.rating, now));
+  #pickFor(human: QueueEntry, now: number, anyHour = false): PoolBot | null {
+    const fitting = this.#available(now, anyHour).filter((b) => this.#mm.fits(human.userId, b.rating, now));
     if (!fitting.length) return null;
     const fresh = fitting.filter((b) => !b.lastOpponents.has(human.userId));
     const closest = (fresh.length ? fresh : fitting)
@@ -402,8 +485,9 @@ export class BotPool {
   /** Nobody fits this human: create a bot near their rating, or at the size limit send the nearest idle bot anyway. */
   #grow(human: QueueEntry, format: Format, d: Demand, now: number): void {
     if (this.#activeCount() >= this.settings.botPoolMax) {
-      const nearest = this.#available(now).sort((a, b) => Math.abs(a.rating - human.rating) - Math.abs(b.rating - human.rating))[0];
+      const nearest = this.#available(now, true).sort((a, b) => Math.abs(a.rating - human.rating) - Math.abs(b.rating - human.rating))[0];
       if (nearest) {
+        if (!this.#online(nearest, now)) this.#startSession(nearest, now);
         this.#enqueue(nearest, human, format, now);
         d.arrivalAt = null;
       }
@@ -423,7 +507,8 @@ export class BotPool {
     const warm = this.warmingUp;
     this.#nextBackgroundAt = now + (warm ? s.warmupEveryMs : Math.round(s.backgroundEveryMs * (0.5 + this.#random())));
     if (warm && this.#fastRooms.size >= s.warmupTables) return;
-    const avail = this.#available(now);
+    // Warm-up settles ratings and ignores schedules; normal background games seat (and keep a reserve of) online bots.
+    const avail = this.#available(now, warm);
     if (avail.length < 4 || (!warm && avail.length - 4 < s.idleReserve)) return;
     const seed = avail[Math.floor(this.#random() * avail.length)];
     const peers = avail

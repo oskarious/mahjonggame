@@ -1,10 +1,11 @@
 // Persistence of games and ratings. `PgStore` is the real one; `MemoryStore` backs the tests.
 import type { Action, FinalStanding, RuleSet } from '@mahjong/engine';
-import type { Format } from '@mahjong/protocol';
+import type { BotSchedule, Format } from '@mahjong/protocol';
 import { randomUUID } from 'node:crypto';
 import { type Kysely, sql } from 'kysely';
 import type { DB } from './db.ts';
 import { anonymousBot, type SeatInit } from './matchmaking.ts';
+import { parseSchedule } from './schedule.ts';
 
 export interface RatingRow {
   rating: number;
@@ -41,6 +42,8 @@ export interface BotRow {
   active: boolean;
   rating: number;
   games: number;
+  /** Null for bots stored before schedules (or with an unreadable one); the pool gives them one. */
+  schedule: BotSchedule | null;
 }
 
 export interface BotPatch {
@@ -50,6 +53,13 @@ export interface BotPatch {
 }
 
 export type BotUpdateResult = 'ok' | 'nameTaken' | 'notFound';
+
+export interface NewBot {
+  name: string;
+  skill: number;
+  rating: number;
+  schedule: BotSchedule;
+}
 
 export interface StoredGame extends GameRecord {
   actions: Action[];
@@ -69,8 +79,9 @@ export interface Store {
   /** Every bot player, active or retired. */
   loadBots(): Promise<BotRow[]>;
   /** Creates a bot player (user, bot and rating rows). Null if the name is taken. */
-  createBot(bot: { name: string; skill: number; rating: number }): Promise<BotRow | null>;
+  createBot(bot: NewBot): Promise<BotRow | null>;
   updateBot(id: string, patch: BotPatch): Promise<BotUpdateResult>;
+  setBotSchedule(id: string, schedule: BotSchedule): Promise<void>;
   /** A runtime setting (JSON), or null if never saved. */
   loadSetting(key: string): Promise<unknown>;
   saveSetting(key: string, value: unknown): Promise<void>;
@@ -201,7 +212,16 @@ export class PgStore implements Store {
       .selectFrom('bot')
       .innerJoin('user', 'user.id', 'bot.userId')
       .leftJoin('rating', 'rating.userId', 'bot.userId')
-      .select(['bot.userId', 'bot.skill', 'bot.active', 'user.displayUsername', 'user.name', 'rating.rating', 'rating.games'])
+      .select([
+        'bot.userId',
+        'bot.skill',
+        'bot.active',
+        'bot.schedule',
+        'user.displayUsername',
+        'user.name',
+        'rating.rating',
+        'rating.games',
+      ])
       .execute();
     return rows.map((r) => ({
       id: r.userId,
@@ -210,10 +230,15 @@ export class PgStore implements Store {
       active: r.active,
       rating: r.rating ?? this.#startRating,
       games: r.games ?? 0,
+      schedule: parseSchedule(r.schedule),
     }));
   }
 
-  async createBot(bot: { name: string; skill: number; rating: number }): Promise<BotRow | null> {
+  async setBotSchedule(id: string, schedule: BotSchedule): Promise<void> {
+    await this.#db.updateTable('bot').set({ schedule: JSON.stringify(schedule) }).where('userId', '=', id).execute();
+  }
+
+  async createBot(bot: NewBot): Promise<BotRow | null> {
     const id = randomUUID();
     return this.#db.transaction().execute(async (trx) => {
       // No `account` row: without a credential, Better Auth cannot sign this user in.
@@ -230,9 +255,9 @@ export class PgStore implements Store {
         .onConflict((oc) => oc.doNothing())
         .executeTakeFirst();
       if (!res.numInsertedOrUpdatedRows) return null;
-      await trx.insertInto('bot').values({ userId: id, skill: bot.skill }).execute();
+      await trx.insertInto('bot').values({ userId: id, skill: bot.skill, schedule: JSON.stringify(bot.schedule) }).execute();
       await trx.insertInto('rating').values({ userId: id, rating: bot.rating, games: 0, updatedAt: new Date() }).execute();
-      return { id, name: bot.name, skill: bot.skill, active: true, rating: bot.rating, games: 0 };
+      return { id, name: bot.name, skill: bot.skill, active: true, rating: bot.rating, games: 0, schedule: bot.schedule };
     });
   }
 
@@ -327,24 +352,34 @@ export class MemoryStore implements Store {
   }
 
   /** Bot players by id; ratings live in `ratings` like everyone's. */
-  bots = new Map<string, { id: string; name: string; skill: number; active: boolean }>();
+  bots = new Map<string, { id: string; name: string; skill: number; active: boolean; schedule: BotSchedule | null }>();
   /** Lowercased usernames in use (bots add theirs; tests may add humans'). */
   usernames = new Set<string>();
   settings = new Map<string, unknown>();
   #nextBot = 1;
 
   async loadBots(): Promise<BotRow[]> {
-    return [...this.bots.values()].map((b) => ({ ...b, ...(this.ratings.get(b.id) ?? { rating: 1000, games: 0 }) }));
+    return [...this.bots.values()].map((b) => ({
+      ...b,
+      schedule: structuredClone(b.schedule),
+      ...(this.ratings.get(b.id) ?? { rating: 1000, games: 0 }),
+    }));
   }
 
-  async createBot(bot: { name: string; skill: number; rating: number }): Promise<BotRow | null> {
+  async createBot(bot: NewBot): Promise<BotRow | null> {
     await this.beforeWrite?.();
     if (this.usernames.has(bot.name.toLowerCase())) return null;
     const id = `bot-${this.#nextBot++}`;
     this.usernames.add(bot.name.toLowerCase());
-    this.bots.set(id, { id, name: bot.name, skill: bot.skill, active: true });
+    this.bots.set(id, { id, name: bot.name, skill: bot.skill, active: true, schedule: structuredClone(bot.schedule) });
     this.ratings.set(id, { rating: bot.rating, games: 0 });
-    return { id, name: bot.name, skill: bot.skill, active: true, rating: bot.rating, games: 0 };
+    return { id, name: bot.name, skill: bot.skill, active: true, rating: bot.rating, games: 0, schedule: bot.schedule };
+  }
+
+  async setBotSchedule(id: string, schedule: BotSchedule): Promise<void> {
+    await this.beforeWrite?.();
+    const b = this.bots.get(id);
+    if (b) b.schedule = structuredClone(schedule);
   }
 
   async updateBot(id: string, patch: BotPatch): Promise<BotUpdateResult> {
