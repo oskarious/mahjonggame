@@ -11,7 +11,7 @@ import {
   pendingSeats,
   scenario,
 } from '@mahjong/engine';
-import type { Position } from './types';
+import type { Position } from './types.ts';
 
 /** Lessons teach the rules played on the site. */
 export const LESSON_RULES = DEFAULT_RULES;

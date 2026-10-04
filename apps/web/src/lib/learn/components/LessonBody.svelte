@@ -5,7 +5,7 @@
   import { loadProgress, markRead } from '$lib/learn/progress.svelte';
   import type { LessonMeta, Unit } from '$lib/learn/registry';
   import { trainerForLesson } from '$lib/train/registry';
-  import type { Exercise } from '$lib/learn/types';
+  import type { Exercise } from '@mahjong/drills/types';
   import Cta from './Cta.svelte';
   import Seo from './Seo.svelte';
 

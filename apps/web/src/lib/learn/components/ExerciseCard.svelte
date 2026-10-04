@@ -23,9 +23,9 @@
     winValue,
     yakuName,
     yakuQuiz,
-  } from '$lib/learn/goals';
-  import { RED, tok } from '$lib/learn/position';
-  import type { CallChoice, Exercise, Verdict } from '$lib/learn/types';
+  } from '@mahjong/drills/goals';
+  import { RED, tok } from '@mahjong/drills/position';
+  import type { CallChoice, Exercise, Verdict } from '@mahjong/drills/types';
   import Ponds from './Ponds.svelte';
   import { segments } from '$lib/learn/text';
   import Rich from './Rich.svelte';

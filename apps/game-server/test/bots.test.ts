@@ -284,6 +284,15 @@ describe('schedules', () => {
     for (const id of botsOf([...hub.rooms.values()][0])) expect(wasOnline.has(id)).toBe(true);
   });
 
+  it('onlineIds lists the active bots online now, including those in a game', async () => {
+    vi.setSystemTime(TOKYO_NIGHT);
+    const { hub } = await setup(POOL, { ...on, seed: 'night' });
+    expect(hub.bots.onlineIds()).toEqual([]);
+    await queue(hub, 'a');
+    await tickUntil(hub, () => !!hub.roomOf('a'));
+    expect(hub.bots.onlineIds().sort()).toEqual(botsOf(hub.roomOf('a')!.room));
+  });
+
   it('offline bots start sessions over time in their evening', async () => {
     vi.setSystemTime(TOKYO_EVENING);
     const { hub } = await setup(many(40), { settings: { schedulesEnabled: true }, seed: 'sessions' });

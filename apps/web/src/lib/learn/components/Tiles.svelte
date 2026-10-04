@@ -3,7 +3,7 @@
   import { kindOf } from '@mahjong/engine';
   import { TILE_MARKS } from '$lib/marks';
   import { describe } from '$lib/learn/text';
-  import { RED, tilesOf } from '$lib/learn/position';
+  import { RED, tilesOf } from '@mahjong/drills/position';
   import Tile from '$lib/components/Tile.svelte';
 
   interface Props {

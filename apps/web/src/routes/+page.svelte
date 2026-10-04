@@ -4,7 +4,8 @@
   import RankBadge from "$lib/components/RankBadge.svelte";
   import Title, { SITE_NAME } from "$lib/components/Title.svelte";
   import { type SavedGame, loadSave } from "$lib/game/saved";
-  import { WINDS } from "$lib/labels";
+  import { WINDS } from "@mahjong/drills/labels";
+  import DailyDiscard from "$lib/train/components/DailyDiscard.svelte";
   import { onMount } from "svelte";
 
   let { data } = $props();
@@ -123,6 +124,10 @@
       </button>
     </div>
   </form>
+
+  {#key data.discard.date}
+    <DailyDiscard {...data.discard} />
+  {/key}
 
   <nav class="more">
     <a class="learn" href="/learn">New to riichi mahjong? <strong>Learn to play</strong> →</a>

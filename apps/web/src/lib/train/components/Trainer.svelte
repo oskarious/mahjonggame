@@ -7,9 +7,9 @@
   import ExerciseCard from '$lib/learn/components/ExerciseCard.svelte';
   import Seo from '$lib/learn/components/Seo.svelte';
   import { lessonBySlug } from '$lib/learn/registry';
-  import type { Exercise, ExerciseOf } from '$lib/learn/types';
+  import type { Exercise, ExerciseOf } from '@mahjong/drills/types';
   import { Feed, type Problem } from '../feed';
-  import { LEVELS, type Level, type TrainerId } from '../generate';
+  import { LEVELS, type Level, type TrainerId } from '@mahjong/drills/generate';
   import { problemPath, trainerById } from '../registry';
   import { loadStats, recordAnswer, recordRush, statsLoaded, statsOf } from '../stats.svelte';
   import DiscardTable from './DiscardTable.svelte';

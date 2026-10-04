@@ -2,7 +2,7 @@
   import { makeMeld, parseTiles } from '@mahjong/engine';
   import Melds from '$lib/components/Melds.svelte';
   import Tile from '$lib/components/Tile.svelte';
-  import { RED, meldSlots } from '$lib/learn/position';
+  import { RED, meldSlots } from '@mahjong/drills/position';
   import { describe } from '$lib/learn/text';
   import { sortTiles } from '$lib/tiles';
   import type { YakuExample } from '$lib/learn/yaku';

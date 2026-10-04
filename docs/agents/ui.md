@@ -64,6 +64,15 @@ sounds, theme. Structure of the web app: [web.md](web.md).
   opsz file: weight 200–800 plus optical size), imported in `+layout.svelte` and set on `:root`. Keep a weight
   hierarchy: text 400, labels/buttons 500–600, numbers/emphasis 700; 800 is the wordmark's (and the seat winds').
 
+## Bands (full-bleed sections)
+
+Content on a narrow page that needs the width (a hand of tiles) goes in a **band** (`lib/components/Band.svelte`,
+"Band" in the design system): it breaks out of the page column, edge to edge on phones (square corners) and
+`band-max` (560 px) centred on wider screens, on `surface-me`, with only 4 px side padding. Its heading is a label
+(with an optional aside on the right, e.g. a countdown) in line with the page column; text rows inside indent by
+`--band-inset` to stay in line too. It is a size container, so tile rows inside measure the band. Pass
+`style="--tile-ratio: …"` when it holds tiles outside the play screen.
+
 ## Learn pages
 
 - **The exception to minimal text**: lessons explain things, but in bite-sized parts: one heading, a few sentences,
@@ -96,7 +105,11 @@ sounds, theme. Structure of the web app: [web.md](web.md).
 - **Rush bar**: clock, a gold time bar, the score and three strike pips (filled `danger` per miss); no labels.
 - **Daily**: five marks (`ok` / `danger` fills) with the day streak; the result shows the share line (● right,
   ○ missed; glyphs, no emoji).
-- The design system has no trainer components yet: these three are a noted deviation until added there.
+- **Daily discard** (a `Band` on the home page, under the play form): the heading with a countdown to the next hand as its aside
+  (H:MM:SS to UTC midnight, device clock; the page reloads at zero), then the lessons' hand slice with round and dora; after the
+  vote, one row per kind voted: tile, a bar and the share in %, the reader's own with an ink dot and ink bar, then the
+  vote count. No efficiency verdict anywhere (it's preference, not a quiz).
+- The design system has no trainer components yet: these four are a noted deviation until added there.
 
 ## Hints
 

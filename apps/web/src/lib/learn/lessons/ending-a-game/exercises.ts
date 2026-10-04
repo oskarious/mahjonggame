@@ -1,4 +1,4 @@
-import type { Exercise } from '../../types';
+import type { Exercise } from '@mahjong/drills/types';
 
 export const exercises: Record<string, Exercise> = {
   deals: {

@@ -196,6 +196,12 @@ export class BotPool {
     return active > 0 && established < active / 2;
   }
 
+  /** Active bots online now (by schedule, or in a game): the ones that may do things around the site. */
+  onlineIds(): string[] {
+    const now = this.#now();
+    return [...this.#bots.values()].filter((b) => b.active && (b.state !== 'idle' || this.#online(b, now))).map((b) => b.id);
+  }
+
   // ---------------------------------------------------------------------------
   // Admin
 

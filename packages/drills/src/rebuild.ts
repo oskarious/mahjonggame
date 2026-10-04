@@ -9,8 +9,8 @@ import {
   type WinRecord,
   tileToString,
 } from '@mahjong/engine';
-import { RED } from '../learn/position';
-import type { Position } from '../learn/types';
+import { RED } from './position.ts';
+import type { Position } from './types.ts';
 
 /** Notation for physical tiles; red fives stay red. */
 export const notation = (tiles: readonly Tile[]) => tiles.map((t) => tileToString(t, RED)).join('');

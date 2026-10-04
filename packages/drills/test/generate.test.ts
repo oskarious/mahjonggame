@@ -11,9 +11,9 @@ import {
   stateOf,
   winValue,
   yakuQuiz,
-} from '../learn/goals';
-import { buildPosition } from '../learn/position';
-import type { ExerciseOf } from '../learn/types';
+} from '../src/goals.ts';
+import { buildPosition } from '../src/position.ts';
+import type { ExerciseOf } from '../src/types.ts';
 import {
   BUDGET,
   LEVELS,
@@ -23,8 +23,8 @@ import {
   generateCounted,
   harvestWin,
   isEfficiencyDecision,
-} from './generate';
-import { winPosition } from './rebuild';
+} from '../src/generate.ts';
+import { winPosition } from '../src/rebuild.ts';
 
 const SEEDS = Array.from({ length: 40 }, (_, i) => `t${i}`);
 const SLOW = 120_000;

@@ -1,5 +1,5 @@
 import type { Component } from 'svelte';
-import type { Exercise } from './types';
+import type { Exercise } from '@mahjong/drills/types';
 
 // Each lesson is lessons/<slug>/Lesson.svelte (the article) + exercises.ts (its exercises as data).
 // Articles load lazily, one per page; exercise data is small and loaded eagerly (the index needs the ids).

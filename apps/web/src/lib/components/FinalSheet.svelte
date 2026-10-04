@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { FinalStanding } from '@mahjong/engine';
   import type { RatingChange } from '@mahjong/protocol';
-  import { signed } from '$lib/labels';
+  import { signed } from '@mahjong/drills/labels';
   import RankBadge from './RankBadge.svelte';
 
   interface Props {

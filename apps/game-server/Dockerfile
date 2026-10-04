@@ -1,11 +1,12 @@
 # Game server (Node + ws). Build context is the repo root because it depends on the engine and protocol workspace
-# packages. No build step: Node 22 strips the types at runtime (erasable-syntax TS only, see tsconfig.base.json).
+# packages (engine, protocol, drills). No build step: Node 22 strips the types at runtime (erasable-syntax TS only, see tsconfig.base.json).
 
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/engine/package.json packages/engine/
 COPY packages/protocol/package.json packages/protocol/
+COPY packages/drills/package.json packages/drills/
 COPY apps/game-server/package.json apps/game-server/
 RUN npm ci --omit=dev --workspace @mahjong/game-server --ignore-scripts
 
@@ -20,6 +21,8 @@ COPY packages/engine/package.json packages/engine/
 COPY packages/engine/src packages/engine/src
 COPY packages/protocol/package.json packages/protocol/
 COPY packages/protocol/src packages/protocol/src
+COPY packages/drills/package.json packages/drills/
+COPY packages/drills/src packages/drills/src
 COPY apps/game-server/package.json apps/game-server/
 COPY apps/game-server/src apps/game-server/src
 USER node

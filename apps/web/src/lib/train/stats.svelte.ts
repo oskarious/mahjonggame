@@ -1,6 +1,6 @@
 // Trainer stats on this device only (no account): per trainer and the daily set. Loaded on mount, so server-rendered
 // HTML never depends on it; storage errors are ignored (a private window simply keeps nothing).
-import type { TrainerId } from './generate';
+import type { TrainerId } from '@mahjong/drills/generate';
 
 const KEY = 'riichi:train';
 

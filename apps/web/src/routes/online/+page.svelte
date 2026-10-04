@@ -3,7 +3,7 @@
   import { goto } from '$app/navigation';
   import type { Format } from '@mahjong/protocol';
   import { RemoteGame } from '$lib/game/remote.svelte';
-  import { WINDS } from '$lib/labels';
+  import { WINDS } from '@mahjong/drills/labels';
   import RankBadge from '$lib/components/RankBadge.svelte';
   import Table from '$lib/components/Table.svelte';
   import Title from '$lib/components/Title.svelte';

@@ -1,5 +1,5 @@
 // The daily set: the same five problems for every visitor on a UTC day.
-import { type Level, type TrainerId, generate } from './generate';
+import { type Level, type TrainerId, generate } from '@mahjong/drills/generate';
 
 export const DAILY: { trainer: TrainerId; level: Level }[] = [
   { trainer: 'efficiency', level: 'normal' },

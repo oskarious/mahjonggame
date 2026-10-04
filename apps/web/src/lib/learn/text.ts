@@ -1,6 +1,6 @@
 import { isRedTile, kindOf } from '@mahjong/engine';
 import { kindName } from '../tiles';
-import { RED, tilesOf } from './position';
+import { RED, tilesOf } from '@mahjong/drills/position';
 
 export type Segment = { text: string } | { tiles: string };
 

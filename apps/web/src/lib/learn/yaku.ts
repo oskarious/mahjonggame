@@ -12,7 +12,7 @@ import {
   parseTiles,
   scoreHand,
 } from '@mahjong/engine';
-import { LESSON_RULES } from './position';
+import { LESSON_RULES } from '@mahjong/drills/position';
 
 export interface YakuExample {
   /** Concealed tiles, the winning tile last. */

@@ -7,7 +7,7 @@
   import { clearSave, loadSave } from '$lib/game/saved';
   import { randomId } from '$lib/random';
   import { parseBotElo } from '$lib/bots';
-  import { WINDS } from '$lib/labels';
+  import { WINDS } from '@mahjong/drills/labels';
   import LocalSettings from '$lib/components/LocalSettings.svelte';
   import Table from '$lib/components/Table.svelte';
   import Title from '$lib/components/Title.svelte';

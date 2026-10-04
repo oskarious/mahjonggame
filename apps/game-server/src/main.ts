@@ -1,8 +1,10 @@
-// Entry point: config → database check → load bot players → recover unfinished games → top up the bot pool → listen.
+// Entry point: config → database check → load bot players → recover unfinished games → top up the bot pool → jobs →
+// listen.
 // SIGTERM stops matchmaking, tells clients to reconnect and exits; the next instance resumes the games from the database.
 import { configFromEnv } from './config.ts';
 import { checkMigration, createDb } from './db.ts';
 import { Hub } from './hub.ts';
+import { startJobs } from './jobs.ts';
 import { replayGame } from './recovery.ts';
 import { createGameServer } from './server.ts';
 import { PgStore } from './store.ts';
@@ -18,6 +20,7 @@ if (recovered) console.log(`Resumed ${recovered} unfinished game(s)`);
 const created = await hub.bots.ensurePool();
 console.log(`Bot players: ${hub.bots.bots.size}${created ? ` (${created} new)` : ''}${config.botsBackground ? '' : ', background games off'}`);
 
+const stopJobs = await startJobs({ db, bots: hub.bots });
 const server = createGameServer(hub, config);
 const tick = setInterval(() => hub.tick().catch((e) => console.error('[hub] tick failed', e)), 1000);
 server.http.listen(config.port, () => console.log(`Game server on :${config.port} (auth via ${config.webInternalUrl})`));
@@ -28,6 +31,7 @@ async function stop(signal: string) {
   stopping = true;
   console.log(`${signal}: shutting down`);
   clearInterval(tick);
+  await stopJobs();
   hub.shutdown();
   await server.close();
   await db.destroy();

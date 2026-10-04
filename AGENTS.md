@@ -25,15 +25,18 @@ Dockerfile              production image for apps/web (build context = repo root
 compose.production.yml  production: web + game-server as one Dokploy Compose app
 scripts/dev.mjs         root `npm run dev`: starts the web dev server and the game server together
 packages/engine/        @mahjong/engine: pure TS, no I/O. Rules, scoring, game state, views, analysis, bots
+packages/drills/        @mahjong/drills: pure TS on the engine: lesson positions + engine-decided answers (Learn), the
+                        trainer generator (bot self-play → problems), the daily discard hand and bot weights, yaku labels
 packages/protocol/      @mahjong/protocol: client↔server WebSocket messages (types, PROTOCOL_VERSION) + hand-written
                         guards; username.ts (username rules, shared), admin.ts (types of the game server's /internal API)
-apps/game-server/       @mahjong/game-server: Node 22 + ws, no build step; rooms, timers, matchmaking, bot players, Elo
+apps/game-server/       @mahjong/game-server: Node 22 + ws, no build step; rooms, timers, matchmaking, bot players, Elo,
+                        scheduled jobs (node-cron)
 apps/web/               SvelteKit (Svelte 5 runes, adapter-node): UI, offline play, accounts, /admin, DB migrations
 docs/agents/            topic guides for agents (index below)
 openspec/               OpenSpec (spec-driven changes/specs); use it for larger features
 ```
 
-Dependencies point one way: engine ← protocol ← web, game-server; the two apps never import each other. At runtime
+Dependencies point one way: engine ← protocol, drills ← web, game-server; the two apps never import each other. At runtime
 they meet in three places: `/ws` (browser → game server; Vite proxy in dev, Traefik in prod), the game server
 asking web's `/api/auth/get-session` to resolve cookies, and web's `/admin` calling the game server's `/internal`
 API. Both use one Postgres: **web owns the schema** (migrations), the game server writes the game, rating and bot
@@ -59,7 +62,7 @@ npm install
 docker compose up -d         # local Postgres on :5432 (copy apps/web/.env.example to apps/web/.env first)
 npm run dev                  # web on :5173 (also LAN) + game server on :3001; migrates the DB on start (see dev.md)
 npm run db:migrate --workspace @mahjong/web   # run migrations without starting the server
-npm test                     # engine (~300), protocol, game-server and web (lib/audio) tests
+npm test                     # engine (~300), protocol, drills, game-server and web tests
 npm run typecheck            # engine + scripts + protocol + game-server + svelte-check
 npm run build --workspace @mahjong/web
 ```

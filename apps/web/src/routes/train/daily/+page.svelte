@@ -3,7 +3,7 @@
   import { page } from '$app/state';
   import Cta from '$lib/learn/components/Cta.svelte';
   import ExerciseCard from '$lib/learn/components/ExerciseCard.svelte';
-  import type { ExerciseOf } from '$lib/learn/types';
+  import type { ExerciseOf } from '@mahjong/drills/types';
   import DiscardTable from '$lib/train/components/DiscardTable.svelte';
   import Seo from '$lib/learn/components/Seo.svelte';
   import { shareLine } from '$lib/train/daily';

@@ -13,7 +13,7 @@ import {
   pendingSeats,
   seedRng,
 } from '@mahjong/engine';
-import { LESSON_RULES } from '../learn/position';
+import { LESSON_RULES } from './position.ts';
 
 /**
  * Bots for generating: good shapes and natural calls, no defense or reading (costly, and folding hands make poor

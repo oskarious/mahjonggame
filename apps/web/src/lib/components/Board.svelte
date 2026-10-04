@@ -6,7 +6,7 @@
     type Tile as TileId,
   } from '@mahjong/engine';
   import type { PlayerInfo } from '@mahjong/protocol';
-  import { WIND_SHORT } from '$lib/labels';
+  import { WIND_SHORT } from '@mahjong/drills/labels';
   import { sortTiles } from '$lib/tiles';
   import { tileset } from '$lib/tileset.svelte';
   import Melds from './Melds.svelte';

@@ -14,11 +14,11 @@ import {
   shanten,
   waits,
 } from '@mahjong/engine';
-import { discardAnswers, discardOptions } from '../learn/goals';
-import { buildPosition } from '../learn/position';
-import type { Exercise, ExerciseOf, Position } from '../learn/types';
-import { handPosition, turnPosition, winPosition } from './rebuild';
-import { playHand, rngOf } from './selfplay';
+import { discardAnswers, discardOptions } from './goals.ts';
+import { buildPosition } from './position.ts';
+import type { Exercise, ExerciseOf, Position } from './types.ts';
+import { handPosition, turnPosition, winPosition } from './rebuild.ts';
+import { playHand, rngOf } from './selfplay.ts';
 
 export type TrainerId = 'efficiency' | 'waits' | 'yaku' | 'score';
 

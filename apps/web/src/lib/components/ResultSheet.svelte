@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { HandResult, PlayerView, RedFives } from '@mahjong/engine';
-  import { ABORTS, LIMITS, WIND_SHORT, YAKU, YAKUMAN, signed } from '$lib/labels';
+  import { ABORTS, LIMITS, WIND_SHORT, YAKU, YAKUMAN, signed } from '@mahjong/drills/labels';
   import { sortTiles } from '$lib/tiles';
   import Melds from './Melds.svelte';
   import Tile from './Tile.svelte';

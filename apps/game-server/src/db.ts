@@ -2,8 +2,9 @@
 // these in sync with apps/web/src/lib/server/schema.ts. The server refuses to start until the migration it needs
 // has been applied.
 import type { Action, FinalStanding, RuleSet } from '@mahjong/engine';
+import type { ExerciseOf } from '@mahjong/drills/types';
 import type { BotSchedule } from '@mahjong/protocol';
-import { type ColumnType, type JSONColumnType, Kysely, PostgresDialect } from 'kysely';
+import { type ColumnType, type Generated, type JSONColumnType, Kysely, PostgresDialect } from 'kysely';
 import pg from 'pg';
 
 type Timestamp = ColumnType<Date, Date | string | undefined, Date | string>;
@@ -72,6 +73,22 @@ export interface SettingTable {
   updatedAt: Timestamp;
 }
 
+export interface DailyDiscardTable {
+  date: string;
+  exercise: JSONColumnType<ExerciseOf<'discard'>>;
+  botShare: number;
+  createdAt: Timestamp;
+}
+
+export interface DailyDiscardVoteTable {
+  id: Generated<string>;
+  date: string;
+  userId: string | null;
+  guestId: string | null;
+  kind: number;
+  createdAt: Timestamp;
+}
+
 export interface MigrationTable {
   name: string;
   timestamp: string;
@@ -85,11 +102,13 @@ export interface DB {
   game_action: GameActionTable;
   bot: BotTable;
   setting: SettingTable;
+  daily_discard: DailyDiscardTable;
+  daily_discard_vote: DailyDiscardVoteTable;
   kysely_migration: MigrationTable;
 }
 
 /** The latest migration (in apps/web/migrations) this server needs: it adds the last of the columns above. */
-export const REQUIRED_MIGRATION = '0004_bot_schedules';
+export const REQUIRED_MIGRATION = '0005_daily_discard';
 
 export function createDb(connectionString: string): Kysely<DB> {
   const pool = new pg.Pool({ connectionString, max: 10 });

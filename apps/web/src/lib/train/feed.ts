@@ -1,7 +1,7 @@
 // The stream of problems on a trainer page: the next one is generated while the reader works on the current one, so
 // Next is instant (generating plays a bot game, tens of milliseconds).
-import type { Exercise } from '../learn/types';
-import { type Level, type TrainerId, generate } from './generate';
+import type { Exercise } from '@mahjong/drills/types';
+import { type Level, type TrainerId, generate } from '@mahjong/drills/generate';
 import { newSeed } from './registry';
 
 export interface Problem {

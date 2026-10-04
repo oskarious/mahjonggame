@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { kindOf, parseTiles } from '@mahjong/engine';
-import { buildPosition } from './position';
-import { noChance, safetyGrades } from './safety';
-import type { Position } from './types';
+import { buildPosition } from '../src/position.ts';
+import { noChance, safetyGrades } from '../src/safety.ts';
+import type { Position } from '../src/types.ts';
 
 const k = (t: string) => kindOf(parseTiles(t)[0]);
 const grades = (p: Position, passed: string[] = []) => {

@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { LEVELS, generate, isLevel } from '$lib/train/generate';
+import { LEVELS, generate, isLevel } from '@mahjong/drills/generate';
 import { newSeed, trainerById } from '$lib/train/registry';
 import type { PageServerLoad } from './$types';
 

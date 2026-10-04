@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { kindOf, parseTiles } from '@mahjong/engine';
 import { discardFeedback, pickFeedback, verdictFeedback } from './feedback';
-import { discardAnswers, fuSteps, hasGoodWait, minRon, pickQuiz, scoreQuiz, verdict, winValue } from './goals';
-import { buildPosition } from './position';
+import { discardAnswers, fuSteps, hasGoodWait, minRon, pickQuiz, scoreQuiz, verdict, winValue } from '@mahjong/drills/goals';
+import { buildPosition } from '@mahjong/drills/position';
 import { describe as words, plain, segments, sentences } from './text';
-import type { Exercise, ExerciseOf, Position } from './types';
+import type { Exercise, ExerciseOf, Position } from '@mahjong/drills/types';
 
 const kinds = (s: string) => new Set(parseTiles(s).map(kindOf));
 const discard = (o: Partial<ExerciseOf<'discard'>> & Pick<ExerciseOf<'discard'>, 'position' | 'goal'>) =>

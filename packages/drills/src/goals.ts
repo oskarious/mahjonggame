@@ -28,10 +28,10 @@ import {
   unseenCounts,
   waits,
 } from '@mahjong/engine';
-import { LIMITS, YAKU } from '../labels';
-import { LESSON_RULES, RED, buildPosition, declareWin, kindsOf, tilesOf, tok, winSpot } from './position';
-import { noChance, safetyGrades } from './safety';
-import type { CallChoice, Exercise, ExerciseOf, Position, TileGroup, Verdict } from './types';
+import { LIMITS, YAKU } from './labels.ts';
+import { LESSON_RULES, RED, buildPosition, declareWin, kindsOf, tilesOf, tok, winSpot } from './position.ts';
+import { noChance, safetyGrades } from './safety.ts';
+import type { CallChoice, Exercise, ExerciseOf, Position, TileGroup, Verdict } from './types.ts';
 
 const ALL_KINDS = Array.from({ length: NUM_KINDS }, (_, k) => k);
 

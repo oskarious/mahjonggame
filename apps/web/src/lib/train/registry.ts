@@ -1,5 +1,5 @@
 // The trainers: the hub, the trainer pages, the sitemap and the "Practice" links at the end of lessons read this list.
-import { LEVELS, type Level, type TrainerId } from './generate';
+import { LEVELS, type Level, type TrainerId } from '@mahjong/drills/generate';
 
 export interface TrainerMeta {
   id: TrainerId;

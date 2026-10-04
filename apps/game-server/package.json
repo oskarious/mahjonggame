@@ -10,9 +10,11 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@mahjong/drills": "*",
     "@mahjong/engine": "*",
     "@mahjong/protocol": "*",
     "kysely": "^0.29.6",
+    "node-cron": "^4.6.0",
     "pg": "^8.23.0",
     "ws": "^8.22.0"
   },

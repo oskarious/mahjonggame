@@ -7,20 +7,36 @@ admin API or the game server's DB access. Also read [fair-play.md](fair-play.md)
 
 ```
 apps/game-server/       @mahjong/game-server: Node 22 + ws, no build step (type stripping)
-  src/main.ts           config → migration check → load bots → recover running games → top up bots → listen
+  src/main.ts           config → migration check → load bots → recover running games → top up bots → jobs → listen
   src/server.ts         http (/healthz, /internal → admin.ts) + upgrade (Origin, session via the web app); connection.ts
   src/hub.ts            users, queue ticks, rooms, message routing; room.ts: one game (serialized pipeline, timers)
   src/matchmaking.ts    per-format queues; rating.ts: Elo + hint level; store.ts: PgStore/MemoryStore; recovery.ts
   src/bots.ts           BotPool: bot players' live state, summoning, background games, admin operations
   src/settings.ts       runtime bot settings (defaults, validation; stored in `setting`); pacing.ts: bot think times;
                         names.ts: bot name generator; schedule.ts: bot time zones, free-time windows, session curve
+  src/jobs.ts           scheduled jobs (node-cron, UTC); daily-discard.ts: the home page poll's hands and bot votes
   src/db.ts             Kysely table types — a copy of apps/web/src/lib/server/schema.ts; keep them in sync
   test/                 vitest (fake timers); server.test.ts runs a real socket against a stub session endpoint
 ```
 
 The DB schema is owned by apps/web (migrations there): `0002_game_server` = rating, game, game_seat, game_action
-(written by this server); `0003_bot_players` = bot, setting, user.role; `0004_bot_schedules` = bot.schedule. The
-server refuses to start until `0004_bot_schedules` is applied.
+(written by this server); `0003_bot_players` = bot, setting, user.role; `0004_bot_schedules` = bot.schedule; `0005_daily_discard` =
+daily_discard, daily_discard_vote. The server refuses to start until `0005_daily_discard` is applied.
+
+## Scheduled jobs
+
+`jobs.ts` lists them (`JOBS`: name, cron expression in UTC, optional run at startup); `startJobs` schedules them with
+node-cron (`noOverlap`) and `main.ts` stops them on shutdown. node-cron doesn't catch up runs missed while the server
+was down and doesn't coordinate instances, so **every job must be safe to run twice or late** (one instance runs
+them; a deploy overlap may briefly run two). A failing run is logged and the next one tries again.
+
+- `daily-discard-hands` (hourly, and at startup): stores today's and tomorrow's hand if missing.
+- `daily-discard-bot-votes` (every minute): while bot votes are below the day's `botShare` (seeded per day in
+  50–75%, `BOT_SHARE`) × human votes, each online bot (`BotPool.onlineIds`: active, by schedule or in a game) that
+  hasn't voted today votes with `VOTE_CHANCE` (5 %) per run, so votes spread over the bots' active hours. The kind
+  is drawn from `botWeights`: discards at the lowest distance weighted by improving tiles (cubed, so the most
+  efficient is the favourite), the rest rare, every weight with a per-day jitter so the favourite doesn't win every
+  day. Bot and human votes are told apart by joining `bot` on `userId`.
 
 ## Rooms and timers
 

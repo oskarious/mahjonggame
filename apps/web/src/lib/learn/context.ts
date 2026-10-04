@@ -1,4 +1,4 @@
-import type { Exercise } from './types';
+import type { Exercise } from '@mahjong/drills/types';
 
 /** Context key: the lesson being rendered (its exercises and its parts). */
 export const LESSON = Symbol('lesson');

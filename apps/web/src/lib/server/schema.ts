@@ -1,5 +1,6 @@
 import type { ColumnType, Generated, Insertable, JSONColumnType, Selectable } from 'kysely';
 import type { Action, FinalStanding, RuleSet } from '@mahjong/engine';
+import type { ExerciseOf } from '@mahjong/drills/types';
 import type { BotSchedule } from '@mahjong/protocol';
 
 // Table types for Kysely. Keep in sync with migrations/ (auth tables are written by Better Auth; we mostly read them).
@@ -118,6 +119,30 @@ export interface SettingTable {
   updatedAt: Timestamp;
 }
 
+// --- The home page's daily discard poll (migration 0005_daily_discard). The game server writes these too.
+
+export interface DailyDiscardTable {
+  /** UTC day, YYYY-MM-DD. */
+  date: string;
+  exercise: JSONColumnType<ExerciseOf<'discard'>>;
+  /** Bot votes as a share of the human votes, that day. */
+  botShare: number;
+  createdAt: Timestamp;
+}
+
+export interface DailyDiscardVoteTable {
+  id: Generated<string>;
+  /** UTC day, YYYY-MM-DD. */
+  date: string;
+  /** A signed-in player or bot player; null for a guest. */
+  userId: string | null;
+  /** The guest's `riichi_voter` cookie id; null for a user. */
+  guestId: string | null;
+  /** Tile kind discarded (0-33). */
+  kind: number;
+  createdAt: Timestamp;
+}
+
 export interface DB {
   user: UserTable;
   session: SessionTable;
@@ -129,6 +154,8 @@ export interface DB {
   game_action: GameActionTable;
   bot: BotTable;
   setting: SettingTable;
+  daily_discard: DailyDiscardTable;
+  daily_discard_vote: DailyDiscardVoteTable;
 }
 
 export type User = Selectable<UserTable>;

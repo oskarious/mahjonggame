@@ -18,10 +18,10 @@ import {
   verdict,
   winValue,
   yakuQuiz,
-} from './goals';
+} from '@mahjong/drills/goals';
 import { LESSONS, REFERENCE, UNITS } from './registry';
 import { sentences } from './text';
-import { EXERCISE_KINDS, type Exercise } from './types';
+import { EXERCISE_KINDS, type Exercise } from '@mahjong/drills/types';
 import { YAKU_LIST, hanIn, yakuTip, type YakuTipId } from './yaku';
 
 const dir = fileURLToPath(new URL('./lessons/', import.meta.url));

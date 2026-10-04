@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { Kind } from '@mahjong/engine';
   import Tile from '$lib/components/Tile.svelte';
-  import { discardAnswers, discardOptions, stateOf } from '$lib/learn/goals';
-  import { RED } from '$lib/learn/position';
-  import type { ExerciseOf } from '$lib/learn/types';
+  import { discardAnswers, discardOptions, stateOf } from '@mahjong/drills/goals';
+  import { RED } from '@mahjong/drills/position';
+  import type { ExerciseOf } from '@mahjong/drills/types';
 
   /**
    * Every distinct discard, best first: tiles away after it, how many tiles then improve the hand (or win it, at

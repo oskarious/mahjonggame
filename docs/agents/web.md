@@ -13,25 +13,30 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
   src/lib/game/remote.svelte.ts  RemoteGame: same-origin /ws client, auto-reconnect (+ ping watchdog: a socket silent 3 s is replaced), takeover, deadline state
   src/lib/server/       db.ts (Kysely + pg pool), schema.ts (table types incl. rating/game tables), auth.ts, migrate.ts,
                         admin.ts (calls the game server's /internal API), game-server.ts (is the game server up? →
-                        "Play online" on the home page)
+                        "Play online" on the home page), daily-discard.ts (the home page poll: the stored hand, voters, tally)
   src/hooks.server.ts   init: run migrations, then load auth; handle: session → locals.user/session, /api/auth/*
   src/routes/           play (offline), online (lobby → queue → table; signed-in only; guests → /signup), login (sign in
                         only), signup, account (rating), healthz, admin (bot pool; 404 unless `user.role = 'admin'`),
-                        learn (public course, see below), train (trainers, see below), sitemap.xml, robots.txt
+                        learn (public course, see below), train (trainers, see below), daily-discard (POST a vote), sitemap.xml, robots.txt
   src/lib/learn/        the Learn course: registry.ts (units + lessons in order, SEO titles), lessons/<slug>/
                         (Lesson.svelte article + exercises.ts), components/ (ExerciseCard: one exercise, context-free;
                         Exercise: the lesson wrapper with progress; Tiles, T, Term, Callout, …),
-                        goals.ts / feedback.ts (engine-decided answers), safety.ts (safety grades vs a riichi, lessons
-                        only), position.ts, glossary.ts, yaku.ts,
+                        feedback.ts (answer texts), glossary.ts, yaku.ts,
                         progress.svelte.ts (`riichi:learn`), lessons.test.ts (validates every lesson)
-  src/lib/train/        trainers: registry.ts (trainers, levels, SEO, linked lessons), generate.ts (problems), selfplay.ts
-                        + rebuild.ts (bot games → lesson positions), feed.ts, daily.ts, stats.svelte.ts
-                        (`riichi:train`), components/ (Trainer, DiscardTable, RushBar), generate.test.ts (seed sweep)
+  src/lib/train/        trainers: registry.ts (trainers, levels, SEO, linked lessons), feed.ts, daily.ts, stats.svelte.ts
+                        (`riichi:train`), components/ (Trainer, DiscardTable, RushBar, DailyDiscard)
+  packages/drills/      (@mahjong/drills, shared with the game server; import `@mahjong/drills/<module>`):
+                        types.ts, position.ts (lesson positions), goals.ts (engine-decided answers), safety.ts (safety
+                        grades vs a riichi, lessons only), labels.ts (yaku/limit names), generate.ts (trainer problems),
+                        selfplay.ts + rebuild.ts (bot games → lesson positions), daily-discard.ts; tests: generate.test.ts
+                        (seed sweep), safety.test.ts, daily-discard.test.ts. Relative imports there carry `.ts`
+                        (the game server runs it with Node type stripping)
   src/lib/components/ContentShell.svelte   the frame of Learn and Train pages (header with both sections + CTA)
+  src/lib/components/Band.svelte           a full-bleed section of a narrow page (see ui.md)
   migrations/           Kysely migrations (NNNN_name.ts, import only from kysely); bundled and run on server start;
                         0001_auth = Better Auth tables; 0002_game_server = rating, game, game_seat, game_action
                         (written by the game server); 0003_bot_players = bot, setting, user.role;
-                        0004_bot_schedules = bot.schedule
+                        0004_bot_schedules = bot.schedule; 0005_daily_discard = daily_discard, daily_discard_vote
   src/lib/tiles.ts      TILESETS (ratio, artwork margin, image paths); tileset.svelte.ts: the chosen one (`riichi:tileset`)
   src/lib/components/   Table (the whole play screen, takes a GameSource), Board (4 seat rows), Pond, Melds, PlayerArea
                         (hand/actions/magnifier), Tile, TimerBar, Countdown (online, after a deal),
@@ -122,6 +127,21 @@ Content pages like Learn (`contentPage`, `ContentShell`, `Seo`, CTA, sitemap fro
   opponents elsewhere on the site. Say "hands" or "winning hands".
 - **Adding a trainer**: a generator branch in `generate.ts` (+ `LEVELS`), an entry in `registry.ts`, sweep tests.
   Lessons listed in its `lessons` get a "Practice" link at their end.
+
+## Daily discard (home page)
+
+A poll, not a puzzle: one hand per UTC day for everyone (`dailyDiscard(date)`: an efficiency-trainer hand, with
+round and dora shown, under a "Daily discard" heading and no prompt): discard any tile. **No right answer is shown and no stats before the vote**,
+so nothing sways it: the home page load sends the tally only to voters, and `POST /daily-discard` answers a vote
+with it. One vote per voter and day (the first stands): by `userId` (FK to `user`) when signed in, else by `guestId` from
+the httpOnly `riichi_voter` cookie (set on the first guest vote); exactly one is set, and both are checked, so signing in after voting doesn't
+reopen the ballot. Ballot stuffing by clearing cookies is possible and accepted (it's a fun poll, not a ranking).
+The hand is stored in `daily_discard` (date, exercise, botShare): the game server's jobs store today's and tomorrow's
+ahead, and the web stores it itself if it finds none (the hand is a pure function of the date, so both write the
+same row). Stored, a day keeps its hand even after engine or bot changes, so its votes stay valid. **Bot players
+vote too**, as real rows under their user id, cast by the game server (see game-server.md); the tally simply counts
+every row. Like the trainers, the page never says some votes come from bots.
+A vote from a page left open past midnight UTC gets 409 and the page reloads to the new hand.
 
 ## Offline autosave
 

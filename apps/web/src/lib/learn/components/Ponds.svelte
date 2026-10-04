@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { GameState, Seat } from '@mahjong/engine';
   import Pond from '$lib/components/Pond.svelte';
-  import { RED } from '$lib/learn/position';
+  import { RED } from '@mahjong/drills/position';
 
   /** The discard rows of the given seats, labelled by where they sit (0 = you). */
   let { state, seats }: { state: GameState; seats: Seat[] } = $props();

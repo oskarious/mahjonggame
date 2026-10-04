@@ -1,10 +1,10 @@
 // What the reader is told after an answer. Pure; built from engine results so it cannot contradict the position.
 // Texts may contain `{1m}`-style tile tokens.
 import { type GameState, type Kind, kindOf, waits } from '@mahjong/engine';
-import { discardAnswers, discardOptions, goodWaitTotal, passedOf } from './goals';
-import { REASON_TEXT, safetyGrades } from './safety';
-import { tok, winSpot } from './position';
-import type { ExerciseOf, Verdict } from './types';
+import { discardAnswers, discardOptions, goodWaitTotal, passedOf } from '@mahjong/drills/goals';
+import { REASON_TEXT, safetyGrades } from '@mahjong/drills/safety';
+import { tok, winSpot } from '@mahjong/drills/position';
+import type { ExerciseOf, Verdict } from '@mahjong/drills/types';
 
 const toks = (ks: Iterable<Kind>) => [...ks].map(tok).join(' ');
 const away = (shanten: number) => (shanten === 0 ? 'tenpai' : `${shanten} away from tenpai`);

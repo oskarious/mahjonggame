@@ -9,7 +9,7 @@
     doraFromIndicator,
     kindOf,
   } from '@mahjong/engine';
-  import { WINDS } from '$lib/labels';
+  import { WINDS } from '@mahjong/drills/labels';
   import { kindName, sortTiles } from '$lib/tiles';
   import Tile from './Tile.svelte';
 

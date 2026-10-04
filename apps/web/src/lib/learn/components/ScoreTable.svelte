@@ -1,6 +1,6 @@
 <script lang="ts">
   import { limitFor, ronPoints, tsumoPoints } from '@mahjong/engine';
-  import { LESSON_RULES } from '$lib/learn/position';
+  import { LESSON_RULES } from '@mahjong/drills/position';
 
   /** The score table, computed from the engine's payment rules (never typed in). */
   let { dealer = false, tsumo = false }: { dealer?: boolean; tsumo?: boolean } = $props();

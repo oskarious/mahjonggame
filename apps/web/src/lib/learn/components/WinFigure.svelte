@@ -2,9 +2,9 @@
   import { type GameState, doraFromIndicator, kindOf } from '@mahjong/engine';
   import Melds from '$lib/components/Melds.svelte';
   import Tile from '$lib/components/Tile.svelte';
-  import { WINDS } from '$lib/labels';
-  import { RED, meldSlots, winSpot } from '$lib/learn/position';
-  import type { Show } from '$lib/learn/types';
+  import { WINDS } from '@mahjong/drills/labels';
+  import { RED, meldSlots, winSpot } from '@mahjong/drills/position';
+  import type { Show } from '@mahjong/drills/types';
   import { sortTiles } from '$lib/tiles';
 
   /**
