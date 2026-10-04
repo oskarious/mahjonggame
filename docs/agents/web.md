@@ -47,6 +47,10 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
                         for light backgrounds
 ```
 
+Analytics: Plausible (self-hosted at pla.vyref.com, domain riichiarena.com), loaded in `src/app.html`; it tracks
+SvelteKit client navigations itself. Custom events: `window.plausible('Name', { props })`. Localhost visits are
+ignored by Plausible, so dev doesn't pollute stats.
+
 The web app owns the DB schema. When a migration changes a table the game server uses, update
 `apps/game-server/src/db.ts` too (a hand-kept copy of `schema.ts`).
 
