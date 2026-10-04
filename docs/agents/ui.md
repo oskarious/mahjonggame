@@ -82,7 +82,8 @@ Content on a narrow page that needs the width (a hand of tiles) goes in a **band
 - **Exercises reuse `PlayerArea`** with generic optional props: no `onsettings` = no cog, `marked` kinds get the
   green "suggested" dot (revealed or solved answers), `showWaits={false}` hides the always-on wait preview where the
   waits are the question, `info` turns panel parts (round, dora, wall) on or off and `panel={false}` drops the panel
-  row. A view with no actions is read-only (inspect only).
+  row. A view with no actions is read-only (inspect only); `inspect={false}` drops inspecting too (no press, hover,
+  magnifier or highlight) and `lit` dims every hand tile but the given kinds (a choice already made).
 - **Show only what the question needs.** An exercise shows the hand (and the tile to act on); everything else is
   opt-in per exercise via `show` (ponds, round, seat, dora, wall, counters). Dora glow is off unless dora are shown,
   so no gold tile appears unexplained. The lesson test rejects flags the exercise kind cannot display.
@@ -106,7 +107,8 @@ Content on a narrow page that needs the width (a hand of tiles) goes in a **band
 - **Daily**: five marks (`ok` / `danger` fills) with the day streak; the result shows the share line (● right,
   ○ missed; glyphs, no emoji).
 - **Daily discard** (a `Band` on the home page, under the play form): the heading with a countdown to the next hand as its aside
-  (H:MM:SS to UTC midnight, device clock; the page reloads at zero), then the lessons' hand slice with round and dora; after the
+  (H:MM:SS to UTC midnight, device clock; the page reloads at zero), then the lessons' hand slice with round and dora. Once
+  voted the hand is shown only (`inspect={false}`, every tile but the pick dimmed via `lit`); after the
   vote, one row per kind voted: tile, a bar and the share in %, the reader's own with an ink dot and ink bar, then the
   vote count. No efficiency verdict anywhere (it's preference, not a quiz).
 - The design system has no trainer components yet: these four are a noted deviation until added there.

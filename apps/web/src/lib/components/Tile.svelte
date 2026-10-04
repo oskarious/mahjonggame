@@ -270,7 +270,8 @@
     background: linear-gradient(160deg, #3a86ab, var(--tile-back));
   }
 
-  button.tile:not(:disabled):hover .face {
+  /* Not on dimmed tiles: the hover filter would replace the dim one. */
+  button.tile:not(:disabled):not(.dim):hover .face {
     filter: brightness(1.04);
   }
 

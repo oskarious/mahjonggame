@@ -92,7 +92,17 @@
     {#if left !== null}<span aria-label="Next hand in">{clock(left)}</span>{/if}
   {/snippet}
   <div class="slice">
-    <PlayerArea {view} red={RED} quickDiscard={false} bind:focusKind {onact} showWaits={false} info={{ round: true, dora: true, wall: false }} />
+    <PlayerArea
+      {view}
+      red={RED}
+      quickDiscard={false}
+      bind:focusKind
+      {onact}
+      showWaits={false}
+      info={{ round: true, dora: true, wall: false }}
+      inspect={mine === null}
+      lit={mine === null ? undefined : new Set([mine])}
+    />
   </div>
 
   {#if failed}

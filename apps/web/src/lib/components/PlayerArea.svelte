@@ -33,6 +33,10 @@
     panel?: boolean;
     /** Online: the own decision timer, shown just below the tile-to-act slot. */
     timer?: Snippet;
+    /** Off: not even inspectable (no press, hover, magnifier or highlighted copies), a hand that is only shown. */
+    inspect?: boolean;
+    /** Kinds that stay lit: every other hand tile dims (e.g. the choice already made). */
+    lit?: ReadonlySet<Kind>;
   }
   let {
     view,
@@ -46,6 +50,8 @@
     info = {},
     panel = true,
     timer,
+    inspect = true,
+    lit,
   }: Props = $props();
   const shown = $derived({ round: info.round ?? true, dora: info.dora ?? true, wall: info.wall ?? true });
 
@@ -144,6 +150,12 @@
     | null = $state(null);
   /** Where the selected tile sits, so its magnifier stays up after release. */
   let selectedAt: Anchor = $state({ x: 0, b: 0 });
+  $effect(() => {
+    if (inspect) return;
+    press = null;
+    hovered = null;
+    selected = null;
+  });
   /** Mouse only: the tile under the cursor. Hover inspects; a click discards. */
   let hovered: ({ tile: TileId } & Anchor) | null = $state(null);
 
@@ -263,7 +275,7 @@
 
   /** Keyboard activation only; pointer input is handled by the strip / drawn slot above. */
   function keyTap(e: MouseEvent, t: TileId) {
-    if (e.detail !== 0) return;
+    if (e.detail !== 0 || !inspect) return;
     const hit = meEl?.querySelector<HTMLElement>(`[data-tile="${t}"]`);
     if (hit && handEl) {
       const r = hit.getBoundingClientRect();
@@ -327,7 +339,7 @@
   function tileState(t: TileId) {
     const allowed = riichiMode ? riichiable.has(t) : discardable.has(t);
     return {
-      dim: onTurn ? !allowed : inCall && !callTiles.has(t),
+      dim: (onTurn ? !allowed : inCall && !callTiles.has(t)) || (!!lit && !lit.has(kindOf(t))),
       mark: ((allowed && best.has(kindOf(t))) || marked?.has(kindOf(t)) ? 'hint' : null) as 'hint' | null,
     };
   }
@@ -427,6 +439,7 @@
         {@const s = tileState(d)}
         <span
           class="drawn"
+          class:inert={!inspect}
           role="group"
           aria-label="Drawn tile"
           data-tile={d}
@@ -485,6 +498,7 @@
     aria-label="Your hand"
     tabindex="-1"
     class:turn={onTurn}
+    class:inert={!inspect}
     bind:this={handEl}
     style:--n={concealed.length}
     onpointerdown={pointerDown}
@@ -723,6 +737,11 @@
   }
   .slot {
     display: inline-flex;
+  }
+
+  /* Not inspectable: the pointer passes through (no hover state, no cursor). */
+  .inert {
+    pointer-events: none;
   }
 
   .magnifier {
