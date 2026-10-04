@@ -33,11 +33,13 @@ them; a deploy overlap may briefly run two). A failing run is logged and the nex
 
 - `daily-discard-hands` (hourly, and at startup): stores today's and tomorrow's hand if missing.
 - `daily-discard-bot-votes` (every minute): while bot votes are below the day's `botShare` (seeded per day in
-  50–75%, `BOT_SHARE`) × human votes, each online bot (`BotPool.onlineIds`: active, by schedule or in a game) that
+  50–75%, `BOT_SHARE`) × active bot players, paced evenly over the UTC day (`botTarget`: by noon at most half of it,
+  so the bots online after midnight don't use it all), each online bot (`BotPool.onlineIds`: active, by schedule or in a game) that
   hasn't voted today votes with `VOTE_CHANCE` (5 %) per run, so votes spread over the bots' active hours. The kind
   is drawn from `botWeights`: discards at the lowest distance weighted by improving tiles (cubed, so the most
   efficient is the favourite), the rest rare, every weight with a per-day jitter so the favourite doesn't win every
-  day. Bot and human votes are told apart by joining `bot` on `userId`.
+  day. Bot votes are counted by joining `bot` on `userId`. Bots that stay offline all day don't vote, so the
+  share is a ceiling.
 
 ## Rooms and timers
 

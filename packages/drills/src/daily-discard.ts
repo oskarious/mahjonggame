@@ -1,6 +1,6 @@
 // The home page's daily discard: one hand for everyone on a UTC day, and a poll of what people would throw. There is no
 // right answer; the stats show only after a vote, so they can't sway it. The game server stores each day's hand ahead
-// and has online bot players vote through the day (a share of the human votes, leaning to efficient discards).
+// and has online bot players vote through the day (a share of the bot players, leaning to efficient discards).
 import { type Kind, type RngState, kindOf, nextUint32 } from '@mahjong/engine';
 import { discardOptions, stateOf } from './goals.ts';
 import { generate } from './generate.ts';
@@ -24,7 +24,7 @@ export interface Tally {
   counts: { kind: Kind; n: number }[];
 }
 
-/** Bot votes as a share of the human votes: a seeded share per day in this range. */
+/** The share of the bot players that vote on a day: seeded per day in this range. */
 export const BOT_SHARE = [0.5, 0.75] as const;
 
 const unit = (s: RngState) => nextUint32(s) / 0x100000000;

@@ -288,6 +288,7 @@ describe('schedules', () => {
     vi.setSystemTime(TOKYO_NIGHT);
     const { hub } = await setup(POOL, { ...on, seed: 'night' });
     expect(hub.bots.onlineIds()).toEqual([]);
+    expect(hub.bots.activeCount()).toBe(POOL.length);
     await queue(hub, 'a');
     await tickUntil(hub, () => !!hub.roomOf('a'));
     expect(hub.bots.onlineIds().sort()).toEqual(botsOf(hub.roomOf('a')!.room));

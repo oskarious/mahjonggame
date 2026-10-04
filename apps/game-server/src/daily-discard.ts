@@ -1,7 +1,7 @@
 // The home page's daily discard (see @mahjong/drills/daily-discard): this server stores each day's hand ahead of the
-// day, and online bot players vote through the day until the bot votes reach the day's share of the human votes.
+// day, and online bot players vote through the day: the day's share of the bot players, paced over the UTC day.
 import { botShare, botWeights, dailyDiscard, pickWeighted, type Weights } from '@mahjong/drills/daily-discard';
-import { type Kysely, sql } from 'kysely';
+import type { Kysely } from 'kysely';
 import type { DB } from './db.ts';
 import { shuffle } from './matchmaking.ts';
 
@@ -43,24 +43,36 @@ export function pickVoters(candidates: readonly string[], need: number, chance: 
 let weightsCache: { date: string; weights: Weights } | null = null;
 
 /**
- * One run of bot voting: while the bot votes are below the day's share of the human votes, some online bots that
- * haven't voted today vote, each for a kind drawn from the day's weights. Returns the number of votes cast.
+ * The bot votes due by `now`: the day's share of the bot players, paced evenly over the UTC day so the bots online
+ * early don't use it all up.
  */
-export async function botVotes(db: Kysely<DB>, online: readonly string[], random: () => number, now = Date.now()) {
+export function botTarget(botShare: number, population: number, now: number): number {
+  const dayPart = (now % 86_400_000) / 86_400_000;
+  return Math.floor(botShare * population * dayPart);
+}
+
+/**
+ * One run of bot voting: while the bot votes are below the target (`botTarget`), some online bots that haven't voted
+ * today vote, each for a kind drawn from the day's weights. Returns the number of votes cast.
+ */
+export async function botVotes(
+  db: Kysely<DB>,
+  online: readonly string[],
+  population: number,
+  random: () => number,
+  now = Date.now(),
+) {
   const date = utcDate(now);
   const day = await db.selectFrom('daily_discard').select(['exercise', 'botShare']).where('date', '=', date).executeTakeFirst();
   if (!day || !online.length) return 0;
 
-  const counts = await db
+  const cast = await db
     .selectFrom('daily_discard_vote as v')
-    .leftJoin('bot as b', 'b.userId', 'v.userId')
-    .select([
-      sql<string>`count(*) filter (where b."userId" is null)`.as('humans'),
-      sql<string>`count(b."userId")`.as('bots'),
-    ])
+    .innerJoin('bot as b', 'b.userId', 'v.userId')
+    .select((eb) => eb.fn.countAll<string>().as('n'))
     .where('v.date', '=', date)
     .executeTakeFirstOrThrow();
-  const need = Math.floor(day.botShare * Number(counts.humans)) - Number(counts.bots);
+  const need = botTarget(day.botShare, population, now) - Number(cast.n);
   if (need <= 0) return 0;
 
   const voted = new Set(

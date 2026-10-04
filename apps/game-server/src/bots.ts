@@ -127,7 +127,7 @@ export class BotPool {
   }
 
   async #fill(): Promise<number> {
-    const missing = this.settings.botPoolMin - this.#activeCount();
+    const missing = this.settings.botPoolMin - this.activeCount();
     if (missing <= 0) return 0;
     const lo = botElo(0);
     const hi = botElo(1);
@@ -248,7 +248,7 @@ export class BotPool {
   async createBots(req: CreateBotsRequest): Promise<{ created: BotSummary[] } | { error: string }> {
     const out: PoolBot[] = [];
     const adding = 'count' in req ? req.count : 1;
-    if (Number.isInteger(adding) && adding > 0 && this.#activeCount() + adding > this.settings.botPoolMax) {
+    if (Number.isInteger(adding) && adding > 0 && this.activeCount() + adding > this.settings.botPoolMax) {
       return { error: this.#overMax() };
     }
     if ('count' in req) {
@@ -290,7 +290,7 @@ export class BotPool {
       return { error: 'skill must be from 0 to 1' };
     }
     if (patch.active !== undefined && typeof patch.active !== 'boolean') return { error: 'active must be true or false' };
-    if (patch.active === true && !b.active && this.#activeCount() >= this.settings.botPoolMax) return { error: this.#overMax() };
+    if (patch.active === true && !b.active && this.activeCount() >= this.settings.botPoolMax) return { error: this.#overMax() };
     const clean: BotPatch = {};
     if (patch.name !== undefined) clean.name = patch.name;
     if (patch.skill !== undefined) clean.skill = patch.skill;
@@ -376,7 +376,8 @@ export class BotPool {
   }
 
   /** Active bots: the ones the minimum and maximum pool size count. Retired bots are never counted. */
-  #activeCount(): number {
+  /** Bot players not retired. */
+  activeCount(): number {
     let n = 0;
     for (const b of this.#bots.values()) if (b.active) n++;
     return n;
@@ -490,7 +491,7 @@ export class BotPool {
 
   /** Nobody fits this human: create a bot near their rating, or at the size limit send the nearest idle bot anyway. */
   #grow(human: QueueEntry, format: Format, d: Demand, now: number): void {
-    if (this.#activeCount() >= this.settings.botPoolMax) {
+    if (this.activeCount() >= this.settings.botPoolMax) {
       const nearest = this.#available(now, true).sort((a, b) => Math.abs(a.rating - human.rating) - Math.abs(b.rating - human.rating))[0];
       if (nearest) {
         if (!this.#online(nearest, now)) this.#startSession(nearest, now);

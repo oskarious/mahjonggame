@@ -126,7 +126,7 @@ export interface DailyDiscardTable {
   /** UTC day, YYYY-MM-DD. */
   date: string;
   exercise: JSONColumnType<ExerciseOf<'discard'>>;
-  /** Bot votes as a share of the human votes, that day. */
+  /** The share of the bot players that vote that day. */
   botShare: number;
   createdAt: Timestamp;
 }
