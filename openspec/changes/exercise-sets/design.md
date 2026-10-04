@@ -1,10 +1,19 @@
 ## Context
 
 Learn lessons are `<Part>` blocks with exactly one `<Exercise id>` each; `exercises.ts` maps id → `Exercise`, and
-`lessons.test.ts` validates every exercise against the engine (113 exercises in 26 lessons today). `Exercise.svelte`
-builds everything from its exercise once at creation (`const ex`, `stateOf(ex)`, answer sets, view) and keeps
-per-attempt state (`status`, `picked`, `chosen`, fu `step`). Progress (`riichi:learn`, v1) stores solved exercise ids
-per lesson. `LessonBody` counts parts as `Object.keys(exercises).length`.
+`lessons.test.ts` validates every exercise against the engine (113 exercises in 26 lessons today). The `Exercise` type,
+`goals.ts` and `position.ts` now live in `@mahjong/drills` (shared with the trainers' generator and the game server's
+daily-discard job, which stores an `Exercise` per day in the DB).
+
+The card is already split since the trainers landed: `ExerciseCard.svelte` is one exercise, context-free, built once
+from its props (re-create it with `{#key}` for the next one), reporting `onresult({ correct, firstTry })` once when it
+ends, with an `after` snippet rendered under the feedback once it has ended. `Exercise.svelte` is the thin lesson
+wrapper: looks the id up in the lesson context, passes `doneBefore` from progress, calls `markSolved` on a correct
+result. The trainers' Practice mode is the precedent for this change: `{#key n}<ExerciseCard>` with a primary "Next"
+button in `after` (ui.md: Next sits right under the feedback, in the thumb zone, before the explanation).
+
+Progress (`riichi:learn`, v1) stores solved exercise ids per lesson. `LessonBody` counts parts as
+`Object.keys(exercises).length` and ends with a "Practice: … trainer" link where a trainer covers the lesson.
 
 ## Goals / Non-Goals
 
@@ -14,8 +23,12 @@ per lesson. `LessonBody` counts parts as `Object.keys(exercises).length`.
 - No layout jump in the part when moving to the next variant beyond the hand itself changing.
 
 **Non-Goals:**
-- Generated or random exercises (the engine could deal hands for some goals, but the hand must fit the part's idea and
-  the `why` is authored; a generator can come later, behind the same set type).
+- Generated variants. `generate(trainer, level, seed)` exists now, but its filters target a trainer level (any
+  1-shanten efficiency hand, any tenpai hand), not a part's idea ("four blocks and four loose tiles", "furiten after
+  your own discard"), and generated problems carry no authored `why`. Endless generated practice is the trainers' job,
+  linked from the end of the lesson. A part could later take a generated variant behind the same set type if a
+  generator filter for its idea is added.
+- Changes to `Exercise` itself or to `ExerciseCard` behaviour (trainers and daily-discard depend on both).
 - Shuffled variant order, adaptive difficulty, spaced repetition.
 - Account-backed progress.
 
@@ -25,26 +38,31 @@ per lesson. `LessonBody` counts parts as `Object.keys(exercises).length`.
 plain array of complete exercises. Alternatives: a `variants` field on `Exercise` with partial overrides (shorter to
 write, but every override needs merging rules and the type stops saying what a variant is), or `Exercise | Exercise[]`
 (two shapes everywhere for a transitional convenience). Authors who want to share a prompt or `show` spread a constant
-(`{ ...base, position, why }`); nothing in the type needs to know.
+(`{ ...base, position, why }`); nothing in the type needs to know. The type is lesson-only, so it lives in the web
+app (`lib/learn/context.ts`, next to `LessonContext`), not in `@mahjong/drills`, whose `Exercise` stays the unit
+trainers, the generator and stored daily hands use.
 
-**Split the card: `Exercise.svelte` (set) + `Task.svelte` (one variant).** The current component body moves to
-`Task.svelte` unchanged in behaviour, taking the exercise object and reporting `onsolved` / `onrevealed` (and getting a
-`next` snippet or callback for the button slot). `Exercise.svelte` reads the set from the lesson context, holds the
-current index, renders `{#key index}<Task …/>{/key}` and the counter. Re-keying gives every variant a fresh state for
-free and keeps `Task` free of reset code. Alternative: one component that resets `status`/`picked`/`chosen`/`step`
-and recomputes derived answers on index change — every per-kind const becomes derived and every new piece of state
-must remember to reset: error-prone.
+**The set lives in the `Exercise.svelte` wrapper; `ExerciseCard` stays one exercise.** The wrapper holds the current
+index and renders `{#key index}<ExerciseCard exercise={set[index]} …>` exactly like the trainers' Practice mode.
+Re-keying gives every variant a fresh state for free. `onresult` with `correct` marks that variant solved (a reveal
+reports `correct: false` and marks nothing). Alternative: teach `ExerciseCard` about sets — it is context-free and
+shared with the trainers, which have their own feed; sets are a lesson concept.
 
-**Next lives in the feedback row.** The feedback area already takes no room until there is something to say and
-appears exactly when a variant is finished; Next goes there (right-aligned, primary), next to "Show answer"'s place.
-The counter (small dots, design-system accent for current, `--ok` for solved, dim for open) sits in the prompt row's
-corner, so it is visible before solving and costs no extra row. After Next, the card keeps its top in place; if the
-card top is above the viewport, scroll it into view (the next prompt must be read first).
+**Next in the `after` snippet, like the trainers.** Same button (`btn primary big`, "Next"), same place (right under
+the feedback), so the two sections feel the same; ui.md already states the rule. Not rendered for the last variant.
+After Next, if the card top is above the viewport, scroll it into view (the next prompt must be read first).
+
+**Position in the prompt row.** `cur/total` (`2/3`, dim), visible before answering, so the reader knows the set's
+length up front. (First built as one dot per variant coloured by state; changed to plain `2/3`, which reads at a
+glance; the solved state shows on the card itself.) `ExerciseCard` has
+no slot there, so it gains one optional snippet prop (`aside`, rendered at the end of the prompt row); trainers don't
+pass it and are unaffected. Alternative: the position above the card from the wrapper — outside the card's surface they
+read as page chrome, not as part of the exercise.
 
 **Solved = all variants answered right.** Matches today's rule that reveal doesn't solve. Alternative "set solved when
 the last variant is reached" would let a reader reveal their way through; the lesson completion badge should mean the
 reader did it. The reader is never blocked: step navigation stays, and revisiting starts the set again from the first
-variant (solved markers kept), so redoing only the unsolved ones means pressing Next past solved ones — acceptable for
+variant, so redoing only the unsolved ones means pressing Next past solved ones — acceptable for
 3 items; no jump-to-variant UI.
 
 **Progress v2.** `lessons[slug].solved` becomes `Record<id, number[]>` (solved variant indexes). `loadProgress` reads

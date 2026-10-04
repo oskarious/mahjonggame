@@ -2,7 +2,10 @@
 
 Every lesson part has exactly one exercise, so a reader applies an idea once and moves on. One hand isn't practice:
 it can be solved by luck or by spotting the one odd tile, and the idea doesn't stick. Several hands on the same idea in
-a row ("four blocks: grow the best loose tile", three times) is what makes it usable in a game.
+a row ("four blocks: grow the best loose tile", three times) is what makes it usable in a game. The trainers
+(`/train`) give endless practice on broad skills (efficiency, waits, yaku, score) and lessons link to them at the end,
+but a trainer hand doesn't drill a part's specific idea, and most parts (calls, furiten, defense, rules) have no
+trainer at all.
 
 ## What Changes
 
@@ -33,10 +36,13 @@ a row ("four blocks: grow the best loose tile", three times) is what makes it us
 
 ## Impact
 
-- `apps/web/src/lib/learn/types.ts` (set type), `components/Exercise.svelte` (split: set wrapper + single task card),
-  `progress.svelte.ts` (variant progress, v2 with migration), `LessonBody.svelte` (part count from sets, unchanged
-  otherwise), `lessons.test.ts`.
+- `apps/web/src/lib/learn/`: `context.ts` (set type, lesson-only), `components/Exercise.svelte` (the lesson wrapper
+  gains the set: index, position, Next), `progress.svelte.ts` (variant progress, v2 with migration), `LessonBody.svelte`
+  (props type), `lessons.test.ts`. `ExerciseCard.svelte` is reused as the trainers use it (`{#key}` re-creation,
+  Next in its `after` snippet) and gains one optional snippet for the position (`2/3`) in its prompt row.
+- `Exercise` in `@mahjong/drills/types` stays one exercise: trainers, the generator and stored daily-discard hands
+  depend on it.
 - All 26 `lessons/<slug>/exercises.ts` files (format change plus new variants); some `Lesson.svelte` part texts where
   they refer to the first exercise's tiles.
-- No engine, protocol, game-server or DB changes. Server-rendered HTML shows the first variant only (SEO and no-JS
+- No engine, drills, protocol, game-server or DB changes. Server-rendered HTML shows the first variant only (SEO and no-JS
   unchanged in substance).

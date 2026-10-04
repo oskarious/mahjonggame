@@ -1,5 +1,5 @@
 // Every lesson, exercise, glossary link and yaku example is checked against the engine, so the course cannot teach
-// something the game does not do. Failures name the lesson slug and exercise id.
+// something the game does not do. Failures name the lesson slug, exercise id and variant number.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -19,13 +19,14 @@ import {
   winValue,
   yakuQuiz,
 } from '@mahjong/drills/goals';
+import type { ExerciseSet } from './context';
 import { LESSONS, REFERENCE, UNITS } from './registry';
 import { sentences } from './text';
 import { EXERCISE_KINDS, type Exercise } from '@mahjong/drills/types';
 import { YAKU_LIST, hanIn, yakuTip, type YakuTipId } from './yaku';
 
 const dir = fileURLToPath(new URL('./lessons/', import.meta.url));
-const files = import.meta.glob<Record<string, Exercise>>('./lessons/*/exercises.ts', {
+const files = import.meta.glob<Record<string, ExerciseSet>>('./lessons/*/exercises.ts', {
   import: 'exercises',
   eager: true,
 });
@@ -165,6 +166,23 @@ function validate(ex: Exercise): void {
   if (g && (ex.kind === 'discard' || ex.kind === 'call')) expect(legalActions(g, 0).length).toBeGreaterThan(0);
 }
 
+/** Variants per set: enough hands in a row for the idea to stick. */
+const MIN_VARIANTS = 3;
+
+/** Throws if the variants of a set are not the same task on different hands. */
+function validateSet(set: ExerciseSet): void {
+  expect(set.length, `at least ${MIN_VARIANTS} variants`).toBeGreaterThanOrEqual(MIN_VARIANTS);
+  const [first] = set;
+  for (const [i, ex] of set.entries()) {
+    expect(ex.kind, `variant ${i + 1} has the set's kind`).toBe(first.kind);
+    if ((ex.kind === 'discard' || ex.kind === 'pick') && 'goal' in first)
+      expect(ex.goal, `variant ${i + 1} has the set's goal`).toEqual(first.goal);
+  }
+  // Different hands (or, for questions without one, different questions).
+  const keys = set.map((ex) => JSON.stringify('position' in ex && ex.position ? ex.position : ex.prompt));
+  expect(new Set(keys).size, 'no variant repeats another').toBe(set.length);
+}
+
 describe('lesson registry', () => {
   it('has unique slugs, titles and descriptions', () => {
     for (const key of ['slug', 'title', 'seoTitle', 'description'] as const) {
@@ -201,7 +219,7 @@ describe('lesson registry', () => {
   });
 
   it('uses every exercise kind somewhere', () => {
-    const used = new Set(LESSONS.flatMap((l) => Object.values(exercisesOf(l.slug)).map((e) => e.kind)));
+    const used = new Set(LESSONS.flatMap((l) => Object.values(exercisesOf(l.slug)).flatMap((set) => set.map((e) => e.kind))));
     expect([...used].sort()).toEqual([...EXERCISE_KINDS].sort());
   });
 });
@@ -255,9 +273,16 @@ describe.each(LESSONS.map((l) => [l.slug, l] as const))('lesson %s', (slug, meta
     }
   });
 
-  it.each(Object.entries(exercises))('exercise %s is answerable', (_id, ex) => {
-    validate(ex);
+  it.each(Object.entries(exercises))('exercise %s is a set of one idea', (_id, set) => {
+    validateSet(set);
   });
+
+  it.each(Object.entries(exercises).flatMap(([id, set]) => set.map((ex, i) => [`${id} #${i + 1}`, ex] as const)))(
+    'exercise %s is answerable',
+    (_name, ex) => {
+      validate(ex);
+    },
+  );
 });
 
 describe('glossary', () => {

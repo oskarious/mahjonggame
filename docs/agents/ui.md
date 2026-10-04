@@ -76,7 +76,7 @@ Content on a narrow page that needs the width (a hand of tiles) goes in a **band
 ## Learn pages
 
 - **The exception to minimal text**: lessons explain things, but in bite-sized parts: one heading, a few sentences,
-  one exercise, shown one part at a time with a step bar. Exercise prompts stay at two sentences at most (tested);
+  one exercise set, shown one part at a time with a step bar. Exercise prompts stay at two sentences at most (tested);
   the exercise slices keep the game's visual language (cues, input, magnifier).
 - One column, max 520 px (`sheet-max`; the design system's narrow pages use 440 px, a noted deviation for reading).
 - **Exercises reuse `PlayerArea`** with generic optional props: no `onsettings` = no cog, `marked` kinds get the
@@ -88,6 +88,10 @@ Content on a narrow page that needs the width (a hand of tiles) goes in a **band
   opt-in per exercise via `show` (ponds, round, seat, dora, wall, counters). Dora glow is off unless dora are shown,
   so no gold tile appears unexplained. The lesson test rejects flags the exercise kind cannot display.
 - Success is a green check plus text; wrong answers keep the slice in place and offer "Show answer".
+- **Exercise sets**: a part's exercise has several hands (variants) played in the same card. The position (`2/3`,
+  dim) sits at the end of the prompt row; a finished variant (solved or revealed) gets "Next" right under the
+  feedback, the same button and place as in the trainers. The last variant has none; the part's step navigation
+  never waits for a set.
 - Winning-hand figures of a riichi win show the ura indicators next to the dora (when dora are shown), since the
   hand's value counts them.
 - **Tile sizes in Learn use `--col`**, a length registered with `@property` (app.css): a tile row declares

@@ -20,9 +20,9 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
                         learn (public course, see below), train (trainers, see below), daily-discard (POST a vote), sitemap.xml, robots.txt
   src/lib/learn/        the Learn course: registry.ts (units + lessons in order, SEO titles), lessons/<slug>/
                         (Lesson.svelte article + exercises.ts), components/ (ExerciseCard: one exercise, context-free;
-                        Exercise: the lesson wrapper with progress; Tiles, T, Term, Callout, …),
-                        feedback.ts (answer texts), glossary.ts, yaku.ts,
-                        progress.svelte.ts (`riichi:learn`), lessons.test.ts (validates every lesson)
+                        Exercise: the lesson wrapper, plays its set's variants with progress; Tiles, T, Term, Callout, …),
+                        feedback.ts (answer texts), glossary.ts, yaku.ts, context.ts (ExerciseSet),
+                        progress.svelte.ts + progress-data.ts (`riichi:learn`), lessons.test.ts (validates every lesson)
   src/lib/train/        trainers: registry.ts (trainers, levels, SEO, linked lessons), feed.ts, daily.ts, stats.svelte.ts
                         (`riichi:train`), components/ (Trainer, DiscardTable, RushBar, DailyDiscard)
   packages/drills/      (@mahjong/drills, shared with the game server; import `@mahjong/drills/<module>`):
@@ -81,7 +81,7 @@ Free, public, server-rendered lessons (marketing: they must rank in search and l
 - **Adding a lesson**: an entry in `registry.ts` (in teaching order; `draft: true` hides it in production), a folder
   `lessons/<slug>/` with `Lesson.svelte` (`<Part>`s with prose + `<Exercise id>`, `<Tiles t="123m 55z">`, `<T t="5p" />`,
   `<Term id>`: a glossary tooltip on first use in a part, `<Yaku id>`: the same for a yaku, from the yaku list,
-  `<Callout kind="ema|tip|mistake">`) and `exercises.ts`. Every yaku named in lesson text needs `<Yaku>` (tested; a
+  `<Callout kind="ema|tip|mistake">`) and `exercises.ts` (id → set). Every yaku named in lesson text needs `<Yaku>` (tested; a
   gloss in brackets right after it is covered). Then run the tests.
 - **Answers come from the engine**: an exercise states a position (`scenario()` options, seat 0 = the reader;
   `discard: true` makes the seat on turn discard its drawn tile) and a goal; `goals.ts` computes what is right.
@@ -101,13 +101,21 @@ Free, public, server-rendered lessons (marketing: they must rank in search and l
 - A discard nobody can call does not open a call window and the game moves on; a "can you win?" ron that is not
   possible must therefore come from the right or across (from the left, seat 0 would draw). `buildPosition` throws
   otherwise.
+- **Every exercise is a set of at least 3 variants** (`ExerciseSet`: complete exercises, played one after another in
+  the card): the same idea, kind and (discard, pick) goal on different hands, so the idea gets practised, not solved
+  once. Vary what can be pattern-matched (suit, where the answer sits, which option is right). Part text must hold
+  for every variant; what is specific to one hand goes in its prompt or `why`. The first variant is the one in the
+  server-rendered HTML. The test checks the set rules and validates each variant (`exercise <id> #<n>`).
 - Standalone tile examples in text use pin or sou (circles and bamboo are easier to read than man's numerals);
   keep the tiles of the part's own figure or exercise when the text refers to them.
 - Exercises show only the hand by default; add `show` flags for what the question needs (see ui.md).
 - Lessons teach `DEFAULT_RULES` (what readers will play) and mark EMA tournament differences with
   `<Callout kind="ema">`.
-- Progress (`riichi:learn`) is per device and read on mount only; a lesson is completed when read to the end (the
-  CTA scrolled into view) with all exercises solved.
+- Progress (`riichi:learn`, v2: solved variant indexes per exercise id; v1 ids upgrade to their first variant) is per
+  device and loaded by `LessonBody` on mount (after its children mount: read it reactively, not in a child's
+  `onMount`). A set is solved when every variant was answered right (a reveal doesn't count); a lesson is completed
+  when read to the end (the CTA scrolled into view) with every set solved. Parsing lives in `progress-data.ts`
+  (tested); the runes store in `progress.svelte.ts`.
 
 ## Train (trainers)
 

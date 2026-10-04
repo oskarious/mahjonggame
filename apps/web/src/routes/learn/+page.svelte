@@ -14,7 +14,9 @@
     loadProgress();
     ready = true;
   });
-  const done = (slug: string) => ready && completed(slug, Object.keys(exercisesOf(slug)));
+  const variantCounts = (slug: string) =>
+    Object.fromEntries(Object.entries(exercisesOf(slug)).map(([id, set]) => [id, set.length]));
+  const done = (slug: string) => ready && completed(slug, variantCounts(slug));
   /** The first lesson not completed on this device: where to continue. */
   const next = $derived(ready ? lessons.find((l) => !done(l.slug))?.slug : undefined);
 

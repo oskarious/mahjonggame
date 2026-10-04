@@ -31,8 +31,8 @@
 
 <Part title="Closed beats edge">
   <p>
-    Closed <T t="46p" /> and edge <T t="12m" /> both wait on 4 tiles. But a <T t="3p" /> or <T t="7p" /> turns
-    <T t="46p" /> into a two-sided shape, while <T t="12m" /> can only ever wait on <T t="3m" />. With one shape too
+    Closed <T t="46p" /> and edge <T t="12s" /> both wait on 4 tiles. But a <T t="3p" /> or <T t="7p" /> turns
+    <T t="46p" /> into a two-sided shape, while <T t="12s" /> can only ever wait on <T t="3s" />. With one shape too
     many, cut the edge.
   </p>
   <Exercise id="shape" />

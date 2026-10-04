@@ -30,8 +30,8 @@
 
 <Part title="The wait matters for pinfu">
   <p>
-    The same shape with a closed wait like <T t="35s" /> is not <Yaku id="pinfu">pinfu</Yaku>. With terminals in the hand and no riichi, nothing
-    is left.
+    <Yaku id="pinfu">Pinfu</Yaku> needs a two-sided wait: a closed wait like <T t="35s" />, an edge wait like
+    <T t="12p" /> or a single wait on the pair breaks it. With terminals in the hand and no riichi, nothing is left.
   </p>
   <Exercise id="kanchan" />
   <Callout kind="tip">

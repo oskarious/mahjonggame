@@ -38,6 +38,7 @@
     doneBefore = false,
     final = false,
     onresult,
+    aside,
     after,
   }: {
     /** Unique on the page (labels the card). */
@@ -51,6 +52,8 @@
     onresult?: (r: { correct: boolean; firstTry: boolean }) => void;
     /** Shown below the feedback once the exercise has ended, with the kinds discarded (discard exercises). */
     after?: Snippet<[{ discarded: Kind[] }]>;
+    /** At the end of the prompt row (a lesson's variant markers). */
+    aside?: Snippet;
   } = $props();
 
   // A card is created for one exercise and never changes it; render a new card (`{#key}`) for the next one.
@@ -256,7 +259,10 @@
 </script>
 
 <section class="exercise" class:done={finished || doneBefore} aria-labelledby="ex-{id}">
-  <p class="prompt" id="ex-{id}"><Rich text={ex.prompt} /></p>
+  <div class="head">
+    <p class="prompt" id="ex-{id}"><Rich text={ex.prompt} /></p>
+    {@render aside?.()}
+  </div>
 
   {#if g && ex.show?.ponds}
     <Ponds state={g} seats={ex.show.ponds} />
@@ -402,7 +408,13 @@
     flex-direction: column;
     gap: 12px;
   }
+  .head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
   .prompt {
+    flex: 1;
     margin: 0;
     font-weight: 600;
   }

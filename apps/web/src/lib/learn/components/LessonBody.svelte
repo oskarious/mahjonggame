@@ -1,11 +1,10 @@
 <script lang="ts">
   import { onMount, setContext, untrack, type Component } from 'svelte';
   import { page } from '$app/state';
-  import { LESSON, type LessonContext } from '$lib/learn/context';
+  import { LESSON, type ExerciseSet, type LessonContext } from '$lib/learn/context';
   import { loadProgress, markRead } from '$lib/learn/progress.svelte';
   import type { LessonMeta, Unit } from '$lib/learn/registry';
   import { trainerForLesson } from '$lib/train/registry';
-  import type { Exercise } from '@mahjong/drills/types';
   import Cta from './Cta.svelte';
   import Seo from './Seo.svelte';
 
@@ -13,7 +12,7 @@
     meta: LessonMeta;
     unit: Unit;
     article: Component;
-    exercises: Record<string, Exercise>;
+    exercises: Record<string, ExerciseSet>;
     prev?: LessonMeta;
     next?: LessonMeta;
     related: LessonMeta[];
@@ -23,7 +22,7 @@
   }
   let { meta, unit, article: Article, exercises, prev, next, related, position, step }: Props = $props();
 
-  /** One exercise per part (the lesson test enforces it), so the part count is known before the parts render. */
+  /** One exercise set per part (the lesson test enforces it), so the part count is known before the parts render. */
   const total = $derived(Math.max(1, Object.keys(exercises).length));
   const clamp = (n: number, t: number) => Math.min(Math.max(1, Math.floor(n) || 1), t) - 1;
 

@@ -1,22 +1,16 @@
-// Course progress on this device only (no account): lessons read to the end and exercises solved, by slug and id.
-// Loaded on mount, so server-rendered HTML never depends on it; storage errors are ignored.
+// Course progress on this device only (no account): lessons read to the end and exercise variants solved, by slug and
+// id. Loaded on mount, so server-rendered HTML never depends on it; storage errors are ignored.
+import { emptyProgress, lessonCompleted, parseProgress } from './progress-data';
 
 const KEY = 'riichi:learn';
 
-interface Stored {
-  v: 1;
-  lessons: Record<string, { read?: true; solved: string[] }>;
-}
-
-const state: { data: Stored } = $state({ data: { v: 1, lessons: {} } });
+const state = $state({ data: emptyProgress() });
 
 export function loadProgress(): void {
   try {
-    const raw = localStorage.getItem(KEY);
-    const parsed = raw ? (JSON.parse(raw) as Stored) : null;
-    if (parsed?.v === 1 && parsed.lessons && typeof parsed.lessons === 'object') state.data = parsed;
+    state.data = parseProgress(localStorage.getItem(KEY));
   } catch {
-    /* unavailable or unreadable: start empty */
+    /* unavailable: start empty */
   }
 }
 
@@ -28,13 +22,16 @@ function save(): void {
   }
 }
 
+// Assign, then read back through the state: `??=` returns the plain object, and changes to it would bypass the proxy.
 function entry(slug: string) {
-  return (state.data.lessons[slug] ??= { solved: [] });
+  state.data.lessons[slug] ??= { solved: {} };
+  return state.data.lessons[slug];
 }
 
-export function markSolved(slug: string, id: string): void {
+export function markSolved(slug: string, id: string, variant: number): void {
   const e = entry(slug);
-  if (!e.solved.includes(id)) e.solved.push(id);
+  e.solved[id] ??= [];
+  if (!e.solved[id].includes(variant)) e.solved[id].push(variant);
   save();
 }
 
@@ -43,12 +40,12 @@ export function markRead(slug: string): void {
   save();
 }
 
-export function solved(slug: string, id: string): boolean {
-  return !!state.data.lessons[slug]?.solved.includes(id);
+/** The variants of an exercise set answered right (indexes). */
+export function solvedVariants(slug: string, id: string): number[] {
+  return state.data.lessons[slug]?.solved[id] ?? [];
 }
 
-/** Read to the end with every exercise solved. */
-export function completed(slug: string, exerciseIds: readonly string[]): boolean {
-  const e = state.data.lessons[slug];
-  return !!e?.read && exerciseIds.every((id) => e.solved.includes(id));
+/** Read to the end with every exercise set solved; `sets` gives each id's variant count. */
+export function completed(slug: string, sets: Record<string, number>): boolean {
+  return lessonCompleted(state.data.lessons[slug], sets);
 }

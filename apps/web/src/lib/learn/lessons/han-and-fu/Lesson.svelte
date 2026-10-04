@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Callout, Exercise, Part, ScoreTable, Term } from '$lib/learn/components';
+  import { Exercise, Part, ScoreTable, Term } from '$lib/learn/components';
 </script>
 
 <Part title="Han and fu">
@@ -29,11 +29,10 @@
 
 <Part title="Mangan: the first limit">
   <p>
-    At 5 han, or 4 han with 40 fu or more, the score is capped at a <Term id="mangan">mangan</Term>: 8000 (dealer
-    12000). Gold in the table.
+    At 5 han, 4 han with 30 fu or more, or 3 han with 60 fu or more, the score is capped at a
+    <Term id="mangan">mangan</Term>: 8000 (dealer 12000). Gold in the table.
   </p>
   <Exercise id="mangan" />
-  <Callout kind="ema"><p>4 han 30 fu and 3 han 60 fu also count as a mangan (EMA 2025).</p></Callout>
 </Part>
 
 <Part title="Bigger limits">

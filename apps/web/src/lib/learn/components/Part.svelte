@@ -3,7 +3,7 @@
   import { LESSON, PART_TERMS, type LessonContext } from '$lib/learn/context';
 
   /**
-   * One part of a lesson: a heading, the text that supports it, and one exercise (the lesson test enforces that).
+   * One part of a lesson: a heading, the text that supports it, and one exercise set (the lesson test enforces that).
    * The lesson shows one part at a time; all parts are in the server-rendered HTML.
    */
   let { title, children }: { title: string; children: Snippet } = $props();
