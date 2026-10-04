@@ -18,6 +18,7 @@
   const SIDES = ['', 'right', 'across', 'left'];
   const seatWind = $derived(WINDS[(0 - state.dealer + 4) % 4]);
   const indicators = $derived(state.hand.doraIndicators.slice(0, state.hand.doraRevealed));
+  const ura = $derived(state.hand.uraIndicators.slice(0, state.hand.doraRevealed));
 </script>
 
 <div class="win-figure">
@@ -43,6 +44,15 @@
           <Tile tile={t} red={RED} plain />→<Tile tile={doraFromIndicator(kindOf(t)) * 4 + 1} red={RED} plain />
         {/each}
       </span>
+      {#if me.riichi}
+        <!-- A riichi win counts ura dora too: show them, or the value would not add up. -->
+        <span class="chip dora">
+          Ura
+          {#each ura as t (t)}
+            <Tile tile={t} red={RED} plain />→<Tile tile={doraFromIndicator(kindOf(t)) * 4 + 1} red={RED} plain />
+          {/each}
+        </span>
+      {/if}
     {/if}
   </div>
 </div>

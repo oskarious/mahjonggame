@@ -4,6 +4,7 @@
   import { LESSON, type LessonContext } from '$lib/learn/context';
   import { loadProgress, markRead } from '$lib/learn/progress.svelte';
   import type { LessonMeta, Unit } from '$lib/learn/registry';
+  import { trainerForLesson } from '$lib/train/registry';
   import type { Exercise } from '$lib/learn/types';
   import Cta from './Cta.svelte';
   import Seo from './Seo.svelte';
@@ -41,6 +42,7 @@
   );
 
   const path = $derived(`/learn/${meta.slug}`);
+  const trainer = $derived(trainerForLesson(meta.slug));
   const origin = $derived(page.url.origin);
   const jsonld = $derived([
     {
@@ -111,6 +113,9 @@
   {/if}
 
   <div class="end" class:later={!last} bind:this={end}>
+    {#if trainer}
+      <a class="btn big practice" href="/train/{trainer.id}">Practice: {trainer.title} trainer</a>
+    {/if}
     <Cta />
 
     <nav class="pager" aria-label="Lessons">
@@ -166,6 +171,12 @@
   }
   .seg.on {
     background: var(--accent);
+  }
+  .practice {
+    display: flex;
+    margin-top: 24px;
+    min-height: 52px;
+    text-decoration: none;
   }
   .step-nav,
   .pager {

@@ -124,7 +124,10 @@
     </div>
   </form>
 
-  <a class="learn" href="/learn">New to riichi mahjong? <strong>Learn to play</strong> →</a>
+  <nav class="more">
+    <a class="learn" href="/learn">New to riichi mahjong? <strong>Learn to play</strong> →</a>
+    <a class="learn" href="/train">Sharpen your reads: <strong>Train</strong> →</a>
+  </nav>
 </main>
 
 <style>
@@ -197,9 +200,13 @@
     text-decoration: none;
     margin-top: 0;
   }
-  .learn {
+  .more {
+    display: flex;
+    flex-direction: column;
     margin-top: 10px;
-    padding: 12px;
+  }
+  .learn {
+    padding: 10px 12px;
     text-align: center;
     color: var(--ink-dim);
     text-decoration: none;

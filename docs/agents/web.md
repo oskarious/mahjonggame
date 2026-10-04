@@ -1,7 +1,7 @@
 # Web app (apps/web): structure, server side, auth
 
 Read when touching the SvelteKit app outside the play screen's look and feel: routes, game sources, offline saves,
-auth, DB access, migrations, audio plumbing, the public Learn course. For the play screen's UI rules read [ui.md](ui.md).
+auth, DB access, migrations, audio plumbing, the public Learn course and trainers. For the play screen's UI rules read [ui.md](ui.md).
 
 ## Layout
 
@@ -17,12 +17,17 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
   src/hooks.server.ts   init: run migrations, then load auth; handle: session → locals.user/session, /api/auth/*
   src/routes/           play (offline), online (lobby → queue → table; signed-in only; guests → /signup), login (sign in
                         only), signup, account (rating), healthz, admin (bot pool; 404 unless `user.role = 'admin'`),
-                        learn (public course, see below), sitemap.xml, robots.txt
+                        learn (public course, see below), train (trainers, see below), sitemap.xml, robots.txt
   src/lib/learn/        the Learn course: registry.ts (units + lessons in order, SEO titles), lessons/<slug>/
-                        (Lesson.svelte article + exercises.ts), components/ (Exercise, Tiles, T, Term, Callout, …),
+                        (Lesson.svelte article + exercises.ts), components/ (ExerciseCard: one exercise, context-free;
+                        Exercise: the lesson wrapper with progress; Tiles, T, Term, Callout, …),
                         goals.ts / feedback.ts (engine-decided answers), safety.ts (safety grades vs a riichi, lessons
                         only), position.ts, glossary.ts, yaku.ts,
                         progress.svelte.ts (`riichi:learn`), lessons.test.ts (validates every lesson)
+  src/lib/train/        trainers: registry.ts (trainers, levels, SEO, linked lessons), generate.ts (problems), selfplay.ts
+                        + rebuild.ts (bot games → lesson positions), feed.ts, daily.ts, stats.svelte.ts
+                        (`riichi:train`), components/ (Trainer, DiscardTable, RushBar), generate.test.ts (seed sweep)
+  src/lib/components/ContentShell.svelte   the frame of Learn and Train pages (header with both sections + CTA)
   migrations/           Kysely migrations (NNNN_name.ts, import only from kysely); bundled and run on server start;
                         0001_auth = Better Auth tables; 0002_game_server = rating, game, game_seat, game_action
                         (written by the game server); 0003_bot_players = bot, setting, user.role;
@@ -87,6 +92,32 @@ Free, public, server-rendered lessons (marketing: they must rank in search and l
   `<Callout kind="ema">`.
 - Progress (`riichi:learn`) is per device and read on mount only; a lesson is completed when read to the end (the
   CTA scrolled into view) with all exercises solved.
+
+## Train (trainers)
+
+Public drills next to the course: `/train` (hub), `/train/<id>` (efficiency, waits, yaku, score) and `/train/daily`.
+Content pages like Learn (`contentPage`, `ContentShell`, `Seo`, CTA, sitemap from the registry).
+
+- **A problem is `generate(trainer, level, seed)` → a Learn `Exercise`**: pure and seeded (engine RNG, never
+  `Math.random`), so answers and feedback are the lessons' (`goals.ts`, `feedback.ts`) and the server and browser
+  build the same problem. `?level=&p=<seed>` reproduces one (the page keeps the address on the shown problem).
+- **Hands come from bot self-play** (`selfplay.ts`: the first hand of a game, bots without defense or blunders): the
+  first moment that fits the trainer (a closed seat's turn at the level's shanten, a closed tenpai hand, a win) is
+  **rebuilt** as a `Position` with that seat as seat 0 (`rebuild.ts`: winds, dealer, riichi, dora/ura, other seats'
+  quads). Wins whose value a rebuild can't carry (ippatsu, haitei, rinshan, chankan, double riichi, …), yakuman and
+  pao are skipped. Filters make each problem a decision (`generate.ts`); after 16 games they are dropped.
+- **`generate.test.ts` sweeps seeds** per trainer and level: determinism, an engine answer, the filters and quotas,
+  the budget, and that every rebuilt win scores exactly as the game paid it. Run it after engine, bot or rebuild
+  changes; bot changes also change which problem a seed gives (shared links, past dailies), which is accepted.
+- First problem: generated in `+page.server.ts` (in the HTML); the browser then makes the next one ahead (`feed.ts`).
+  Generating takes ~10–70 ms (a bot game). The daily set is cached per UTC day per server process.
+- Modes: Practice (retries, reveal; stats count first answers), Rush (3 min, 3 misses, levels climb every 5 solved;
+  `ExerciseCard final`), Daily (5 fixed problems, final answers, a share line; Copy falls back to selecting the text
+  outside secure contexts). Stats per device in `riichi:train`, read on mount.
+- **Player-facing copy never says how hands are made** (no "bots", no "real games"): bot players pass as human
+  opponents elsewhere on the site. Say "hands" or "winning hands".
+- **Adding a trainer**: a generator branch in `generate.ts` (+ `LEVELS`), an entry in `registry.ts`, sweep tests.
+  Lessons listed in its `lessons` get a "Practice" link at their end.
 
 ## Offline autosave
 

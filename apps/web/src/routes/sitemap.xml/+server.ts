@@ -1,8 +1,10 @@
 import { dev } from '$app/environment';
 import { REFERENCE, published } from '$lib/learn/registry';
+import { TRAINERS } from '$lib/train/registry';
 import type { RequestHandler } from './$types';
 
-// Public pages for search engines, generated from the course registry (a new lesson appears without editing this).
+// Public pages for search engines, generated from the course and trainer registries (a new lesson or trainer appears
+// without editing this).
 export const GET: RequestHandler = ({ url }) => {
   const lessons = published(dev);
   const latest = lessons
@@ -15,6 +17,9 @@ export const GET: RequestHandler = ({ url }) => {
     ...lessons.map((l) => ({ path: `/learn/${l.slug}`, lastmod: l.updated })),
     { path: REFERENCE.yaku.path, lastmod: latest },
     { path: REFERENCE.glossary.path, lastmod: latest },
+    { path: '/train' },
+    { path: '/train/daily' },
+    ...TRAINERS.map((t) => ({ path: `/train/${t.id}` })),
     { path: '/signup' },
   ];
   const body = [

@@ -78,11 +78,25 @@ sounds, theme. Structure of the web app: [web.md](web.md).
   opt-in per exercise via `show` (ponds, round, seat, dora, wall, counters). Dora glow is off unless dora are shown,
   so no gold tile appears unexplained. The lesson test rejects flags the exercise kind cannot display.
 - Success is a green check plus text; wrong answers keep the slice in place and offer "Show answer".
+- Winning-hand figures of a riichi win show the ura indicators next to the dora (when dora are shown), since the
+  hand's value counts them.
 - **Tile sizes in Learn use `--col`**, a length registered with `@property` (app.css): a tile row declares
   `--col: 100cqw`, which is computed to px against its container (the lesson column, an exercise card, a yaku entry)
   and inherited as px. Never put raw `cqw` in `--tw`: `Tile`'s face is a size container, so it would resolve against
   the face (the white dragon's frame vanished). Viewport units are wrong too (they include the scrollbar). Subtract
   the 1px gaps between tiles.
+
+## Train pages
+
+- Same frame and column as Learn; the drill is the page: mode (Practice / Rush) and level as segmented controls, a
+  stats line (streak, best, first-try %), then the exercise card. Answers use the lessons' input and cues. Next sits
+  right under the feedback (thumb zone), before the explanation.
+- **Discard table** (efficiency, after the answer): every distinct discard, best first: tile, tiles away, count, the
+  improving tiles (or waits). Best rows have a gold-tinted fill, the reader's discards a dot. No headers.
+- **Rush bar**: clock, a gold time bar, the score and three strike pips (filled `danger` per miss); no labels.
+- **Daily**: five marks (`ok` / `danger` fills) with the day streak; the result shows the share line (● right,
+  ○ missed; glyphs, no emoji).
+- The design system has no trainer components yet: these three are a noted deviation until added there.
 
 ## Hints
 
