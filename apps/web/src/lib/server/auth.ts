@@ -52,6 +52,8 @@ export const auth = betterAuth({
   advanced: {
     // Traefik (Dokploy) sits in front in production.
     ipAddress: { ipAddressHeaders: ['x-forwarded-for'] },
+    // Ids are `uuid` columns; on Postgres the database generates them (`gen_random_uuid()` defaults).
+    database: { generateId: 'uuid' },
   },
   plugins: [
     username({

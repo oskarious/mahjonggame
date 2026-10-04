@@ -21,7 +21,8 @@ apps/game-server/       @mahjong/game-server: Node 22 + ws, no build step (type 
 
 The DB schema is owned by apps/web (migrations there): `0002_game_server` = rating, game, game_seat, game_action
 (written by this server); `0003_bot_players` = bot, setting, user.role; `0004_bot_schedules` = bot.schedule; `0005_daily_discard` =
-daily_discard, daily_discard_vote. The server refuses to start until `0005_daily_discard` is applied.
+daily_discard, daily_discard_vote; `0006_uuid_ids` = ids are `uuid` (see web.md). The server refuses to start until
+`REQUIRED_MIGRATION` (`src/db.ts`, the latest one it needs) is applied.
 
 ## Scheduled jobs
 

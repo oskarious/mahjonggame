@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_MESSAGE_BYTES, isAction, isClientMessage, parseClientMessage } from '../src/index.ts';
+import { MAX_MESSAGE_BYTES, isAction, isClientMessage, isUuid, parseClientMessage } from '../src/index.ts';
+
+const G = '109b066c-8093-4b99-84e8-1c948bc394a5';
 
 describe('client message guards', () => {
   it('accepts every valid message shape', () => {
@@ -8,17 +10,17 @@ describe('client message guards', () => {
       { type: 'queue.join', format: 'east' },
       { type: 'queue.join', format: 'south' },
       { type: 'queue.leave' },
-      { type: 'act', gameId: 'g1', seq: 12, action: { type: 'discard', seat: 2, tile: 17 } },
-      { type: 'act', gameId: 'g1', seq: 0, action: { type: 'discard', seat: 0, tile: 0, riichi: true } },
-      { type: 'act', gameId: 'g1', seq: 3, action: { type: 'pon', seat: 1, tiles: [4, 5] } },
-      { type: 'act', gameId: 'g1', seq: 3, action: { type: 'chii', seat: 1, tiles: [4, 9] } },
-      { type: 'act', gameId: 'g1', seq: 3, action: { type: 'kan', seat: 3, kind: 33 } },
-      { type: 'act', gameId: 'g1', seq: 3, action: { type: 'pass', seat: 3 } },
-      { type: 'act', gameId: 'g1', seq: 3, action: { type: 'ron', seat: 3 } },
-      { type: 'act', gameId: 'g1', seq: 3, action: { type: 'tsumo', seat: 3 } },
-      { type: 'act', gameId: 'g1', seq: 3, action: { type: 'daiminkan', seat: 3 } },
-      { type: 'act', gameId: 'g1', seq: 3, action: { type: 'kyuushu', seat: 3 } },
-      { type: 'ready', gameId: 'g1' },
+      { type: 'act', gameId: G, seq: 12, action: { type: 'discard', seat: 2, tile: 17 } },
+      { type: 'act', gameId: G, seq: 0, action: { type: 'discard', seat: 0, tile: 0, riichi: true } },
+      { type: 'act', gameId: G, seq: 3, action: { type: 'pon', seat: 1, tiles: [4, 5] } },
+      { type: 'act', gameId: G, seq: 3, action: { type: 'chii', seat: 1, tiles: [4, 9] } },
+      { type: 'act', gameId: G, seq: 3, action: { type: 'kan', seat: 3, kind: 33 } },
+      { type: 'act', gameId: G, seq: 3, action: { type: 'pass', seat: 3 } },
+      { type: 'act', gameId: G, seq: 3, action: { type: 'ron', seat: 3 } },
+      { type: 'act', gameId: G, seq: 3, action: { type: 'tsumo', seat: 3 } },
+      { type: 'act', gameId: G, seq: 3, action: { type: 'daiminkan', seat: 3 } },
+      { type: 'act', gameId: G, seq: 3, action: { type: 'kyuushu', seat: 3 } },
+      { type: 'ready', gameId: G },
       { type: 'resync' },
       { type: 'ping' },
     ];
@@ -40,15 +42,17 @@ describe('client message guards', () => {
       { type: 'queue.join', format: 'north' },
       { type: 'act', seq: 1, action: { type: 'pass', seat: 0 } },
       { type: 'act', gameId: '', seq: 1, action: { type: 'pass', seat: 0 } },
-      { type: 'act', gameId: 'g', seq: -1, action: { type: 'pass', seat: 0 } },
-      { type: 'act', gameId: 'g', seq: 1, action: { type: 'nextHand' } },
-      { type: 'act', gameId: 'g', seq: 1, action: { type: 'pass', seat: 4 } },
-      { type: 'act', gameId: 'g', seq: 1, action: { type: 'discard', seat: 0, tile: 136 } },
-      { type: 'act', gameId: 'g', seq: 1, action: { type: 'discard', seat: 0, tile: 1, riichi: 'yes' } },
-      { type: 'act', gameId: 'g', seq: 1, action: { type: 'discard', seat: 0, tile: 1, extra: 1 } },
-      { type: 'act', gameId: 'g', seq: 1, action: { type: 'kan', seat: 0, kind: 34 } },
-      { type: 'act', gameId: 'g', seq: 1, action: { type: 'pon', seat: 0, tiles: [1, 2, 3, 4] } },
-      { type: 'act', gameId: 'g', seq: 1, action: { type: 'pon', seat: 0, tiles: ['1m'] } },
+      { type: 'act', gameId: 'g1', seq: 1, action: { type: 'pass', seat: 0 } },
+      { type: 'ready', gameId: 'g1' },
+      { type: 'act', gameId: G, seq: -1, action: { type: 'pass', seat: 0 } },
+      { type: 'act', gameId: G, seq: 1, action: { type: 'nextHand' } },
+      { type: 'act', gameId: G, seq: 1, action: { type: 'pass', seat: 4 } },
+      { type: 'act', gameId: G, seq: 1, action: { type: 'discard', seat: 0, tile: 136 } },
+      { type: 'act', gameId: G, seq: 1, action: { type: 'discard', seat: 0, tile: 1, riichi: 'yes' } },
+      { type: 'act', gameId: G, seq: 1, action: { type: 'discard', seat: 0, tile: 1, extra: 1 } },
+      { type: 'act', gameId: G, seq: 1, action: { type: 'kan', seat: 0, kind: 34 } },
+      { type: 'act', gameId: G, seq: 1, action: { type: 'pon', seat: 0, tiles: [1, 2, 3, 4] } },
+      { type: 'act', gameId: G, seq: 1, action: { type: 'pon', seat: 0, tiles: ['1m'] } },
       { type: 'ready' },
       { type: 'hints', level: 'off' },
     ];
@@ -68,5 +72,14 @@ describe('client message guards', () => {
     expect(parseClientMessage('{"type":"ping"}', MAX_MESSAGE_BYTES + 1)).toBeNull();
     const padded = JSON.stringify({ type: 'ping', pad: 'x'.repeat(MAX_MESSAGE_BYTES) });
     expect(parseClientMessage(padded)).toBeNull();
+  });
+
+  it('isUuid accepts only canonical UUIDs', () => {
+    expect(isUuid(G)).toBe(true);
+    expect(isUuid(G.toUpperCase())).toBe(true);
+    for (const v of ['', 'g1', G.replaceAll('-', ''), G + '0', '0' + G, G.replace('1', 'g'), `${G}
+`, 42, null]) {
+      expect(isUuid(v), String(v)).toBe(false);
+    }
   });
 });

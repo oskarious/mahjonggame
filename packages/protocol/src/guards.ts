@@ -12,7 +12,11 @@ const isSeat = (v: unknown): v is number => isInt(v, 0, 3);
 const isTile = (v: unknown): v is number => isInt(v, 0, 135);
 const isKind = (v: unknown): v is number => isInt(v, 0, 33);
 const isTiles = (v: unknown, max: number): v is number[] => Array.isArray(v) && v.length <= max && v.every(isTile);
-const isId = (v: unknown): v is string => typeof v === 'string' && v.length > 0 && v.length <= 64;
+
+/** A UUID in its canonical 8-4-4-4-12 hex form, as every database id is. Check ids from outside with it before querying. */
+export function isUuid(v: unknown): v is string {
+  return typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+}
 
 export function isFormat(v: unknown): v is Format {
   return typeof v === 'string' && (FORMATS as readonly string[]).includes(v);
@@ -61,9 +65,9 @@ export function isClientMessage(v: unknown): v is ClientMessage {
     case 'ping':
       return true;
     case 'act':
-      return isId(v.gameId) && isInt(v.seq, 0, 1_000_000_000) && isAction(v.action);
+      return isUuid(v.gameId) && isInt(v.seq, 0, 1_000_000_000) && isAction(v.action);
     case 'ready':
-      return isId(v.gameId);
+      return isUuid(v.gameId);
     default:
       return false;
   }

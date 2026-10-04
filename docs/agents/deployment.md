@@ -15,7 +15,10 @@ Read when touching Dockerfiles, `compose.production.yml`, env vars, migrations' 
   `ORIGIN=https://<domain>`, `ADDRESS_HEADER=X-Forwarded-For`, `XFF_DEPTH=1`; the compose file itself sets
   `WEB_INTERNAL_URL=http://web:3000` and `GAME_SERVER_URL=http://game-server:3001`, and passes `INTERNAL_TOKEN`
   (≥ 32 random chars; set it on the compose app) to both services for `/admin`. Migrations run when the web
-  container starts (fail → container exits); the game server refuses to start until `0005_daily_discard` is applied.
+  container starts (fail → container exits); the game server refuses to start until its `REQUIRED_MIGRATION` is applied.
+- **A migration that rewrites ids** (e.g. `0006_uuid_ids` remapped human user ids to UUIDs): back up the database
+  first and deploy while no rated human games run. Until it is replaced, the old game server still holds the old
+  ids and its writes for human seats fail (bot-only games are unaffected).
 - The web image contains `apps/web/build` (engine, protocol, drills bundled) plus production `node_modules`; the game server
   image runs the TS sources directly (game server, engine, protocol, drills) with production deps (ws, kysely, pg,
   node-cron). Both answer `GET /healthz` without the DB.

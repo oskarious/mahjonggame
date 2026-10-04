@@ -1,6 +1,6 @@
 // Kysely instance and the table types this server uses. The schema is owned by apps/web (migrations there); keep
 // these in sync with apps/web/src/lib/server/schema.ts. The server refuses to start until the migration it needs
-// has been applied.
+// has been applied. Ids are Postgres `uuid` columns, read and written as strings.
 import type { Action, FinalStanding, RuleSet } from '@mahjong/engine';
 import type { ExerciseOf } from '@mahjong/drills/types';
 import type { BotSchedule } from '@mahjong/protocol';
@@ -108,7 +108,7 @@ export interface DB {
 }
 
 /** The latest migration (in apps/web/migrations) this server needs: it adds the last of the columns above. */
-export const REQUIRED_MIGRATION = '0005_daily_discard';
+export const REQUIRED_MIGRATION = '0006_uuid_ids';
 
 export function createDb(connectionString: string): Kysely<DB> {
   const pool = new pg.Pool({ connectionString, max: 10 });

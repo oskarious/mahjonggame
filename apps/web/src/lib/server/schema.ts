@@ -4,6 +4,7 @@ import type { ExerciseOf } from '@mahjong/drills/types';
 import type { BotSchedule } from '@mahjong/protocol';
 
 // Table types for Kysely. Keep in sync with migrations/ (auth tables are written by Better Auth; we mostly read them).
+// Ids (and the columns referencing them) are Postgres `uuid`, read and written as strings (migration 0006_uuid_ids).
 type Timestamp = ColumnType<Date, Date | string | undefined, Date | string>;
 
 export interface UserTable {

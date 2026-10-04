@@ -36,7 +36,8 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
   migrations/           Kysely migrations (NNNN_name.ts, import only from kysely); bundled and run on server start;
                         0001_auth = Better Auth tables; 0002_game_server = rating, game, game_seat, game_action
                         (written by the game server); 0003_bot_players = bot, setting, user.role;
-                        0004_bot_schedules = bot.schedule; 0005_daily_discard = daily_discard, daily_discard_vote
+                        0004_bot_schedules = bot.schedule; 0005_daily_discard = daily_discard, daily_discard_vote;
+                        0006_uuid_ids = every id column and reference becomes `uuid`
   src/lib/tiles.ts      TILESETS (ratio, artwork margin, image paths); tileset.svelte.ts: the chosen one (`riichi:tileset`)
   src/lib/components/   Table (the whole play screen, takes a GameSource), Board (4 seat rows), Pond, Melds, PlayerArea
                         (hand/actions/magnifier), Tile, TimerBar, Countdown (online, after a deal),
@@ -58,6 +59,12 @@ ignored by Plausible, so dev doesn't pollute stats.
 
 The web app owns the DB schema. When a migration changes a table the game server uses, update
 `apps/game-server/src/db.ts` too (a hand-kept copy of `schema.ts`).
+
+Ids are Postgres `uuid` columns (strings in TS): Better Auth runs with `generateId: 'uuid'` and the auth tables'
+`gen_random_uuid()` defaults make them; the game server makes game and bot ids with `randomUUID()`. A malformed
+value in a `uuid` column comparison is a Postgres error, so check ids from outside (paths, cookies, messages) with
+`isUuid` from `@mahjong/protocol` first and treat a bad one as unknown. A credential `account.accountId` equals its
+user id: Better Auth finds the password by both, so anything that rewrites user ids must rewrite it too.
 
 ## Learn (public course)
 

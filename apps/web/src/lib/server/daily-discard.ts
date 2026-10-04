@@ -2,7 +2,7 @@ import type { Cookies } from '@sveltejs/kit';
 import type { Kind } from '@mahjong/engine';
 import { type Tally, botShare, dailyDiscard, discardKinds } from '@mahjong/drills/daily-discard';
 import type { ExerciseOf } from '@mahjong/drills/types';
-import { randomId } from '$lib/random';
+import { isUuid } from '@mahjong/protocol';
 import { db } from './db';
 
 // The stored hand, read once per UTC day per server process.
@@ -29,6 +29,11 @@ export async function todaysDiscard(date: string) {
 
 const COOKIE = 'riichi_voter';
 
+/** The cookie's guest id; anything but a UUID (or the 32-hex form older cookies have) counts as none. */
+function guestIdOf(cookie: string | undefined): string | null {
+  return cookie && (isUuid(cookie) || /^[0-9a-f]{32}$/i.test(cookie)) ? cookie : null;
+}
+
 /** Who is voting: the account and/or this browser's guest id. */
 export interface Voter {
   userId: string | null;
@@ -40,9 +45,9 @@ export interface Voter {
  * than a second ballot. `create` gives a new guest browser an id (only when voting).
  */
 export function voterOf(cookies: Cookies, user: { id: string } | null, secure: boolean, create = false): Voter {
-  let guestId = cookies.get(COOKIE) ?? null;
+  let guestId = guestIdOf(cookies.get(COOKIE));
   if (!guestId && create && !user) {
-    guestId = randomId();
+    guestId = crypto.randomUUID();
     cookies.set(COOKIE, guestId, { path: '/', httpOnly: true, sameSite: 'lax', secure, maxAge: 60 * 60 * 24 * 400 });
   }
   return { userId: user?.id ?? null, guestId };

@@ -142,7 +142,7 @@ describe('game server connections', () => {
     const t = await connect('session=alice');
     hello(t);
     await t.next('welcome');
-    send(t, { type: 'act', gameId: 'g', seq: 1, action: { type: 'nextHand' } });
+    send(t, { type: 'act', gameId: '109b066c-8093-4b99-84e8-1c948bc394a5', seq: 1, action: { type: 'nextHand' } });
     expect(await t.next()).toMatchObject({ type: 'error', code: 'badMessage' });
     expect((await t.closed).code).toBe(1008);
   });
