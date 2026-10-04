@@ -6,6 +6,11 @@ import type { ScenarioOptions, Seat, YakuId } from '@mahjong/engine';
  */
 export interface Position extends ScenarioOptions {
   discard?: boolean;
+  /**
+   * Tiles in other seats' rivers that were discarded after the riichi (`riichi`) and not won on: genbutsu too.
+   * Ponds have no global order, so the position says which tiles came after.
+   */
+  passed?: string;
 }
 
 /**
@@ -37,14 +42,25 @@ export type DiscardGoal =
   | 'min-shanten'
   /** Lowest shanten and, among those, the most tiles that improve the hand. */
   | 'max-ukeire'
+  /** Leave 1-shanten with the most tiles that reach tenpai on a good wait (`goodWaitAcceptance`). */
+  | 'max-good-wait'
+  /**
+   * A rule of thumb the engine cannot decide alone (five blocks, keep a safe tile): the answers are `only`. The
+   * lesson test still checks that each keeps the lowest shanten, unless the exercise sets `stepBack`.
+   */
+  | 'judgment'
   /** A tile the given seat (in riichi) has discarded: it cannot ron on it. */
-  | { safeAgainst: Seat };
+  | { safeAgainst: Seat }
+  /** The hand tiles in the best safety grade against the given seat (in riichi); see `safety.ts`. */
+  | { safest: Seat };
 
 export type PickGoal =
   /** Every kind that completes the hand (seat 0 holds 13 tiles). */
   | 'waits'
   /** The dora of every revealed indicator. */
   | 'dora'
+  /** Number tiles no two-sided wait can complete, because a tile of each shape is all visible (kabe). */
+  | 'no-chance'
   /** Every kind that brings the hand closer to winning (seat 0 holds 13 tiles). */
   | 'ukeire'
   | { group: TileGroup };
@@ -64,7 +80,14 @@ interface Base {
 
 export type Exercise = Base &
   (
-    | { kind: 'discard'; position: Position; goal: DiscardGoal; only?: string }
+    | {
+        kind: 'discard';
+        position: Position;
+        goal: DiscardGoal;
+        only?: string;
+        /** A judgment answer that deliberately leaves the hand further from tenpai. */
+        stepBack?: boolean;
+      }
     | { kind: 'pick'; position: Position; goal: PickGoal; from?: string }
     | { kind: 'call'; position: Position; goal: CallChoice }
     /** `expect`: the verdict the lesson text relies on, checked against the engine by the lesson test. */
@@ -91,9 +114,23 @@ export type Exercise = Base &
         answer: number;
         position?: Position;
         /** Facts about the shown hand the question relies on, checked against the engine by the lesson test. */
-        claim?: { shanten?: number; waits?: string };
+        claim?: Claim;
       }
   );
+
+/** Facts about the shown hand (seat 0, 13 tiles) a question relies on, checked against the engine by the lesson test. */
+export interface Claim {
+  shanten?: number;
+  /** Exactly these winning tiles. */
+  waits?: string;
+  tenpai?: boolean;
+  /** Winning tiles (tenpai) or improving tiles still unseen by the reader. */
+  liveWaits?: number;
+  /** The wait can come in at least 5 copies (two-sided or better). */
+  goodWait?: boolean;
+  /** The least the hand wins by ron, without riichi (`minRon`). */
+  minRon?: number;
+}
 
 export type ExerciseKind = Exercise['kind'];
 export type ExerciseOf<K extends ExerciseKind> = Extract<Exercise, { kind: K }>;

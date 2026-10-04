@@ -7,6 +7,7 @@ import {
   analyzeHand,
   analyzeSeat,
   countKinds,
+  goodWaitAcceptance,
   kindOf,
   kindToString,
   parseTiles,
@@ -251,5 +252,30 @@ describe('consistency with the rules (random hands)', () => {
     expect(perCall).toBeLessThan(20);
     void DEFAULT_RULES;
     void randomInt;
+  });
+});
+
+describe('goodWaitAcceptance', () => {
+  const good = (hand: string) => {
+    const tiles = parseTiles(hand);
+    return goodWaitAcceptance(tiles, [], unseenOf(tiles));
+  };
+
+  it('counts only draws that can leave a good wait', () => {
+    // 45p two-sided + 13s closed + 99s pair: drawing 3p or 6p leaves the closed wait on 2s (4 tiles), drawing 2s
+    // leaves 45p waiting on 3p and 6p (8 tiles).
+    const r = good('123m456p45p13s99s7z');
+    expect(kinds(analyze('123m456p45p13s99s7z').ukeire)).toBe('3p 6p 2s');
+    expect(kinds(r.tiles)).toBe('2s');
+    expect(r.total).toBe(4);
+  });
+
+  it('keeps every draw of two two-sided shapes', () => {
+    expect(kinds(good('123m456p45p67s99s3z').tiles)).toBe('3p 6p 5s 8s');
+  });
+
+  it('is empty for a hand that is not 1-shanten', () => {
+    expect(good('123m456p789s3456s').tiles).toEqual([]);
+    expect(good('159m159p159s1234z').tiles).toEqual([]);
   });
 });

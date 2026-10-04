@@ -13,7 +13,8 @@ packages/engine/        @mahjong/engine: pure TS, no I/O. Rules, scoring, game s
   src/scoring.ts        yaku, fu (with fuParts breakdown), limits, payments
   src/game.ts           state machine: createGame / applyAction / legalActions / pendingSeats
   src/view.ts           viewFor (per-seat redacted view + hint levels), redactEvent
-  src/analysis.ts       tenpai / tiles-away / waits / per-discard options
+  src/analysis.ts       tenpai / tiles-away / waits / per-discard options; goodWaitAcceptance (1-shanten draws that
+                        reach a wait of 5+ copies; Learn only so far, no bot uses it)
   src/bot.ts            skill-based bots, botProfile(skill), botElo / skillForElo
   src/scenario.ts       scenario(): a playing position from tile notation (hands, melds, discards, draws, dora, riichi);
                         used by engine/game-server tests and the Learn exercises

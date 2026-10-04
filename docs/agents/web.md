@@ -20,7 +20,8 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
                         learn (public course, see below), sitemap.xml, robots.txt
   src/lib/learn/        the Learn course: registry.ts (units + lessons in order, SEO titles), lessons/<slug>/
                         (Lesson.svelte article + exercises.ts), components/ (Exercise, Tiles, T, Term, Callout, …),
-                        goals.ts / feedback.ts (engine-decided answers), position.ts, glossary.ts, yaku.ts,
+                        goals.ts / feedback.ts (engine-decided answers), safety.ts (safety grades vs a riichi, lessons
+                        only), position.ts, glossary.ts, yaku.ts,
                         progress.svelte.ts (`riichi:learn`), lessons.test.ts (validates every lesson)
   migrations/           Kysely migrations (NNNN_name.ts, import only from kysely); bundled and run on server start;
                         0001_auth = Better Auth tables; 0002_game_server = rating, game, game_seat, game_action
@@ -66,7 +67,16 @@ Free, public, server-rendered lessons (marketing: they must rank in search and l
   Where the text states a result, add `expect` (verdict, yaku, score, fu) or `claim` (choice) or `only`
   (discard): `lessons.test.ts` checks it against the engine. It also checks that every exercise is answerable,
   placed exactly once, links and glossary terms exist, prompts have at most two sentences, and the yaku list examples
-  score as listed. It has caught several wrong hand-made claims; trust it over mental arithmetic.
+  score as listed. It has caught several wrong hand-made claims; trust it over mental arithmetic. It counts seat 0's
+  hand as written: `scenario()` pads a short hand with junk, which silently changes it.
+- **Strategy lessons** take *Riichi Book I* (Daina Chiba) as the reference: when a lesson disagrees with it, fix the
+  lesson. Use it for concepts only, never its hands, problems or wording. Discard goals: `tenpai`, `min-shanten`,
+  `max-ukeire`, `max-good-wait` (1-shanten draws that reach a wait of 5+ copies), `{ safest: seat }` (best
+  `safety.ts` grade; `passed` in the position lists tiles let pass after the riichi) and `judgment`: a rule of
+  thumb the engine can't decide alone (five blocks, keep a safe tile, value over wait). Its answers are `only`, and
+  the test still requires each to keep the lowest shanten (unless `stepBack`). Use `judgment` only where the engine
+  rates the choices equal or the rule is the point, and say the rule in `why`. Decision questions (riichi, push,
+  call) are `choice` with a `claim` (`tenpai`, `goodWait`, `liveWaits`, `minRon`) so their facts are tested.
 - A discard nobody can call does not open a call window and the game moves on; a "can you win?" ron that is not
   possible must therefore come from the right or across (from the left, seat 0 would draw). `buildPosition` throws
   otherwise.

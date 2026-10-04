@@ -45,7 +45,7 @@
 
 <h1>Learn riichi mahjong</h1>
 <p>
-  A free course from your first tile to scoring and basic strategy. Every lesson has hands you play right in the page,
+  A free course from your first tile to scoring, building a hand, and attack and defense. Every lesson has hands you play right in the page,
   with the same controls as a real game. No account needed.
 </p>
 

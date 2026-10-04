@@ -1,7 +1,8 @@
 // What the reader is told after an answer. Pure; built from engine results so it cannot contradict the position.
 // Texts may contain `{1m}`-style tile tokens.
 import { type GameState, type Kind, kindOf, waits } from '@mahjong/engine';
-import { discardOptions } from './goals';
+import { discardAnswers, discardOptions, goodWaitTotal, passedOf } from './goals';
+import { REASON_TEXT, safetyGrades } from './safety';
 import { tok, winSpot } from './position';
 import type { ExerciseOf, Verdict } from './types';
 
@@ -9,8 +10,16 @@ const toks = (ks: Iterable<Kind>) => [...ks].map(tok).join(' ');
 const away = (shanten: number) => (shanten === 0 ? 'tenpai' : `${shanten} away from tenpai`);
 
 export function discardFeedback(ex: ExerciseOf<'discard'>, g: GameState, kind: Kind, correct: boolean): string {
-  const o = discardOptions(g).find((x) => x.kind === kind)!;
+  const opts = discardOptions(g);
+  const o = opts.find((x) => x.kind === kind)!;
   const goal = ex.goal;
+  /** One right answer, to compare a wrong one with. */
+  const right = () => [...discardAnswers(ex, g)][0];
+  if (typeof goal === 'object' && 'safest' in goal) {
+    const grades = safetyGrades(g, goal.safest, passedOf(ex.position));
+    const why = (k: Kind) => `${tok(k)}: ${REASON_TEXT[grades.get(k)!.reason]}.`;
+    return correct ? why(kind) : `${why(kind)} You hold a safer tile.`;
+  }
   if (typeof goal === 'object') {
     const safe = g.hand.players[goal.safeAgainst].discards.some((d) => kindOf(d.tile) === kind);
     return safe
@@ -20,8 +29,21 @@ export function discardFeedback(ex: ExerciseOf<'discard'>, g: GameState, kind: K
   const result = o.tenpai
     ? `Tenpai, waiting on ${toks(o.waits.map((w) => w.kind))}${o.furiten ? ' (but furiten)' : ''}.`
     : `${away(o.shanten)[0].toUpperCase()}${away(o.shanten).slice(1)}, with ${o.total} tiles that improve the hand.`;
+  if (goal === 'max-good-wait') {
+    const good = `${result.slice(0, -1)}, ${goodWaitTotal(g, kind)} of them to a good wait.`;
+    if (correct || o.shanten > opts[0].shanten) return good;
+    return `${good} Another discard keeps ${goodWaitTotal(g, right())}.`;
+  }
+  if (goal === 'judgment') {
+    if (correct) return result;
+    const r = opts.find((x) => x.kind === right())!;
+    if (r.shanten !== o.shanten || r.total > o.total) return `${result} Another discard is better.`;
+    return r.total === o.total
+      ? `${result} Another discard keeps as many tiles, and is better here.`
+      : `${result} Another discard is better here, even with fewer tiles.`;
+  }
   if (correct || goal === 'tenpai') return result;
-  const best = discardOptions(g)[0];
+  const best = opts[0];
   if (goal === 'min-shanten' || o.shanten > best.shanten) return `${result} Another discard keeps you closer.`;
   return `${result} Another discard leaves ${best.total}.`;
 }

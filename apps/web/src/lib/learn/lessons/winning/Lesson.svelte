@@ -35,8 +35,8 @@
     wins by ron or self-draw, open or closed.
   </p>
   <p>
-    <strong>Your first plan:</strong> discard 1s, 9s and honors early and keep the middle tiles. Then any complete hand
-    can win.
+    <strong>Your first plan:</strong> keep the middle tiles and a pair of dragons, and keep your hand closed so you can
+    declare riichi. Don't force <Yaku id="tanyao">all simples</Yaku> by breaking good shapes.
   </p>
   <Exercise id="simples" />
 </Part>

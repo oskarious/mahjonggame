@@ -28,8 +28,15 @@ export function tilesOf(notation: string): Tile[] {
  * seat 0 cannot claim has to come from the right or across.
  */
 export function buildPosition(p: Position): GameState {
-  const { discard, ...opts } = p;
+  const { discard, passed, ...opts } = p;
   let g = scenario({ rules: LESSON_RULES, ...opts });
+  if (passed) {
+    const others = new Set(
+      g.hand.players.flatMap((pl, s) => (p.riichi?.includes(s) ? [] : pl.discards.map((d) => kindOf(d.tile)))),
+    );
+    for (const k of kindsOf(tilesOf(passed)))
+      if (!others.has(k)) throw new Error(`passed: ${k} is not in another seat's river`);
+  }
   if (discard) {
     const step = g.hand.step;
     if (step.type !== 'turn' || step.seat === 0) throw new Error('`discard` needs another seat on turn');

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { kindOf, parseTiles } from '@mahjong/engine';
 import { discardFeedback, pickFeedback, verdictFeedback } from './feedback';
-import { discardAnswers, fuSteps, pickQuiz, scoreQuiz, verdict, winValue } from './goals';
+import { discardAnswers, fuSteps, hasGoodWait, minRon, pickQuiz, scoreQuiz, verdict, winValue } from './goals';
 import { buildPosition } from './position';
 import { describe as words, plain, segments, sentences } from './text';
 import type { Exercise, ExerciseOf, Position } from './types';
@@ -58,6 +58,65 @@ describe('discard goals', () => {
     const g = buildPosition(p);
     expect(discardFeedback(ex, g, kindOf(parseTiles('9s')[0]), false)).toMatch(/^1 away from tenpai/);
     expect(discardFeedback(ex, g, kindOf(parseTiles('7z')[0]), true)).toBe('Tenpai, waiting on {1s} {4s}.');
+  });
+});
+
+describe('strategy goals', () => {
+  it('takes a judgment answer as written', () => {
+    const p = { hands: ['123m456p789s3456s'], dealer: 3, turn: 0, draws: '9m' } as Position;
+    const ex = discard({ position: p, goal: 'judgment', only: '6s' });
+    expect(discardAnswers(ex, buildPosition(p))).toEqual(kinds('6s'));
+    expect(discardFeedback(ex, buildPosition(p), kindOf(parseTiles('9m')[0]), false)).toMatch(
+      /Another discard is better here, even with fewer tiles.$/,
+    );
+  });
+
+  it('prefers the discard that reaches a good wait over raw ukeire', () => {
+    // 44m 78m 112233p 45p 33s: dropping 4p or 5p keeps the most tiles (21), but only 4 reach a good wait; breaking
+    // a pair (4m or 3s) keeps both two-sided shapes: 14 tiles, all to a good wait.
+    const p = { hands: ['4m78m112233p45p33s'], dealer: 3, turn: 0, draws: '4m' } as Position;
+    const g = buildPosition(p);
+    expect(discardAnswers(discard({ position: p, goal: 'max-ukeire' }), g)).toEqual(kinds('4p5p'));
+    const ex = discard({ position: p, goal: 'max-good-wait' });
+    expect(discardAnswers(ex, g)).toEqual(kinds('4m3s'));
+    expect(discardFeedback(ex, g, kindOf(parseTiles('4p')[0]), false)).toBe(
+      '1 away from tenpai, with 21 tiles that improve the hand, 4 of them to a good wait. Another discard keeps 14.',
+    );
+  });
+
+  it('picks the safest tiles in hand against a riichi', () => {
+    const p = {
+      hands: ['123m678p789s1p5p1z3z'],
+      discards: [undefined, undefined, '4p2z'],
+      riichi: [2],
+      dealer: 3,
+      turn: 0,
+      draws: '8p',
+    } as Position;
+    // Nothing in hand is genbutsu; 1p is suji of 4p (grade 2).
+    const ex = discard({ position: p, goal: { safest: 2 } });
+    expect(discardAnswers(ex, buildPosition(p))).toEqual(kinds('1p'));
+    expect(discardFeedback(ex, buildPosition(p), kindOf(parseTiles('5p')[0]), false)).toBe(
+      '{5p}: no suji, open to two-sided waits. You hold a safer tile.',
+    );
+  });
+
+  it('offers no-chance tiles from the hand', () => {
+    const position = { hands: ['77m89m123p456p789s'], discards: [undefined, '77m'], dealer: 3, turn: 1 };
+    const ex = { kind: 'pick', prompt: '', position, goal: 'no-chance' } as ExerciseOf<'pick'>;
+    const q = pickQuiz(ex, buildPosition(position));
+    expect(q.answers).toEqual(kinds('8m9m'));
+  });
+
+  it('knows the least a tenpai hand wins by ron', () => {
+    // Pinfu tanyao on 3p or 6p, closed ron 30 fu 2 han: 2000 for a non-dealer. No dora (indicator 3z).
+    const p = { hands: ['234m567m45p678s22s'], dealer: 3, turn: 1 } as Position;
+    expect(minRon(buildPosition(p))).toBe(2000);
+    expect(hasGoodWait(buildPosition(p))).toBe(true);
+    // The same shape waiting on 6p only by a closed wait: no yaku but tanyao, 40 fu 1 han.
+    const q = { hands: ['234m567m46p678s22s'], dealer: 3, turn: 1 } as Position;
+    expect(minRon(buildPosition(q))).toBe(1300);
+    expect(hasGoodWait(buildPosition(q))).toBe(false);
   });
 });
 

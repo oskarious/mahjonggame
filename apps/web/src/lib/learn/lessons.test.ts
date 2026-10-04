@@ -10,6 +10,8 @@ import {
   discardAnswers,
   discardOptions,
   fuSteps,
+  hasGoodWait,
+  minRon,
   pickQuiz,
   scoreQuiz,
   stateOf,
@@ -53,6 +55,12 @@ function validate(ex: Exercise): void {
   if (ex.kind === 'call')
     expect(ex.prompt, 'prompt asks a question or gives an order').toMatch(/\?$|\b(Complete|Make|Call)\b/);
   const g = stateOf(ex);
+  // `scenario()` pads a short hand with junk, which silently changes what the hand is: count the hand as written.
+  const written = 'position' in ex ? ex.position?.hands?.[0] : undefined;
+  if (written) {
+    const melds = ex.position!.melds?.[0]?.length ?? 0;
+    expect(parseTiles(written.replace(/\s+/g, '')).length, 'hand size as written').toBe(13 - 3 * melds);
+  }
   switch (ex.kind) {
     case 'discard': {
       expect(g!.hand.step, 'seat 0 is on turn').toMatchObject({
@@ -66,6 +74,21 @@ function validate(ex: Exercise): void {
         const all = discardAnswers({ ...ex, only: undefined }, g!);
         for (const k of parseTiles(ex.only).map(kindOf)) expect(all.has(k), `only: ${k} meets the goal`).toBe(true);
       }
+      const opts = discardOptions(g!);
+      if (ex.goal === 'judgment') {
+        // The rule of thumb is authored; it must not quietly cost a step towards tenpai.
+        expect(ex.only, 'a judgment names its answer').toBeTruthy();
+        for (const k of ok) {
+          const back = opts.find((o) => o.kind === k)!.shanten > opts[0].shanten;
+          expect(back, `${k} ${ex.stepBack ? 'is marked as a step back' : 'keeps the lowest shanten'}`).toBe(
+            !!ex.stepBack,
+          );
+        }
+      } else expect(ex.stepBack, 'stepBack only for judgment').toBeUndefined();
+      if (ex.goal === 'max-good-wait')
+        for (const k of ok) expect(opts.find((o) => o.kind === k)!.shanten, 'good waits are about 1-shanten').toBe(1);
+      if (typeof ex.goal === 'object' && 'safest' in ex.goal)
+        expect(g!.hand.players[ex.goal.safest].riichi, 'safest against a riichi').not.toBeNull();
       break;
     }
     case 'pick': {
@@ -120,6 +143,10 @@ function validate(ex: Exercise): void {
         if (ex.claim.shanten !== undefined) expect(a.shanten, 'claimed shanten').toBe(ex.claim.shanten);
         if (ex.claim.waits !== undefined)
           expect(waits(me.hand, me.melds), 'claimed waits').toEqual(parseTiles(ex.claim.waits).map(kindOf));
+        if (ex.claim.tenpai !== undefined) expect(a.tenpai, 'claimed tenpai').toBe(ex.claim.tenpai);
+        if (ex.claim.liveWaits !== undefined) expect(a.total, 'claimed live tiles').toBe(ex.claim.liveWaits);
+        if (ex.claim.goodWait !== undefined) expect(hasGoodWait(g), 'claimed good wait').toBe(ex.claim.goodWait);
+        if (ex.claim.minRon !== undefined) expect(minRon(g), 'claimed minimum ron').toBe(ex.claim.minRon);
       }
       break;
     }

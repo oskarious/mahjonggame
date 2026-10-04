@@ -36,3 +36,12 @@
   <p><Yaku id="chiitoitsu">Seven pairs</Yaku> has its own fixed fu, never rounded.</p>
   <Exercise id="pairs" />
 </Part>
+
+<Part title="A quick estimate">
+  <p>
+    Most hands land on a few values: <Yaku id="pinfu">pinfu</Yaku> 30 by ron, <Yaku id="chiitoitsu">seven pairs</Yaku> 25, an open hand about 30,
+    any other closed hand about 40 by ron (30 by self-draw). Count exactly when the hand has a quad or a closed triplet
+    of 1s, 9s or honors.
+  </p>
+  <Exercise id="estimate" />
+</Part>

@@ -40,7 +40,7 @@ export const exercises: Record<string, Exercise> = {
     kind: 'call',
     prompt: 'You hold three red dragons, and the player on your right discards the fourth. Make a quad.',
     position: {
-      hands: ['777z123m456p58s99s'],
+      hands: ['777z123m456p67s99s'],
       dealer: 3,
       turn: 1,
       draws: '7z',
@@ -48,7 +48,7 @@ export const exercises: Record<string, Exercise> = {
     },
     goal: 'daiminkan',
     show: { ponds: [1] },
-    why: 'A kan: you draw a replacement tile, and a new dora indicator is turned over.',
+    why: 'A kan: you draw a replacement tile, and a new dora indicator is turned over. Open kans are best when, like here, you are in tenpai with a good wait.',
   },
   priority: {
     kind: 'choice',

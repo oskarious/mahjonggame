@@ -119,6 +119,42 @@ export function analyzeDiscards(
   return out.sort((a, b) => a.shanten - b.shanten || b.total - a.total || a.kind - b.kind);
 }
 
+/**
+ * A tenpai wait is good when it can still come in at least 5 copies (counting all copies not in the hand itself):
+ * two-sided (8), three-sided, four in a row (6), not closed, edge, shanpon or single waits (4 or fewer).
+ */
+export const GOOD_WAIT = 5;
+
+/**
+ * For a 1-shanten hand (13 - 3 * melds concealed tiles): the draws after which some discard leaves a good wait. A
+ * measure of shape quality next to `analyzeHand`'s ukeire, which counts every draw that reaches tenpai alike.
+ * Empty for a hand that is not 1-shanten.
+ */
+export function goodWaitAcceptance(concealed: readonly Tile[], melds: readonly Meld[], unseen: Counts): {
+  tiles: TileCount[];
+  total: number;
+} {
+  if (analyzeHand(concealed, melds, unseen).shanten !== 1) return { tiles: [], total: 0 };
+  const good: Kind[] = [];
+  for (let k = 0; k < NUM_KINDS; k++) {
+    if (unseen[k] === 0) continue;
+    const withK = [...concealed, k * 4 + 3];
+    const tried = new Set<Kind>();
+    const reaches = withK.some((t, i) => {
+      const d = kindOf(t);
+      if (tried.has(d)) return false;
+      tried.add(d);
+      const rest = [...withK.slice(0, i), ...withK.slice(i + 1)];
+      const held = countKinds(rest);
+      const w = waits(rest, melds);
+      return w.length > 0 && w.reduce((n, x) => n + 4 - held[x], 0) >= GOOD_WAIT;
+    });
+    if (reaches) good.push(k);
+  }
+  const tiles = toCounts(good, unseen);
+  return { tiles, total: sumRemaining(tiles) };
+}
+
 /** What the hand waits on after discarding a tile of `kind` (on own turn), or right now (`kind` null). */
 export interface TenpaiOption {
   kind: Kind | null;

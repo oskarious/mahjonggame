@@ -27,7 +27,7 @@
 
 <Part title="Don't go backwards">
   <p>
-    Throw away tiles that belong to no set, pair or partial set: losing them costs nothing. Riichi Arena's hints can
+    Throw away tiles that belong to no set, pair or partial set: losing them costs little. Riichi Arena's hints can
     show how many tiles away you are while you learn.
   </p>
   <Exercise id="stay" />

@@ -6,25 +6,32 @@ import {
   NUM_KINDS,
   analyzeDiscards,
   analyzeHand,
+  EAST,
+  GOOD_WAIT,
+  countKinds,
   doraFromIndicator,
+  goodWaitAcceptance,
   isDragon,
   isFuriten,
   isHonor,
   isSimple,
   isTerminal,
+  isRedTile,
   isWind,
   kindOf,
   legalActions,
   limitFor,
   ronPoints,
+  scoreHand,
   suitOf,
   tsumoPoints,
   unseenCounts,
   waits,
 } from '@mahjong/engine';
 import { LIMITS, YAKU } from '../labels';
-import { LESSON_RULES, buildPosition, declareWin, kindsOf, tilesOf, tok, winSpot } from './position';
-import type { CallChoice, Exercise, ExerciseOf, TileGroup, Verdict } from './types';
+import { LESSON_RULES, RED, buildPosition, declareWin, kindsOf, tilesOf, tok, winSpot } from './position';
+import { noChance, safetyGrades } from './safety';
+import type { CallChoice, Exercise, ExerciseOf, Position, TileGroup, Verdict } from './types';
 
 const ALL_KINDS = Array.from({ length: NUM_KINDS }, (_, k) => k);
 
@@ -40,17 +47,39 @@ export function discardOptions(g: GameState) {
   );
 }
 
+/** Tiles the position marks as discarded after the riichi (genbutsu too). */
+export const passedOf = (p: Position | undefined): Kind[] => (p?.passed ? kindsOf(tilesOf(p.passed)) : []);
+
+/** Live copies of the tiles that reach tenpai on a good wait, after discarding a tile of `kind` (1-shanten only). */
+export function goodWaitTotal(g: GameState, kind: Kind): number {
+  const me = g.hand.players[0];
+  const i = me.hand.findIndex((t) => kindOf(t) === kind);
+  const rest = [...me.hand.slice(0, i), ...me.hand.slice(i + 1)];
+  return goodWaitAcceptance(rest, me.melds, unseenCounts(g, 0)).total;
+}
+
 /** Kinds seat 0 may discard that meet the goal (and the `only` restriction). */
 export function discardAnswers(ex: ExerciseOf<'discard'>, g: GameState): Set<Kind> {
   const opts = discardOptions(g);
   let ok: Kind[];
   const goal = ex.goal;
+  const best = Math.min(...opts.map((o) => o.shanten));
+  const top = opts.filter((o) => o.shanten === best);
   if (goal === 'tenpai') ok = opts.filter((o) => o.tenpai).map((o) => o.kind);
-  else if (goal === 'min-shanten' || goal === 'max-ukeire') {
-    const best = Math.min(...opts.map((o) => o.shanten));
-    const top = opts.filter((o) => o.shanten === best);
+  else if (goal === 'min-shanten') ok = top.map((o) => o.kind);
+  else if (goal === 'max-ukeire') {
     const most = Math.max(...top.map((o) => o.total));
-    ok = (goal === 'min-shanten' ? top : top.filter((o) => o.total === most)).map((o) => o.kind);
+    ok = top.filter((o) => o.total === most).map((o) => o.kind);
+  } else if (goal === 'max-good-wait') {
+    const good = new Map(top.map((o) => [o.kind, goodWaitTotal(g, o.kind)]));
+    const most = Math.max(...good.values());
+    ok = top.filter((o) => good.get(o.kind) === most).map((o) => o.kind);
+  } else if (goal === 'judgment') ok = opts.map((o) => o.kind);
+  else if ('safest' in goal) {
+    const grades = safetyGrades(g, goal.safest, passedOf(ex.position));
+    const gradeOf = (k: Kind) => grades.get(k)!.grade;
+    const safest = Math.min(...opts.map((o) => gradeOf(o.kind)));
+    ok = opts.filter((o) => gradeOf(o.kind) === safest).map((o) => o.kind);
   } else {
     const safe = new Set(g.hand.players[goal.safeAgainst].discards.map((d) => kindOf(d.tile)));
     ok = opts.filter((o) => safe.has(o.kind)).map((o) => o.kind);
@@ -60,6 +89,54 @@ export function discardAnswers(ex: ExerciseOf<'discard'>, g: GameState): Set<Kin
     ok = ok.filter((k) => only.has(k));
   }
   return new Set(ok);
+}
+
+// --- claims ---------------------------------------------------------------------------------------------------
+
+/** Whether seat 0's tenpai wait can still come in at least `GOOD_WAIT` copies (two-sided or better). */
+export function hasGoodWait(g: GameState): boolean {
+  const me = g.hand.players[0];
+  const held = countKinds(me.hand);
+  return waits(me.hand, me.melds).reduce((n, k) => n + 4 - held[k], 0) >= GOOD_WAIT;
+}
+
+/**
+ * The least seat 0 can win by ron, over all its winning tiles, without riichi, ura dora or other luck (0 when a
+ * winning tile gives no yaku): the value a decision can count on.
+ */
+export function minRon(g: GameState): number {
+  const me = g.hand.players[0];
+  const h = g.hand;
+  const dealer = g.dealer === 0;
+  const values = waits(me.hand, me.melds).map((k) => {
+    // A plain copy of the winning tile that is not in the hand (red fives would add dora by chance).
+    const winTile = [3, 2, 1, 0].map((c) => k * 4 + c).find((t) => !me.hand.includes(t) && !isRedTile(t, RED))!;
+    const v = scoreHand(
+      {
+        concealed: [...me.hand, winTile],
+        melds: me.melds,
+        winTile,
+        tsumo: false,
+        seatWind: EAST + ((4 - g.dealer) % 4),
+        roundWind: EAST + g.roundWind,
+        dealer,
+        riichi: 'none',
+        ippatsu: false,
+        rinshan: false,
+        chankan: false,
+        haitei: false,
+        houtei: false,
+        tenhou: false,
+        chiihou: false,
+        renhou: false,
+        doraIndicators: h.doraIndicators.slice(0, h.doraRevealed),
+        uraIndicators: [],
+      },
+      LESSON_RULES,
+    );
+    return v ? ronPoints(v.basePoints, dealer) : 0;
+  });
+  return values.length ? Math.min(...values) : 0;
 }
 
 // --- pick ----------------------------------------------------------------------------------------------------
@@ -79,13 +156,18 @@ const GROUPS: Record<TileGroup, (k: Kind) => boolean> = {
 export function pickQuiz(ex: ExerciseOf<'pick'>, g: GameState): { palette: Kind[]; answers: Set<Kind> } {
   const me = g.hand.players[0];
   const goal = ex.goal;
-  const palette = ex.from ? kindsOf(tilesOf(ex.from)) : typeof goal === 'object' ? kindsOf(me.hand) : ALL_KINDS;
+  const palette = ex.from
+    ? kindsOf(tilesOf(ex.from))
+    : typeof goal === 'object' || goal === 'no-chance'
+      ? kindsOf(me.hand)
+      : ALL_KINDS;
   let answers: Kind[];
   if (goal === 'waits') answers = waits(me.hand, me.melds);
   else if (goal === 'ukeire') {
     const a = analyzeHand(me.hand, me.melds, unseenCounts(g, 0));
     answers = (a.tenpai ? a.waits : a.ukeire).map((t) => t.kind);
-  } else if (goal === 'dora') {
+  } else if (goal === 'no-chance') answers = noChance(g).filter((k) => palette.includes(k));
+  else if (goal === 'dora') {
     const h = g.hand;
     answers = h.doraIndicators.slice(0, h.doraRevealed).map((t) => doraFromIndicator(kindOf(t)));
   } else answers = palette.filter(GROUPS[goal.group]);

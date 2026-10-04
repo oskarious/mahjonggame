@@ -3,10 +3,10 @@ import type { Exercise } from '../../types';
 export const exercises: Record<string, Exercise> = {
   declare: {
     kind: 'discard',
-    prompt: 'You drew {9m}. Discard for riichi with the most winning tiles.',
-    position: { hands: ['123m456p5678s9m3z'], dealer: 3, turn: 0, draws: '9m' },
+    prompt: 'You drew {3z}. Discard for riichi with the most winning tiles.',
+    position: { hands: ['123m456p789p5678s'], dealer: 3, turn: 0, draws: '3z' },
     goal: 'max-ukeire',
-    why: 'Dropping {3z} leaves {5678s} waiting on {5s} or {8s}, far more tiles than a single wait.',
+    why: 'Dropping {3z} keeps {5678s} waiting on {5s} or {8s}; any other tenpai discard leaves a single wait on {3z}.',
   },
   open: {
     kind: 'choice',

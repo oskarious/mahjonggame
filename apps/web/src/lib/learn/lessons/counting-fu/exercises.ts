@@ -55,4 +55,12 @@ export const exercises: Record<string, Exercise> = {
     answer: 1,
     why: 'Seven pairs is always 25 fu, never rounded.',
   },
+  estimate: {
+    kind: 'score',
+    expect: '1 han 40 fu',
+    prompt: 'A closed hand with all simples wins by ron on a closed wait. What is it worth?',
+    position: { hands: ['234p567p456s88m46m'], dealer: 3, turn: 2, draws: '5m', discard: true },
+    ask: 'han-fu',
+    why: 'Closed, not pinfu, won by ron: about 40. Exactly: 20 + 10 for the closed ron + 2 for the wait, rounded up.',
+  },
 };

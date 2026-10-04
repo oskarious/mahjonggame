@@ -57,8 +57,9 @@
   <Exercise id="trap" />
   <Callout kind="mistake">
     <p>
-      Before every call, name the yaku the open hand will have: a <Yaku id="yakuhai">dragon or wind triplet</Yaku>, or <Yaku id="tanyao">all simples</Yaku>. If you can't,
-      stay closed and aim for riichi. More in <a href="/learn/when-to-call">When to call</a>.
+      Before every call, name the yaku the open hand will have: a <Yaku id="yakuhai">dragon or wind triplet</Yaku>,
+      <Yaku id="tanyao">all simples</Yaku>, a <Yaku id="honitsu">flush</Yaku> or <Yaku id="toitoi">all triplets</Yaku>.
+      If you can't, stay closed and aim for riichi. More in <a href="/learn/when-to-call">When to call</a>.
     </p>
   </Callout>
 </Part>
