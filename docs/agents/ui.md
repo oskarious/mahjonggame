@@ -64,6 +64,26 @@ sounds, theme. Structure of the web app: [web.md](web.md).
   opsz file: weight 200–800 plus optical size), imported in `+layout.svelte` and set on `:root`. Keep a weight
   hierarchy: text 400, labels/buttons 500–600, numbers/emphasis 700; 800 is the wordmark's (and the seat winds').
 
+## Learn pages
+
+- **The exception to minimal text**: lessons explain things, but in bite-sized parts: one heading, a few sentences,
+  one exercise, shown one part at a time with a step bar. Exercise prompts stay at two sentences at most (tested);
+  the exercise slices keep the game's visual language (cues, input, magnifier).
+- One column, max 520 px (`sheet-max`; the design system's narrow pages use 440 px, a noted deviation for reading).
+- **Exercises reuse `PlayerArea`** with generic optional props: no `onsettings` = no cog, `marked` kinds get the
+  green "suggested" dot (revealed or solved answers), `showWaits={false}` hides the always-on wait preview where the
+  waits are the question, `info` turns panel parts (round, dora, wall) on or off and `panel={false}` drops the panel
+  row. A view with no actions is read-only (inspect only).
+- **Show only what the question needs.** An exercise shows the hand (and the tile to act on); everything else is
+  opt-in per exercise via `show` (ponds, round, seat, dora, wall, counters). Dora glow is off unless dora are shown,
+  so no gold tile appears unexplained. The lesson test rejects flags the exercise kind cannot display.
+- Success is a green check plus text; wrong answers keep the slice in place and offer "Show answer".
+- **Tile sizes in Learn use `--col`**, a length registered with `@property` (app.css): a tile row declares
+  `--col: 100cqw`, which is computed to px against its container (the lesson column, an exercise card, a yaku entry)
+  and inherited as px. Never put raw `cqw` in `--tw`: `Tile`'s face is a size container, so it would resolve against
+  the face (the white dragon's frame vanished). Viewport units are wrong too (they include the scrollbar). Subtract
+  the 1px gaps between tiles.
+
 ## Hints
 
 **Hint levels are server-decided** (`viewFor(..., { hints: 'off' | 'distance' | 'full' })`, default off),

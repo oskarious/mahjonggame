@@ -18,7 +18,7 @@ import {
   viewFor,
   waits,
 } from '../src/index.ts';
-import { discard, play, rig } from './helpers.ts';
+import { discard, play, scenario } from './helpers.ts';
 
 /** Unseen counts when only the player's own hand is visible. */
 const unseenOf = (tiles: Tile[]): Counts => countKinds(tiles).map((n) => 4 - n);
@@ -92,7 +92,7 @@ describe('analyzeDiscards (own turn)', () => {
 
 describe('analyzeSeat / viewFor', () => {
   it('only counts tiles the player can see', () => {
-    const g = rig({ hands: [undefined, '123m456p789s55m23s'], discards: ['4s4s'], dora: '1s' });
+    const g = scenario({ hands: [undefined, '123m456p789s55m23s'], discards: ['4s4s'], dora: '1s' });
     const u = unseenCounts(g, 1);
     expect(u[kindOf(parseTiles('4s')[0])]).toBe(2); // two in seat 0's discards
     expect(u[kindOf(parseTiles('1s')[0])]).toBe(3); // dora indicator
@@ -102,7 +102,7 @@ describe('analyzeSeat / viewFor', () => {
   });
 
   it('between turns: current hand; on turn: per-discard options and whether the hand is complete', () => {
-    const g = rig({ hands: [undefined, '123m456p789s55m23s'], draws: '? 1z' });
+    const g = scenario({ hands: [undefined, '123m456p789s55m23s'], draws: '? 1z' });
     const between = analyzeSeat(g, 1);
     expect([between.discards, between.tenpai]).toEqual([null, true]);
 
@@ -112,19 +112,19 @@ describe('analyzeSeat / viewFor', () => {
     expect(a).toMatchObject({ shanten: 0, tenpai: true, complete: false });
     expect(kindToString(a.discards![0].kind)).toBe('1z');
 
-    const win = rig({ hands: ['123m456p789s55m23s'], draws: '4s' });
+    const win = scenario({ hands: ['123m456p789s55m23s'], draws: '4s' });
     expect(analyzeSeat(win, 0).complete).toBe(true);
   });
 
   it('shows furiten between turns', () => {
-    const g = rig({ hands: [undefined, '123m456p789s55m23s'], discards: [undefined, '1s'] });
+    const g = scenario({ hands: [undefined, '123m456p789s55m23s'], discards: [undefined, '1s'] });
     expect(analyzeSeat(g, 1).furiten).toBe(true);
   });
 
 });
 
 describe('hint levels in the player view', () => {
-  const tenpai = rig({ hands: [undefined, '123m456p789s55m23s'] });
+  const tenpai = scenario({ hands: [undefined, '123m456p789s55m23s'] });
 
   it('off by default: nothing about the hand is sent', () => {
     expect(viewFor(tenpai, 1).hints).toBeNull();
@@ -132,19 +132,19 @@ describe('hint levels in the player view', () => {
   });
 
   it('distance: only how many tiles away from winning', () => {
-    const far = rig({ hands: [undefined, '147m258p369s1234z'] });
+    const far = scenario({ hands: [undefined, '147m258p369s1234z'] });
     const h = viewFor(far, 1, { hints: 'distance' }).hints!;
     expect(h.tilesAway).toBe(h.shanten + 1);
     expect(h.tilesAway).toBeGreaterThanOrEqual(5);
     expect(Object.keys(h).sort()).toEqual(['complete', 'level', 'shanten', 'tenpai', 'tilesAway']);
 
     expect(viewFor(tenpai, 1, { hints: 'distance' }).hints).toMatchObject({ tilesAway: 1, shanten: 0, tenpai: true });
-    const complete = rig({ hands: ['123m456p789s55m23s'], draws: '4s' });
+    const complete = scenario({ hands: ['123m456p789s55m23s'], draws: '4s' });
     expect(viewFor(complete, 0, { hints: 'distance' }).hints).toMatchObject({ tilesAway: 0, shanten: -1, complete: true });
   });
 
   it('full: improving tiles and ranked discards', () => {
-    const onTurn = rig({ hands: ['123m456p789s55m23s'], draws: '1z' });
+    const onTurn = scenario({ hands: ['123m456p789s55m23s'], draws: '1z' });
     const h = viewFor(onTurn, 0, { hints: 'full' }).hints!;
     expect(kindToString(h.discards![0].kind)).toBe('1z');
     expect(h.waits!.length).toBe(2);
@@ -152,11 +152,11 @@ describe('hint levels in the player view', () => {
 });
 
 describe('tenpai waits in the player view (any hint level)', () => {
-  const opts = (g: ReturnType<typeof rig>, seat = 0) =>
+  const opts = (g: ReturnType<typeof scenario>, seat = 0) =>
     Object.fromEntries(viewFor(g, seat).tenpai.map((o) => [o.kind === null ? '-' : kindToString(o.kind), kinds(o.waits)]));
 
   it('on turn: the waits after each discard that leaves the hand tenpai, even with hints off', () => {
-    const g = rig({ hands: ['123m456p789s55m23s'], draws: '5m' });
+    const g = scenario({ hands: ['123m456p789s55m23s'], draws: '5m' });
     expect(viewFor(g, 0).hints).toBeNull();
     expect(opts(g)).toEqual({ '5m': '1s 4s', '2s': '3s', '3s': '2s' });
     const fiveM = viewFor(g, 0).tenpai.find((o) => o.kind !== null && kindToString(o.kind) === '5m')!;
@@ -165,27 +165,27 @@ describe('tenpai waits in the player view (any hint level)', () => {
   });
 
   it('on turn: a discard that leaves a discarded wait is furiten', () => {
-    const g = rig({ hands: ['123m456p789s55m23s'], discards: ['1s'], draws: '1z' });
+    const g = scenario({ hands: ['123m456p789s55m23s'], discards: ['1s'], draws: '1z' });
     const [o] = viewFor(g, 0).tenpai;
     expect([kindToString(o.kind!), o.furiten]).toEqual(['1z', true]);
   });
 
   it('also when riichi is not legal (open hand, no points, last tile)', () => {
-    const open = rig({ hands: ['456p789s55m23s'], melds: [[['chii', '123m']]], draws: '5m' });
+    const open = scenario({ hands: ['456p789s55m23s'], melds: [[['chii', '123m']]], draws: '5m' });
     expect(opts(open)).toEqual({ '5m': '1s 4s', '2s': '3s', '3s': '2s' });
-    const broke = rig({ hands: ['123m456p789s55m23s'], draws: '5m', scores: [500, 25000, 25000, 49500] });
+    const broke = scenario({ hands: ['123m456p789s55m23s'], draws: '5m', scores: [500, 25000, 25000, 49500] });
     expect(Object.keys(opts(broke))).toHaveLength(3);
-    const lastTile = rig({ hands: ['123m456p789s55m23s'], draws: '5m', wallSize: 1 });
+    const lastTile = scenario({ hands: ['123m456p789s55m23s'], draws: '5m', wallSize: 1 });
     expect(Object.keys(opts(lastTile))).toHaveLength(3);
   });
 
   it('between turns: the current waits and furiten, or nothing when noten', () => {
-    expect(opts(rig({ hands: [undefined, '123m456p789s55m23s'] }), 1)).toEqual({ '-': '1s 4s' });
-    const furiten = rig({ hands: [undefined, '123m456p789s55m23s'], discards: [undefined, '1s'] });
+    expect(opts(scenario({ hands: [undefined, '123m456p789s55m23s'] }), 1)).toEqual({ '-': '1s 4s' });
+    const furiten = scenario({ hands: [undefined, '123m456p789s55m23s'], discards: [undefined, '1s'] });
     expect(viewFor(furiten, 1).tenpai[0].furiten).toBe(true);
-    expect(viewFor(rig({ hands: [undefined, '147m258p369s1234z'] }), 1).tenpai).toEqual([]);
+    expect(viewFor(scenario({ hands: [undefined, '147m258p369s1234z'] }), 1).tenpai).toEqual([]);
     // Waiting only on a fifth copy is noten.
-    expect(viewFor(rig({ hands: [undefined, '123m456m789m9999p'] }), 1).tenpai).toEqual([]);
+    expect(viewFor(scenario({ hands: [undefined, '123m456m789m9999p'] }), 1).tenpai).toEqual([]);
   });
 
   it('matches analyzeSeat and covers every legal riichi discard (random hands)', () => {
@@ -196,7 +196,7 @@ describe('tenpai waits in the player view (any hint level)', () => {
       const suit = 36 * randomInt(rng, 3);
       const tiles = shuffle(rng, Array.from({ length: 36 }, (_, j) => j + suit)).slice(0, 14);
       const str = (ts: Tile[]) => ts.map((t) => kindToString(kindOf(t))).join('');
-      const g = rig({ hands: [str(tiles.slice(0, 13))], draws: str(tiles.slice(13)) });
+      const g = scenario({ hands: [str(tiles.slice(0, 13))], draws: str(tiles.slice(13)) });
       const v = viewFor(g, 0);
       const expected = analyzeSeat(g, 0)
         .discards!.filter((o) => o.tenpai)

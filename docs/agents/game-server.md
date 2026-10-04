@@ -108,5 +108,5 @@ server refuses to start until `0004_bot_schedules` is applied.
 
 Tests use `MemoryStore`, `FakeClient` and vitest fake timers (`TEST_CONFIG` has background games off; `addBots`,
 `seeded`, `tickUntil` in test/helpers.ts; a 0 ms timeout set inside a fake tick fires 1 ms later); `room.idle()`
-drains the queue including inputs that processing queued. Rigged states from the engine's `rig()` need `seq = 0`
+drains the queue including inputs that processing queued. States built with the engine's `scenario()` need `seq = 0`
 after any pre-applied action (MemoryStore checks that seqs are contiguous).

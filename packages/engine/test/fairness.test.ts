@@ -23,7 +23,7 @@ import {
   viewFor,
 } from '../src/index.ts';
 import { chacha20Block, nextUint32, sha256, utf8 } from '../src/rng.ts';
-import { rig } from './helpers.ts';
+import { scenario } from './helpers.ts';
 
 const LEVELS: HintLevel[] = ['off', 'distance', 'full'];
 const hex = (words: number[]) => words.map((w) => w.toString(16).padStart(8, '0')).join('');
@@ -93,7 +93,7 @@ describe('wall RNG', () => {
 describe('public sequence number', () => {
   it('does not move for a call response that leaves the window open', () => {
     // Seat 0 discards 5m: seat 1 can chii (46m), seat 2 can pon (55m).
-    let g = rig({ hands: [undefined, '46m', '55m'], draws: '5m' });
+    let g = scenario({ hands: [undefined, '46m', '55m'], draws: '5m' });
     g = applyAction(g, { type: 'discard', seat: 0, tile: g.hand.players[0].drawn! }).state;
     expect(pendingSeats(g)).toEqual([1, 2]);
     const pass2 = applyAction(g, { type: 'pass', seat: 2 });

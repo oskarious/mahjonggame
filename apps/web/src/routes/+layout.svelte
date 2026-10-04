@@ -21,8 +21,10 @@
   });
 </script>
 
-<!-- Link previews: scrapers need an absolute image URL. -->
+<!-- Link previews: scrapers need an absolute image URL. Content pages (Learn) set `contentPage`: they bring their own
+     metadata and have no fullscreen toggle. -->
 <svelte:head>
+  {#if !page.data.contentPage}
   <meta property="og:site_name" content={SITE_NAME} />
   <meta property="og:title" content={SITE_NAME} />
   <meta property="og:description" content="Simply riichi mahjong" />
@@ -31,8 +33,9 @@
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
+  {/if}
 </svelte:head>
 
 <BgPattern />
 {@render children()}
-<FullscreenButton />
+{#if !page.data.contentPage}<FullscreenButton />{/if}

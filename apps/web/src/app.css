@@ -272,3 +272,12 @@ input {
   opacity: 0;
   pointer-events: none;
 }
+
+/* Learn: the width tile rows size themselves from. Registered as a length so `--col: 100cqw` is computed to px on the
+   row that declares it (its container's width) and inherited as px: an unregistered value would be substituted
+   inside Tile, whose face is a size container, and resolve against the face. */
+@property --col {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 340px;
+}

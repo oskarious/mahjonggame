@@ -1,7 +1,7 @@
 # Web app (apps/web): structure, server side, auth
 
 Read when touching the SvelteKit app outside the play screen's look and feel: routes, game sources, offline saves,
-auth, DB access, migrations, audio plumbing. For the play screen's UI rules read [ui.md](ui.md).
+auth, DB access, migrations, audio plumbing, the public Learn course. For the play screen's UI rules read [ui.md](ui.md).
 
 ## Layout
 
@@ -15,8 +15,13 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
                         admin.ts (calls the game server's /internal API), game-server.ts (is the game server up? →
                         "Play online" on the home page)
   src/hooks.server.ts   init: run migrations, then load auth; handle: session → locals.user/session, /api/auth/*
-  src/routes/           play (offline), online (lobby → queue → table; signed-in only), login, account (rating), healthz,
-                        admin (bot pool; 404 unless `user.role = 'admin'`)
+  src/routes/           play (offline), online (lobby → queue → table; signed-in only; guests → /signup), login (sign in
+                        only), signup, account (rating), healthz, admin (bot pool; 404 unless `user.role = 'admin'`),
+                        learn (public course, see below), sitemap.xml, robots.txt
+  src/lib/learn/        the Learn course: registry.ts (units + lessons in order, SEO titles), lessons/<slug>/
+                        (Lesson.svelte article + exercises.ts), components/ (Exercise, Tiles, T, Term, Callout, …),
+                        goals.ts / feedback.ts (engine-decided answers), position.ts, glossary.ts, yaku.ts,
+                        progress.svelte.ts (`riichi:learn`), lessons.test.ts (validates every lesson)
   migrations/           Kysely migrations (NNNN_name.ts, import only from kysely); bundled and run on server start;
                         0001_auth = Better Auth tables; 0002_game_server = rating, game, game_seat, game_action
                         (written by the game server); 0003_bot_players = bot, setting, user.role;
@@ -38,6 +43,40 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
 
 The web app owns the DB schema. When a migration changes a table the game server uses, update
 `apps/game-server/src/db.ts` too (a hand-kept copy of `schema.ts`).
+
+## Learn (public course)
+
+Free, public, server-rendered lessons (marketing: they must rank in search and lead to sign-up). One concept per URL
+(`/learn/<slug>`), plus `/learn/yaku` and `/learn/glossary`; `/sitemap.xml` is generated from the registry.
+
+- **SSR, not prerendered**: the root layout resolves the session, and the call to action differs for signed-in
+  players. The learn layout sets `contentPage` (the page sets its own meta via `Seo.svelte`; no fullscreen toggle).
+- **Every page has the CTA** (`Cta.svelte`): guests "Sign up and play" (`/signup?next=/online`) + "Play a bot now"
+  (`BEGINNER_PLAY`: weakest bots, full hints); signed in "Play online". It is in the header and at the end of pages.
+- **Bite-sized parts**: a lesson is only `<Part title>` blocks, each a heading, short supporting text and exactly one
+  `<Exercise>` (tested). The page shows one part at a time (`?step=n`, all parts in the HTML; without scripts all
+  show). Keep part text short: what the exercise needs, applicable in a game right away.
+- **Adding a lesson**: an entry in `registry.ts` (in teaching order; `draft: true` hides it in production), a folder
+  `lessons/<slug>/` with `Lesson.svelte` (`<Part>`s with prose + `<Exercise id>`, `<Tiles t="123m 55z">`, `<T t="5p" />`,
+  `<Term id>`: a glossary tooltip on first use in a part, `<Yaku id>`: the same for a yaku, from the yaku list,
+  `<Callout kind="ema|tip|mistake">`) and `exercises.ts`. Every yaku named in lesson text needs `<Yaku>` (tested; a
+  gloss in brackets right after it is covered). Then run the tests.
+- **Answers come from the engine**: an exercise states a position (`scenario()` options, seat 0 = the reader;
+  `discard: true` makes the seat on turn discard its drawn tile) and a goal; `goals.ts` computes what is right.
+  Where the text states a result, add `expect` (verdict, yaku, score, fu) or `claim` (choice) or `only`
+  (discard): `lessons.test.ts` checks it against the engine. It also checks that every exercise is answerable,
+  placed exactly once, links and glossary terms exist, prompts have at most two sentences, and the yaku list examples
+  score as listed. It has caught several wrong hand-made claims; trust it over mental arithmetic.
+- A discard nobody can call does not open a call window and the game moves on; a "can you win?" ron that is not
+  possible must therefore come from the right or across (from the left, seat 0 would draw). `buildPosition` throws
+  otherwise.
+- Standalone tile examples in text use pin or sou (circles and bamboo are easier to read than man's numerals);
+  keep the tiles of the part's own figure or exercise when the text refers to them.
+- Exercises show only the hand by default; add `show` flags for what the question needs (see ui.md).
+- Lessons teach `DEFAULT_RULES` (what readers will play) and mark EMA tournament differences with
+  `<Callout kind="ema">`.
+- Progress (`riichi:learn`) is per device and read on mount only; a lesson is completed when read to the end (the
+  CTA scrolled into view) with all exercises solved.
 
 ## Offline autosave
 

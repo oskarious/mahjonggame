@@ -9,7 +9,7 @@ import {
   kindToString,
   skillForElo,
 } from '../src/index.ts';
-import { discard, play, rig } from './helpers.ts';
+import { discard, play, scenario } from './helpers.ts';
 
 const kindOfAction = (a: Action | null) =>
   a && 'tile' in a ? kindToString(kindOf(a.tile)) : a?.type ?? null;
@@ -36,7 +36,7 @@ describe('bot profiles', () => {
   });
 
   it('a beginner sometimes throws a random tile', () => {
-    const g = rig({ hands: ['123m456p789s55m23s'], draws: '1z' });
+    const g = scenario({ hands: ['123m456p789s55m23s'], draws: '1z' });
     const plain = (a: Action | null) => a?.type === 'discard' && !a.riichi;
     // random() = 0 always triggers the blunder branch at skill 0, which takes the first legal tile.
     const a = botAction(g, 0, { skill: 0, random: () => 0 });
@@ -68,7 +68,7 @@ describe('bot ratings', () => {
 describe('defense', () => {
   // Far from tenpai; seat 1 is in riichi and has discarded 5m.
   const messy = '147m2358p469s5m1z';
-  const setup = () => rig({ hands: [messy], draws: '7p', riichi: [1], discards: [undefined, '5m9m'] });
+  const setup = () => scenario({ hands: [messy], draws: '7p', riichi: [1], discards: [undefined, '5m9m'] });
 
   it('folds with a safe tile (genbutsu) when far from tenpai', () => {
     expect(kindOfAction(botAction(setup(), 0, { skill: 1, random: noLuck }))).toBe('5m');
@@ -81,14 +81,14 @@ describe('defense', () => {
 
   it('pushes a good tenpai instead of breaking it for a safe tile', () => {
     // Tenpai on 1s/4s; drew a live 6m. Folding would mean throwing 2s (genbutsu) and losing tenpai.
-    const g = rig({ hands: ['123m456p789s55m23s'], draws: '6m', riichi: [1], discards: [undefined, '2s'] });
+    const g = scenario({ hands: ['123m456p789s55m23s'], draws: '6m', riichi: [1], discards: [undefined, '2s'] });
     expect(kindOfAction(botAction(g, 0, { skill: 1, random: noLuck }))).toBe('6m');
   });
 });
 
 describe('calls', () => {
   const callWindow = (seat1: string, tile: string) =>
-    play(rig({ hands: [tile, seat1] }), [discard(0, tile)], { settle: false }).state;
+    play(scenario({ hands: [tile, seat1] }), [discard(0, tile)], { settle: false }).state;
 
   it('pons a value honour', () => {
     const g = callWindow('55z123m456p78s99s', '5z');
@@ -115,19 +115,19 @@ describe('riichi', () => {
   const hand = '555z123m456p78s33s';
 
   it('smart bots stay silent with a hand that already has a yaku and value', () => {
-    const g = rig({ hands: [hand], draws: '1z', dora: '2s' });
+    const g = scenario({ hands: [hand], draws: '1z', dora: '2s' });
     const a = botAction(g, 0, { skill: 1, random: noLuck });
     expect(a).toMatchObject({ type: 'discard' });
     expect(a && 'riichi' in a && a.riichi).toBeFalsy();
   });
 
   it('simpler bots always declare riichi', () => {
-    const g = rig({ hands: [hand], draws: '1z', dora: '2s' });
+    const g = scenario({ hands: [hand], draws: '1z', dora: '2s' });
     expect(botAction(g, 0, { skill: 0.5, random: noLuck })).toMatchObject({ type: 'discard', riichi: true });
   });
 
   it('smart bots still riichi a cheap hand', () => {
-    const g = rig({ hands: [hand], draws: '1z' });
+    const g = scenario({ hands: [hand], draws: '1z' });
     expect(botAction(g, 0, { skill: 1, random: noLuck })).toMatchObject({ type: 'discard', riichi: true });
   });
 });

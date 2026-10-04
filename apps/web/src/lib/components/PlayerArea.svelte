@@ -21,12 +21,33 @@
     /** Out: kind being looked at (selected or under the finger), for highlighting copies on the board. */
     focusKind?: Kind | null;
     onact: (a: Action) => void;
-    /** Open the settings sheet (the play screen has no header; the cog lives in this panel). */
-    onsettings: () => void;
+    /** Open the settings sheet (the play screen has no header; the cog lives in this panel). No cog without it. */
+    onsettings?: () => void;
+    /** Kinds to mark with the suggested-tile dot whatever the hint level (e.g. a revealed answer in a lesson). */
+    marked?: ReadonlySet<Kind>;
+    /** Show the always-on tenpai waits (panel and magnifier). Off where the waits are the question (lessons). */
+    showWaits?: boolean;
+    /** Which parts of the panel's info to show (all by default). Lessons hide what their question doesn't need. */
+    info?: { round?: boolean; dora?: boolean; wall?: boolean };
+    /** Show the panel row at all (lessons drop it for a read-only hand with nothing to show in it). */
+    panel?: boolean;
     /** Online: the own decision timer, shown just below the tile-to-act slot. */
     timer?: Snippet;
   }
-  let { view, red, quickDiscard, focusKind = $bindable(null), onact, onsettings, timer }: Props = $props();
+  let {
+    view,
+    red,
+    quickDiscard,
+    focusKind = $bindable(null),
+    onact,
+    onsettings,
+    marked,
+    showWaits = true,
+    info = {},
+    panel = true,
+    timer,
+  }: Props = $props();
+  const shown = $derived({ round: info.round ?? true, dora: info.dora ?? true, wall: info.wall ?? true });
 
   let selected: TileId | null = $state(null);
   let riichiMode = $state(false);
@@ -79,12 +100,15 @@
    * The current waits, never gated by the hint level: between turns, or on own turn in riichi (the drawn tile goes).
    */
   const current = $derived.by(() => {
+    if (!showWaits) return null;
     if (!onTurn) return view.tenpai.find((o) => o.kind === null) ?? null;
     if (!view.players[view.seat].riichi || view.drawn === null) return null;
     return view.tenpai.find((o) => o.kind === kindOf(view.drawn!)) ?? null;
   });
   /** Winning tiles for the panel: the inspected discard's (full hints), else the current ones, else the best discard's. */
-  const panelWaits = $derived(preview ? preview.waits : (current?.waits ?? hints?.waits ?? []));
+  const panelWaits = $derived(
+    !showWaits ? [] : preview ? preview.waits : (current?.waits ?? hints?.waits ?? []),
+  );
 
   const canDiscard = (t: TileId) => (riichiMode ? riichiable.has(t) : discardable.has(t));
 
@@ -264,7 +288,7 @@
    */
   const waitsPreview = $derived.by(() => {
     const m = magnified as { tile: TileId } | null;
-    if (!m) return null;
+    if (!m || !showWaits) return null;
     if (!onTurn) return view.tenpai.find((o) => o.kind === null) ?? null;
     return canDiscard(m.tile) ? (view.tenpai.find((o) => o.kind === kindOf(m.tile)) ?? null) : null;
   });
@@ -286,8 +310,6 @@
     focusKind = focus;
   });
 
-
-
   /** In a call window: the hand tiles some offered call would use (the rest dim). Ron uses none. */
   const callTiles = $derived.by(() => {
     const out = new Set<TileId>();
@@ -306,7 +328,7 @@
     const allowed = riichiMode ? riichiable.has(t) : discardable.has(t);
     return {
       dim: onTurn ? !allowed : inCall && !callTiles.has(t),
-      mark: (allowed && best.has(kindOf(t)) ? 'hint' : null) as 'hint' | null,
+      mark: ((allowed && best.has(kindOf(t))) || marked?.has(kindOf(t)) ? 'hint' : null) as 'hint' | null,
     };
   }
 
@@ -319,13 +341,16 @@
 <section class="me" bind:this={meEl}>
   <!-- One row, as tall as the tile slot: round + hints | the tile to act on | dora + wall + cog.
        When there is something to decide, the buttons overlay the left side and Pass/Back the right. -->
+  {#if panel}
   <div class="panel">
     <div class="side left">
       <div class="info" class:covered={leftButtons}>
-        <div class="round">
-          <strong>{WINDS[view.roundWind]} {view.dealer + 1}</strong>
-          <span class="dim">{view.honba} honba{view.riichiSticks ? ` · ${view.riichiSticks} riichi` : ''}</span>
-        </div>
+        {#if shown.round}
+          <div class="round">
+            <strong>{WINDS[view.roundWind]} {view.dealer + 1}</strong>
+            <span class="dim">{view.honba} honba{view.riichiSticks ? ` · ${view.riichiSticks} riichi` : ''}</span>
+          </div>
+        {/if}
         <div class="hints">
           {#if hints}
             {#if hints.complete}
@@ -419,6 +444,7 @@
 
     <div class="side right">
       <div class="info" class:covered={rightButton}>
+        {#if shown.dora}
         <div class="dora">
           <span class="dim">Dora</span>
           <!-- The indicator is the flipped tile; the dora is the next tile in its sequence. -->
@@ -430,11 +456,14 @@
             </span>
           {/each}
         </div>
+        {/if}
         <div class="bottom">
-          <span class="wall" aria-label="{view.wallCount} tiles left in the wall">
-            <span class="wall-tile" aria-hidden="true"></span>{view.wallCount}
-          </span>
-          <button class="cog" aria-label="Settings" onclick={onsettings}>⚙</button>
+          {#if shown.wall}
+            <span class="wall" aria-label="{view.wallCount} tiles left in the wall">
+              <span class="wall-tile" aria-hidden="true"></span>{view.wallCount}
+            </span>
+          {/if}
+          {#if onsettings}<button class="cog" aria-label="Settings" onclick={onsettings}>⚙</button>{/if}
         </div>
       </div>
       {#if rightButton}
@@ -448,6 +477,7 @@
       {/if}
     </div>
   </div>
+  {/if}
 
   <div
     class="hand"

@@ -85,7 +85,7 @@
           </div>
         {/if}
       {/each}
-      {#if !result.tenpai.some(Boolean)}<p class="dim">Nobody was tenpai.</p>{/if}
+      {#if !result.tenpai.some(Boolean)}<p class="dim">Nobody was in tenpai.</p>{/if}
     {/if}
 
     <table class="deltas">

@@ -9,9 +9,9 @@ import {
   createGame,
   kindOf,
   pendingSeats,
+  scenario,
   scrambleHidden,
 } from '@mahjong/engine';
-import { rig } from '../../../packages/engine/test/helpers.ts';
 import type { Config } from '../src/config.ts';
 import { anonymousBot, type SeatInit } from '../src/matchmaking.ts';
 import { joinDelay, readyDelay, thinkDelay } from '../src/pacing.ts';
@@ -63,7 +63,7 @@ async function build(
 }
 
 /** Rigged state where seat 0 (a human) is on turn holding a drawn tile. */
-const turnState = () => rig({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], draws: '5m' });
+const turnState = () => scenario({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], draws: '5m' });
 const discardOf = (c: FakeClient) => c.last('update')!.view.actions.find((a) => a.type === 'discard' && !a.riichi)!;
 
 beforeEach(() => {
@@ -117,7 +117,7 @@ describe('Room timers', () => {
 
   it('passes for a player who times out on a call', async () => {
     // Seat 3 discards 5m; seat 0 holds 55m and can pon.
-    let g = rig({ hands: ['55m123p456s789s1z', undefined, undefined, undefined], turn: 3, draws: '5m' });
+    let g = scenario({ hands: ['55m123p456s789s1z', undefined, undefined, undefined], turn: 3, draws: '5m' });
     g = applyAction(g, { type: 'discard', seat: 3, tile: g.hand.players[3].drawn! }).state;
     g.seq = 0;
     expect(pendingSeats(g)).toEqual([0]);
@@ -150,7 +150,7 @@ describe('Room timers', () => {
 
   it('waits for ready between hands, at most the ready time', async () => {
     // One live-wall tile: the dealer draws it, discards, and the hand ends in an exhaustive draw.
-    const built = await build([human('a'), bot, bot, bot], rig({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 }), { readyMs: 12_000 }, true, {
+    const built = await build([human('a'), bot, bot, bot], scenario({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 }), { readyMs: 12_000 }, true, {
       random: () => 0.5,
     });
     const { room, clients } = built;
@@ -171,7 +171,7 @@ describe('Room timers', () => {
   });
 
   it('deals once the human and every bot have confirmed, so the human is not always the one who starts the hand', async () => {
-    const wallOfOne = () => rig({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 });
+    const wallOfOne = () => scenario({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 });
     /** Plays the dealer's discard and runs until the hand is over; returns the time the result appeared. */
     const toHandOver = async (b: Built) => {
       b.room.act(0, 0, discardOf(b.clients[0]!), b.clients[0]!);
@@ -273,7 +273,7 @@ describe('Room countdowns', () => {
   });
 
   it('counts down 3 s after the next deal; a bot dealer waits for it too', async () => {
-    const g = rig({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 });
+    const g = scenario({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 });
     const { room, clients } = await build([human('a'), bot, bot, bot], g, COUNTDOWNS, true, { random: () => 0.5 });
     const a = clients[0]!;
     // No start countdown for a game that didn't start here (rigged / recovered state).
@@ -556,7 +556,7 @@ describe('Room authority', () => {
   });
 
   it('only sends a deadline to a seat that has something to decide', async () => {
-    let g = rig({ hands: ['55m123p456s789s1z', undefined, '123m456p789s11z2z', undefined], turn: 3, draws: '5m' });
+    let g = scenario({ hands: ['55m123p456s789s1z', undefined, '123m456p789s11z2z', undefined], turn: 3, draws: '5m' });
     g = applyAction(g, { type: 'discard', seat: 3, tile: g.hand.players[3].drawn! }).state;
     g.seq = 0;
     const { clients } = await build([human('a'), bot, human('c'), bot], g);
@@ -595,7 +595,7 @@ describe('Room authority', () => {
 describe('Room hidden information', () => {
   it('tells nobody about a call response while the window stays open', async () => {
     // Seat 0 (human a) discards 5m: seat 1 (a bot) can chii with 46m, seat 2 (human b) can pon with 55m.
-    const g = rig({ hands: [undefined, '46m', '55m'], draws: '5m' });
+    const g = scenario({ hands: [undefined, '46m', '55m'], draws: '5m' });
     const { room, clients } = await build([human('a'), bot, human('b'), bot], g);
     const [a, , b] = clients as FakeClient[];
     room.act(0, 0, { type: 'discard', seat: 0, tile: room.state.hand.players[0].drawn! }, a);

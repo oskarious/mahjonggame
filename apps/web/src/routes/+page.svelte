@@ -37,6 +37,7 @@
       <a class="chip" href="/account">{data.user.name}</a>
     {:else}
       <a class="chip" href="/login">Sign in</a>
+      <a class="chip gold" href="/signup">Sign up</a>
     {/if}
   </nav>
 
@@ -122,6 +123,8 @@
       </button>
     </div>
   </form>
+
+  <a class="learn" href="/learn">New to riichi mahjong? <strong>Learn to play</strong> →</a>
 </main>
 
 <style>
@@ -137,6 +140,7 @@
   .account {
     display: flex;
     justify-content: flex-end;
+    gap: 6px;
     margin: -16px -4px 0;
   }
   .account .chip {
@@ -192,6 +196,16 @@
   .online {
     text-decoration: none;
     margin-top: 0;
+  }
+  .learn {
+    margin-top: 10px;
+    padding: 12px;
+    text-align: center;
+    color: var(--ink-dim);
+    text-decoration: none;
+  }
+  .learn strong {
+    color: var(--ink);
   }
   .start {
     display: flex;

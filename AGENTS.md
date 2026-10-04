@@ -12,7 +12,8 @@ anime characters, no fluff. Rules source: **EMA Riichi Rules 2025** (European Ma
 Current state: the rules engine, rule-based bots with measured Elo, a SvelteKit client (offline play against bots in
 the browser, accounts with Better Auth on Postgres), and a WebSocket **game server** for rated online play: quick-play
 matchmaking, turn timers, disconnect handling, Elo ratings and durable game records, plus a population of **bot
-players** (named, rated accounts that fill tables and play each other in the background) managed from `/admin`.
+players** (named, rated accounts that fill tables and play each other in the background) managed from `/admin`, and a
+free public **Learn** course (`/learn`: server-rendered lessons with exercises built from the engine; marketing).
 
 ## Architecture
 
@@ -44,7 +45,7 @@ tables.
 | [docs/agents/engine.md](docs/agents/engine.md)           | rules, scoring, game state, views, analysis, bots, engine tests, calibration                       |
 | [docs/agents/fair-play.md](docs/agents/fair-play.md)     | anything a client receives or a bot/timer decides: views, hints, events, messages, pacing, RNG     |
 | [docs/agents/game-server.md](docs/agents/game-server.md) | online play: rooms, timers, disconnects, matchmaking, bot players, ratings, recovery, admin API    |
-| [docs/agents/web.md](docs/agents/web.md)                 | SvelteKit structure, routes, game sources, offline autosave, auth, DB, migrations                  |
+| [docs/agents/web.md](docs/agents/web.md)                 | SvelteKit structure, routes, game sources, offline autosave, auth, DB, migrations, Learn course    |
 | [docs/agents/ui.md](docs/agents/ui.md)                   | anything the player sees or touches: table layout, hand input, tiles, hints display, sounds, theme |
 | [docs/agents/dev.md](docs/agents/dev.md)                 | running dev servers, browser checks, dev-setup trouble (ports, stale Vite modules)                 |
 | [docs/agents/deployment.md](docs/agents/deployment.md)   | Dockerfiles, compose, env vars, Dokploy                                                            |
