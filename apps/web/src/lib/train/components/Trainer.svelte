@@ -11,7 +11,9 @@
   import { Feed, type Problem } from '../feed';
   import { LEVELS, type Level, type TrainerId } from '@mahjong/drills/generate';
   import { problemPath, trainerById } from '../registry';
-  import { loadStats, recordAnswer, recordRush, statsLoaded, statsOf } from '../stats.svelte';
+  import { recordAnswer, recordRush, statsLoaded, statsOf } from '../stats.svelte';
+  import { trackOwner } from '$lib/progress/client.svelte';
+  import ProgressNudge from '$lib/progress/ProgressNudge.svelte';
   import DiscardTable from './DiscardTable.svelte';
   import RushBar from './RushBar.svelte';
 
@@ -37,8 +39,8 @@
   /** Renders a new exercise card per problem. */
   let n = $state(0);
 
+  trackOwner();
   onMount(() => {
-    loadStats();
     return () => {
       feed.stop();
       clearInterval(clock);
@@ -216,6 +218,7 @@
       <p class="score"><b>{score}</b></p>
       <p class="best">{#if newBest}<span class="chip gold">Best</span>{:else}<b>{stats?.rushBest ?? 0}</b> best{/if}</p>
       <button class="btn primary big" onclick={startRush}>Again</button>
+      <ProgressNudge />
     </section>
   {/if}
 

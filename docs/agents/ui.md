@@ -110,6 +110,10 @@ Content on a narrow page that needs the width (a hand of tiles) goes in a **band
 - **Rush bar**: clock, a gold time bar, the score and three strike pips (filled `danger` per miss); no labels.
 - **Daily**: five marks (`ok` / `danger` fills) with the day streak; the result shows the share line (● right,
   ○ missed; glyphs, no emoji).
+- **Guest progress nudge** (`ProgressNudge`): a quiet row, "NOT SAVED" in the `label` style and one ghost button
+  "Sign up to keep it". It shows only to guests who have made progress this visit, under the title of `/learn` and
+  `/train`, above the CTA at the end of a lesson, and in the Rush and daily results. It never blocks a drill. The
+  design system has no notice component; this follows the inline CTA row.
 - **Daily discard** (a `Band` on the home page, under the play form): the heading with a countdown to the next hand as its aside
   (H:MM:SS to UTC midnight, device clock; the page reloads at zero), then the lessons' hand slice with round and dora. Once
   voted the hand is shown only (`inspect={false}`, every tile but the pick dimmed via `lit`); after the

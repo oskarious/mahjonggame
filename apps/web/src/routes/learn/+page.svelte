@@ -1,24 +1,21 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { dev } from '$app/environment';
   import { page } from '$app/state';
   import Cta from '$lib/learn/components/Cta.svelte';
   import Seo from '$lib/learn/components/Seo.svelte';
   import { exercisesOf } from '$lib/learn/content';
-  import { completed, loadProgress } from '$lib/learn/progress.svelte';
+  import { completed } from '$lib/learn/progress.svelte';
+  import { progressLoaded, trackOwner } from '$lib/progress/client.svelte';
+  import ProgressNudge from '$lib/progress/ProgressNudge.svelte';
   import { REFERENCE, UNITS, published } from '$lib/learn/registry';
 
   const lessons = published(dev);
-  let ready = $state(false);
-  onMount(() => {
-    loadProgress();
-    ready = true;
-  });
+  trackOwner();
   const variantCounts = (slug: string) =>
     Object.fromEntries(Object.entries(exercisesOf(slug)).map(([id, set]) => [id, set.length]));
-  const done = (slug: string) => ready && completed(slug, variantCounts(slug));
-  /** The first lesson not completed on this device: where to continue. */
-  const next = $derived(ready ? lessons.find((l) => !done(l.slug))?.slug : undefined);
+  const done = (slug: string) => progressLoaded() && completed(slug, variantCounts(slug));
+  /** The first lesson not completed: where to continue. */
+  const next = $derived(progressLoaded() ? lessons.find((l) => !done(l.slug))?.slug : undefined);
 
   const origin = $derived(page.url.origin);
   const jsonld = $derived([
@@ -50,6 +47,7 @@
   A free course from your first tile to scoring, building a hand, and attack and defense. Every lesson has hands you play right in the page,
   with the same controls as a real game. No account needed.
 </p>
+<ProgressNudge />
 
 {#each UNITS as unit, u (unit.id)}
   {@const list = lessons.filter((l) => l.unit === unit.id)}

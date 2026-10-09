@@ -2,6 +2,8 @@ import type { ColumnType, Generated, Insertable, JSONColumnType, Selectable } fr
 import type { Action, FinalStanding, RuleSet } from '@mahjong/engine';
 import type { ExerciseOf } from '@mahjong/drills/types';
 import type { BotSchedule } from '@mahjong/protocol';
+import type { Progress } from '../learn/progress-data';
+import type { TrainData } from '../train/stats-data';
 
 // Table types for Kysely. Keep in sync with migrations/ (auth tables are written by Better Auth; we mostly read them).
 // Ids (and the columns referencing them) are Postgres `uuid`, read and written as strings (migration 0006_uuid_ids).
@@ -144,6 +146,15 @@ export interface DailyDiscardVoteTable {
   createdAt: Timestamp;
 }
 
+// --- Progress on the account (migration 0007_user_progress). Web only.
+
+export interface UserProgressTable {
+  userId: string;
+  learn: JSONColumnType<Progress>;
+  train: JSONColumnType<TrainData>;
+  updatedAt: Timestamp;
+}
+
 export interface DB {
   user: UserTable;
   session: SessionTable;
@@ -157,6 +168,7 @@ export interface DB {
   setting: SettingTable;
   daily_discard: DailyDiscardTable;
   daily_discard_vote: DailyDiscardVoteTable;
+  user_progress: UserProgressTable;
 }
 
 export type User = Selectable<UserTable>;

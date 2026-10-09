@@ -15,7 +15,7 @@
 
   /** The variant shown; the first on the server, so the HTML holds one complete exercise. */
   let index = $state(0);
-  /** Variants answered right, on earlier visits or now (empty until the lesson loads progress, after mounting). */
+  /** Variants answered right, on earlier visits or now (empty until the reader's progress is loaded, after mounting). */
   const solved = $derived(solvedVariants(lesson.slug, exId));
 
   let box: HTMLElement | undefined = $state();

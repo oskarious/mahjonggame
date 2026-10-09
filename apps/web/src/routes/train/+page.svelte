@@ -4,9 +4,11 @@
   import Seo from '$lib/learn/components/Seo.svelte';
   import { DAILY, utcDate } from '$lib/train/daily';
   import { TRAINERS } from '$lib/train/registry';
-  import { dailyOf, dailyStreak, loadStats, statsLoaded, statsOf } from '$lib/train/stats.svelte';
+  import { dailyOf, dailyStreak, statsLoaded, statsOf } from '$lib/train/stats.svelte';
+  import { trackOwner } from '$lib/progress/client.svelte';
+  import ProgressNudge from '$lib/progress/ProgressNudge.svelte';
 
-  onMount(loadStats);
+  trackOwner();
 
   // The date is the browser's (UTC), read after mount like the stats.
   let today = $state('');
@@ -23,6 +25,7 @@
 />
 
 <h1>Train</h1>
+<ProgressNudge />
 
 <a class="card daily" href="/train/daily">
   <span class="name">Daily</span>

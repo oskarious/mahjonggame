@@ -2,7 +2,9 @@
   import { onMount, setContext, untrack, type Component } from 'svelte';
   import { page } from '$app/state';
   import { LESSON, type ExerciseSet, type LessonContext } from '$lib/learn/context';
-  import { loadProgress, markRead } from '$lib/learn/progress.svelte';
+  import { markRead } from '$lib/learn/progress.svelte';
+  import { trackOwner } from '$lib/progress/client.svelte';
+  import ProgressNudge from '$lib/progress/ProgressNudge.svelte';
   import type { LessonMeta, Unit } from '$lib/learn/registry';
   import { trainerForLesson } from '$lib/train/registry';
   import Cta from './Cta.svelte';
@@ -70,10 +72,11 @@
   const LT = String.fromCharCode(60);
   const noscript = `${LT}noscript>${LT}style>.part.later,.end.later{display:block!important}${LT}/style>${LT}/noscript>`;
 
+  trackOwner();
+
   // Reaching the call to action at the end counts as having read the lesson.
   let end: HTMLElement | undefined = $state();
   onMount(() => {
-    loadProgress();
     if (!end) return;
     const io = new IntersectionObserver((entries) => {
       if (entries.some((e) => e.isIntersecting)) {
@@ -115,6 +118,7 @@
     {#if trainer}
       <a class="btn big practice" href="/train/{trainer.id}">Practice: {trainer.title} trainer</a>
     {/if}
+    <ProgressNudge />
     <Cta />
 
     <nav class="pager" aria-label="Lessons">

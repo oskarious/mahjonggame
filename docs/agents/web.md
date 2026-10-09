@@ -13,31 +13,35 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
   src/lib/game/remote.svelte.ts  RemoteGame: same-origin /ws client, auto-reconnect (+ ping watchdog: a socket silent 3 s is replaced), takeover, deadline state
   src/lib/server/       db.ts (Kysely + pg pool), schema.ts (table types incl. rating/game tables), auth.ts, migrate.ts,
                         admin.ts (calls the game server's /internal API), game-server.ts (is the game server up? →
-                        "Play online" on the home page), daily-discard.ts (the home page poll: the stored hand, voters, tally)
+                        "Play online" on the home page), daily-discard.ts (the home page poll: the stored hand, voters, tally),
+                        progress.ts (Learn progress and trainer stats on the account: get, events, merge; CATALOG)
   src/hooks.server.ts   init: run migrations, then load auth; handle: session → locals.user/session, /api/auth/*
   src/routes/           play (offline), online (lobby → queue → table; signed-in only; guests → /signup), login (sign in
                         only), signup, account (rating), healthz, admin (bot pool; 404 unless `user.role = 'admin'`),
-                        learn (public course, see below), train (trainers, see below), daily-discard (POST a vote), sitemap.xml, robots.txt
+                        learn (public course, see below), train (trainers, see below), daily-discard (POST a vote), api/progress
+                        (the signed-in player's progress: GET, POST events or a merge), sitemap.xml, robots.txt
   src/lib/learn/        the Learn course: registry.ts (units + lessons in order, SEO titles), lessons/<slug>/
                         (Lesson.svelte article + exercises.ts), components/ (ExerciseCard: one exercise, context-free;
                         Exercise: the lesson wrapper, plays its set's variants with progress; Tiles, T, Term, Callout, …),
                         feedback.ts (answer texts), glossary.ts, yaku.ts, context.ts (ExerciseSet),
-                        progress.svelte.ts + progress-data.ts (`riichi:learn`), lessons.test.ts (validates every lesson)
+                        progress.svelte.ts + progress-data.ts (course progress), lessons.test.ts (validates every lesson)
   src/lib/train/        trainers: registry.ts (trainers, levels, SEO, linked lessons), feed.ts, daily.ts, stats.svelte.ts
-                        (`riichi:train`), components/ (Trainer, DiscardTable, RushBar, DailyDiscard)
+                        + stats-data.ts (trainer stats), components/ (Trainer, DiscardTable, RushBar, DailyDiscard)
   packages/drills/      (@mahjong/drills, shared with the game server; import `@mahjong/drills/<module>`):
                         types.ts, position.ts (lesson positions), goals.ts (engine-decided answers), safety.ts (safety
                         grades vs a riichi, lessons only), labels.ts (yaku/limit names), generate.ts (trainer problems),
                         selfplay.ts + rebuild.ts (bot games → lesson positions), daily-discard.ts; tests: generate.test.ts
                         (seed sweep), safety.test.ts, daily-discard.test.ts. Relative imports there carry `.ts`
                         (the game server runs it with Node type stripping)
+  src/lib/progress/     progress for Learn and Train (see "Progress" below): events.ts (shapes, request parsing, apply,
+                        merge; shared with the server), client.svelte.ts (the store), ProgressNudge.svelte
   src/lib/components/ContentShell.svelte   the frame of Learn and Train pages (header with both sections + CTA)
   src/lib/components/Band.svelte           a full-bleed section of a narrow page (see ui.md)
   migrations/           Kysely migrations (NNNN_name.ts, import only from kysely); bundled and run on server start;
                         0001_auth = Better Auth tables; 0002_game_server = rating, game, game_seat, game_action
                         (written by the game server); 0003_bot_players = bot, setting, user.role;
                         0004_bot_schedules = bot.schedule; 0005_daily_discard = daily_discard, daily_discard_vote;
-                        0006_uuid_ids = every id column and reference becomes `uuid`
+                        0006_uuid_ids = every id column and reference becomes `uuid`; 0007_user_progress = user_progress
   src/lib/tiles.ts      TILESETS (ratio, artwork margin, image paths); tileset.svelte.ts: the chosen one (`riichi:tileset`)
   src/lib/components/   Table (the whole play screen, takes a GameSource), Board (4 seat rows), Pond, Melds, PlayerArea
                         (hand/actions/magnifier), Tile, TimerBar, Countdown (online, after a deal),
@@ -111,11 +115,10 @@ Free, public, server-rendered lessons (marketing: they must rank in search and l
 - Exercises show only the hand by default; add `show` flags for what the question needs (see ui.md).
 - Lessons teach `DEFAULT_RULES` (what readers will play) and mark EMA tournament differences with
   `<Callout kind="ema">`.
-- Progress (`riichi:learn`, v2: solved variant indexes per exercise id; v1 ids upgrade to their first variant) is per
-  device and loaded by `LessonBody` on mount (after its children mount: read it reactively, not in a child's
-  `onMount`). A set is solved when every variant was answered right (a reveal doesn't count); a lesson is completed
-  when read to the end (the CTA scrolled into view) with every set solved. Parsing lives in `progress-data.ts`
-  (tested); the runes store in `progress.svelte.ts`.
+- Progress (v2: solved variant indexes per exercise id; v1 ids upgrade to their first variant) is the reader's (see
+  "Progress" below); `LessonBody` tracks its owner (read it reactively, not in a child's `onMount`). A set is solved when every variant was answered right (a reveal doesn't count); a lesson is completed
+  when read to the end (the CTA scrolled into view) with every set solved. Shapes, parsing and changes live in
+  `progress-data.ts` (tested); `progress.svelte.ts` wraps the shared store.
 
 ## Train (trainers)
 
@@ -137,11 +140,34 @@ Content pages like Learn (`contentPage`, `ContentShell`, `Seo`, CTA, sitemap fro
   Generating takes ~10–70 ms (a bot game). The daily set is cached per UTC day per server process.
 - Modes: Practice (retries, reveal; stats count first answers), Rush (3 min, 3 misses, levels climb every 5 solved;
   `ExerciseCard final`), Daily (5 fixed problems, final answers, a share line; Copy falls back to selecting the text
-  outside secure contexts). Stats per device in `riichi:train`, read on mount.
+  outside secure contexts). Stats are the reader's (see "Progress" below), read on mount.
 - **Player-facing copy never says how hands are made** (no "bots", no "real games"): bot players pass as human
   opponents elsewhere on the site. Say "hands" or "winning hands".
 - **Adding a trainer**: a generator branch in `generate.ts` (+ `LEVELS`), an entry in `registry.ts`, sweep tests.
   Lessons listed in its `lessons` get a "Practice" link at their end.
+
+
+## Progress (Learn and Train)
+
+Kept **only on accounts**, a sign-up incentive (openspec account-only-progress). Nothing goes to browser storage.
+
+- **Signed-in:** one `user_progress` row per user (`learn` and `train` JSONB documents, created on the first change).
+  The store (`lib/progress/client.svelte.ts`) fetches `GET /api/progress` once per visit and sends each change as an
+  event (`POST { events }`, at most 100). The server checks events against `CATALOG` (lessons, sets, variant counts,
+  trainers, daily size; daily dates today or yesterday UTC) and refuses the whole request if one is unknown. It then
+  applies them in order under a row lock, with the same reducers as the client. Failed sends stay queued for the next
+  change, plus a `pagehide` keepalive.
+- **Guests:** in memory only, for the visit. Client-side navigation keeps it; a reload loses it.
+  `ProgressNudge` ("Not saved" + "Sign up to keep it", `/signup?next=<page>`) shows once a guest has progress.
+- **Claiming:** sign-up and login finish with a client-side `goto`, so the visit survives. The next page that calls
+  `trackOwner()` sees the owner change from guest to user and sends the visit as `POST { merge }`. Read and solved are
+  unions, bests are the higher, answer counts are summed, and daily results are taken for days the account lacks.
+  Sign-out clears memory.
+- **Legacy keys** `riichi:learn` / `riichi:train` (before this change) are read once and removed. A user gets them
+  merged into the account; a guest gets them in the visit.
+- **Server-rendered HTML never depends on progress.** Every page that shows or records it calls `trackOwner()`.
+  Until `progressLoaded()`, show nothing as done and no stats.
+- Not progress, and still local: the offline game autosave, settings, and the daily discard vote (cookie).
 
 ## Daily discard (home page)
 

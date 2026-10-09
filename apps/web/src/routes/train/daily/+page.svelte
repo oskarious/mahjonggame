@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { untrack } from 'svelte';
   import { page } from '$app/state';
   import Cta from '$lib/learn/components/Cta.svelte';
   import ExerciseCard from '$lib/learn/components/ExerciseCard.svelte';
@@ -8,17 +8,19 @@
   import Seo from '$lib/learn/components/Seo.svelte';
   import { shareLine } from '$lib/train/daily';
   import { trainerById } from '$lib/train/registry';
-  import { dailyOf, dailyStreak, loadStats, recordDaily, statsLoaded } from '$lib/train/stats.svelte';
+  import { dailyOf, dailyStreak, recordDaily, statsLoaded } from '$lib/train/stats.svelte';
+  import { trackOwner } from '$lib/progress/client.svelte';
+  import ProgressNudge from '$lib/progress/ProgressNudge.svelte';
 
   let { data } = $props();
 
   const total = $derived(data.problems.length);
-  /** The problem on screen; set from this device's results once they are read. */
+  /** The problem on screen; past the ones already answered once the reader's results are in. */
   let shown = $state(0);
 
-  onMount(() => {
-    loadStats();
-    shown = dailyOf(data.date).length;
+  trackOwner();
+  $effect(() => {
+    if (statsLoaded()) untrack(() => (shown = Math.max(shown, dailyOf(data.date).length)));
   });
 
   const results = $derived(statsLoaded() ? dailyOf(data.date) : []);
@@ -75,6 +77,7 @@
       <button class="btn primary" onclick={copy}>{copied ? 'Copied' : 'Copy'}</button>
       {#if canShare}<button class="btn" onclick={share}>Share</button>{/if}
     </div>
+    <ProgressNudge />
     <p class="more"><a class="btn" href="/train">More training</a></p>
   </section>
 {:else}
