@@ -113,12 +113,13 @@ export function isComplete(counts: Counts, meldCount: number): boolean {
 
 /**
  * Tile kinds that complete a concealed part of 13 - 3 * melds tiles.
- * A hand holding all four copies of a kind cannot wait on it.
+ * A hand holding all four copies of a kind cannot wait on it; with `meldedCopies: false` only concealed copies count
+ * (Tenhou's tenpai at an exhaustive draw, see `RuleSet.deadWaitCopies`).
  */
-export function waits(concealed: readonly Tile[], melds: readonly Meld[]): Kind[] {
+export function waits(concealed: readonly Tile[], melds: readonly Meld[], meldedCopies = true): Kind[] {
   const c = countKinds(concealed);
   const held = c.slice();
-  for (const m of melds) for (const t of m.tiles) held[kindOf(t)]++;
+  if (meldedCopies) for (const m of melds) for (const t of m.tiles) held[kindOf(t)]++;
   const out: Kind[] = [];
   for (let k = 0; k < NUM_KINDS; k++) {
     if (held[k] >= 4) continue;

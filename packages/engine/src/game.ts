@@ -1,4 +1,14 @@
-import { type Kind, type Tile, EAST, isDragon, isRedTile, isSuited, isWind, kindOf } from './tiles.ts';
+import {
+  type Kind,
+  type Tile,
+  EAST,
+  isDragon,
+  isRedTile,
+  isSuited,
+  isTerminalOrHonor,
+  isWind,
+  kindOf,
+} from './tiles.ts';
 import { countKinds, decomposeStandard, distinctTerminalsAndHonors, waits } from './hand.ts';
 import { type RngState, seedRng, shuffle } from './rng.ts';
 import type { RuleSet } from './rules.ts';
@@ -65,6 +75,8 @@ export interface HandState {
   doraIndicators: Tile[];
   uraIndicators: Tile[];
   doraRevealed: number;
+  /** Open quads whose dora is revealed on their player's next discard or quad (`RuleSet.openKanDora`). */
+  pendingDora: number;
   /** Tiles moved from the live wall to the dead wall by quads. */
   deadExtra: Tile[];
   players: PlayerState[];
@@ -95,7 +107,14 @@ export type AbortReason = 'nineTerminals' | 'fourWinds' | 'fourRiichi' | 'fourKa
 
 export type HandResult =
   | { type: 'win'; wins: WinRecord[]; uraIndicators: Tile[]; deltas: number[] }
-  | { type: 'exhaustive'; tenpai: boolean[]; hands: (Tile[] | null)[]; deltas: number[] }
+  | {
+      type: 'exhaustive';
+      tenpai: boolean[];
+      hands: (Tile[] | null)[];
+      /** Seats paid for nagashi mangan (then there are no noten payments). */
+      nagashi: Seat[];
+      deltas: number[];
+    }
   | { type: 'abortive'; reason: AbortReason; seat: Seat | null; deltas: number[] };
 
 export interface FinalStanding {
@@ -321,6 +340,7 @@ function emptyHand(): HandState {
     doraIndicators: [],
     uraIndicators: [],
     doraRevealed: 0,
+    pendingDora: 0,
     deadExtra: [],
     players: [],
     step: { type: 'over' },
@@ -412,6 +432,16 @@ function revealDora(g: GameState, ev: GameEvent[]): void {
   const h = g.hand;
   h.doraRevealed++;
   ev.push({ type: 'dora', indicator: h.doraIndicators[h.doraRevealed - 1] });
+}
+
+/** The dora of a new quad: at once, or for an open quad under `openKanDora: 'afterDiscard'` later. */
+function kanDora(g: GameState, open: boolean, ev: GameEvent[]): void {
+  if (open && g.rules.openKanDora === 'afterDiscard') g.hand.pendingDora++;
+  else revealDora(g, ev);
+}
+
+function revealPendingDora(g: GameState, ev: GameEvent[]): void {
+  for (; g.hand.pendingDora > 0; g.hand.pendingDora--) revealDora(g, ev);
 }
 
 function scoreWin(
@@ -511,7 +541,7 @@ function kanKinds(g: GameState, seat: Seat): Kind[] {
   const c = countKinds(p.hand);
   const out: Kind[] = [];
   for (let k = 0; k < c.length; k++) {
-    if (c[k] === 4 && (!p.riichi || riichiAnkanAllowed(p, k))) out.push(k);
+    if (c[k] === 4 && (!p.riichi || riichiAnkanAllowed(p, k, g.rules))) out.push(k);
   }
   if (!p.riichi) {
     for (const m of p.melds) {
@@ -524,9 +554,9 @@ function kanKinds(g: GameState, seat: Seat): Kind[] {
 
 /**
  * After riichi a concealed quad is allowed only with the drawn tile, if it does not change the
- * waits, and if the three tiles can only be read as a triplet in every winning hand.
+ * waits, and (`riichiAnkan: 'tripletOnly'`) if the three tiles can only be read as a triplet in every winning hand.
  */
-function riichiAnkanAllowed(p: PlayerState, kind: Kind): boolean {
+function riichiAnkanAllowed(p: PlayerState, kind: Kind, rules: RuleSet): boolean {
   if (p.drawn === null || kindOf(p.drawn) !== kind) return false;
   const before = p.hand.filter((t) => t !== p.drawn);
   const beforeCounts = countKinds(before);
@@ -538,6 +568,7 @@ function riichiAnkanAllowed(p: PlayerState, kind: Kind): boolean {
     [...p.melds, quad],
   );
   if (w0.length !== w1.length || w0.some((k, i) => k !== w1[i])) return false;
+  if (rules.riichiAnkan === 'sameWaits') return true;
   for (const w of w0) {
     const c = beforeCounts.slice();
     c[w]++;
@@ -560,6 +591,7 @@ function discard(g: GameState, seat: Seat, tile: Tile, riichi: boolean, ev: Game
   p.discards.push({ tile, tsumogiri, riichi, calledBy: null });
   h.lastDiscard = { seat, tile };
   ev.push({ type: 'discard', seat, tile, tsumogiri, riichi });
+  revealPendingDora(g, ev);
   openCalls(g, seat, tile, ev);
 }
 
@@ -615,7 +647,8 @@ function completeKan(g: GameState, seat: Seat, kind: Kind, ev: GameEvent[]): voi
   h.kans.push(seat);
   interrupt(h);
   ev.push({ type: 'kan', seat, meld: structuredClone(meld) });
-  revealDora(g, ev);
+  revealPendingDora(g, ev);
+  kanDora(g, meld.type !== 'ankan', ev);
   h.deadExtra.push(h.wall.pop()!);
   draw(g, seat, true, ev);
 }
@@ -823,7 +856,7 @@ function applyCall(g: GameState, call: Action, discarder: Seat, tile: Tile, ev: 
   ev.push({ type: 'call', seat, meld: structuredClone(meld) });
   if (call.type === 'daiminkan') {
     h.kans.push(seat);
-    revealDora(g, ev);
+    kanDora(g, true, ev);
     h.deadExtra.push(h.wall.pop()!);
     draw(g, seat, true, ev);
   } else {
@@ -881,9 +914,10 @@ function win(g: GameState, winners: Seat[], from: Seat | null, tile: Tile, chank
     wins.push({ seat: w, from, winTile: tile, hand: concealed, melds: structuredClone(p.melds), value, pao });
   }
 
-  // Winners get their own deposit from this hand back; the rest goes to the first winner after the discarder.
+  // Winners get their own deposit from this hand back (unless the first takes all); the rest goes to the first winner
+  // after the discarder.
   let sticks = g.riichiSticks;
-  for (const w of winners) {
+  for (const w of rules.depositsToFirstRonWinner ? [] : winners) {
     if (h.riichiDeposits.includes(w)) {
       deltas[w] += rules.riichiDeposit;
       sticks--;
@@ -906,18 +940,38 @@ function win(g: GameState, winners: Seat[], from: Seat | null, tile: Tile, chank
 
 function exhaustiveDraw(g: GameState, ev: GameEvent[]): void {
   const players = g.hand.players;
-  const tenpai = players.map((p) => waitsOf(p).length > 0);
+  const tenpai = players.map((p) => waits(p.hand, p.melds, g.rules.deadWaitCopies === 'all').length > 0);
   const n = tenpai.filter(Boolean).length;
   const deltas = [0, 0, 0, 0];
-  if (n > 0 && n < 4) {
-    for (let s = 0; s < 4; s++) {
-      deltas[s] = tenpai[s] ? g.rules.notenPenalty / n : -g.rules.notenPenalty / (4 - n);
-      g.scores[s] += deltas[s];
+  const nagashi = g.rules.nagashiMangan
+    ? [0, 1, 2, 3].filter(
+        (s) =>
+          players[s].discards.length > 0 &&
+          players[s].discards.every((d) => d.calledBy === null && isTerminalOrHonor(kindOf(d.tile))),
+      )
+    : [];
+  if (nagashi.length) {
+    for (const w of nagashi) {
+      for (let s = 0; s < 4; s++) {
+        if (s === w) continue;
+        const pay = w === g.dealer || s === g.dealer ? 4000 : 2000;
+        deltas[s] -= pay;
+        deltas[w] += pay;
+      }
     }
+  } else if (n > 0 && n < 4) {
+    for (let s = 0; s < 4; s++) deltas[s] = tenpai[s] ? g.rules.notenPenalty / n : -g.rules.notenPenalty / (4 - n);
   }
+  for (let s = 0; s < 4; s++) g.scores[s] += deltas[s];
   endHand(
     g,
-    { type: 'exhaustive', tenpai, hands: players.map((p, s) => (tenpai[s] ? [...p.hand] : null)), deltas },
+    {
+      type: 'exhaustive',
+      tenpai,
+      hands: players.map((p, s) => (tenpai[s] ? [...p.hand] : null)),
+      nagashi,
+      deltas,
+    },
     tenpai[g.dealer],
     g.honba + 1,
     ev,
@@ -934,11 +988,28 @@ function endHand(g: GameState, result: HandResult, renchan: boolean, honba: numb
   g.next = { renchan, honba };
   ev.push({ type: 'handEnd', result, scores: [...g.scores] });
 
-  const lastRound = g.rules.length === 'east' ? 0 : 1;
-  const bankrupt = g.rules.bankruptcy && g.scores.some((s) => s < 0);
-  const roundsDone = !renchan && (g.dealer + 1) % 4 === 0 && g.roundWind >= lastRound;
-  if (bankrupt || roundsDone) finishGame(g, ev);
+  if (gameOver(g, renchan)) finishGame(g, ev);
   else g.phase = 'handOver';
+}
+
+function gameOver(g: GameState, renchan: boolean): boolean {
+  const rules = g.rules;
+  if (rules.bankruptcy && g.scores.some((s) => s < 0)) return true;
+  const lastRound = rules.length === 'east' ? 0 : 1;
+  // Sudden death: every hand of the extra round is a last hand.
+  const extra = rules.suddenDeath && g.roundWind > lastRound;
+  const lastHand = extra || (g.dealer === 3 && g.roundWind >= lastRound);
+  const reached = g.scores.some((s) => s >= rules.returnPoints);
+  if (renchan) {
+    // The dealer stops only after winning or being tenpai, not after an abortive draw.
+    if (!rules.dealerStopsAllLast || !lastHand || g.result?.type === 'abortive') return false;
+    if (g.scores[g.dealer] < rules.returnPoints) return false;
+    // Leading: ties rank the seat closer to the first dealer higher, or are shared.
+    const d = g.dealer;
+    return g.scores.every((s, i) => s < g.scores[d] || (s === g.scores[d] && (i >= d || rules.tieBreak === 'split')));
+  }
+  if (!lastHand) return false;
+  return !rules.suddenDeath || reached || (extra && g.dealer === 3);
 }
 
 function finishGame(g: GameState, ev: GameEvent[]): void {
@@ -948,7 +1019,8 @@ function finishGame(g: GameState, ev: GameEvent[]): void {
 
   // Leftover deposits go to the leader(s), split and rounded down.
   const top = Math.max(...g.scores);
-  const leaders = [0, 1, 2, 3].filter((s) => g.scores[s] === top);
+  const tied = [0, 1, 2, 3].filter((s) => g.scores[s] === top);
+  const leaders = rules.tieBreak === 'split' ? tied : tied.slice(0, 1);
   if (g.riichiSticks) {
     const share = Math.floor((g.riichiSticks * rules.riichiDeposit) / leaders.length);
     for (const s of leaders) g.scores[s] += share;

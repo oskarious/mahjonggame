@@ -4,6 +4,8 @@ import {
   EMA_2025,
   type GameState,
   type HandResult,
+  type MeldType,
+  type RuleSet,
   applyAction,
   kindOf,
   kindToString,
@@ -15,6 +17,7 @@ import {
 import {
   actionTypes,
   chii,
+  daiminkan,
   discard,
   kan,
   kyuushu,
@@ -198,8 +201,8 @@ describe('riichi', () => {
   });
 
   describe('concealed quad after riichi (EMA 6.7.1)', () => {
-    const kans = (hand: string, draw: string, inRiichi = true) =>
-      legalActions(scenario({ hands: [hand], draws: draw, riichi: inRiichi ? [0] : [] }), 0)
+    const kans = (hand: string, draw: string, inRiichi = true, rules = DEFAULT_RULES) =>
+      legalActions(scenario({ rules, hands: [hand], draws: draw, riichi: inRiichi ? [0] : [] }), 0)
         .filter((a) => a.type === 'kan')
         .map((a) => (a.type === 'kan' ? kindToString(a.kind) : ''));
 
@@ -220,6 +223,14 @@ describe('riichi', () => {
     });
     it('allowed when the waits do not change', () => {
       expect(kans('123m456p789s111z2s', '1z')).toEqual(['1z']);
+    });
+    it('Tenhou: only the waits must stay the same', () => {
+      const tenhou = makeRules(DEFAULT_RULES, { riichiAnkan: 'sameWaits' });
+      expect(kans('1234m444p555p666p', '4p', true, tenhou)).toEqual(['4p']);
+      // From a Tenhou log: waits 4m/5m either way.
+      expect(kans('4666777888m345p', '8m')).toEqual([]);
+      expect(kans('4666777888m345p', '8m', true, tenhou)).toEqual(['8m']);
+      expect(kans('234m222p3p234s789s', '2p', true, tenhou)).toEqual([]);
     });
   });
 });
@@ -604,5 +615,136 @@ describe('last discard', () => {
     const { state } = play(g, [discard(0, '3m'), pon(2)]);
     expect(state.hand.lastDiscard).toBeNull();
     expect(viewFor(state, 0).lastDiscard).toBeNull();
+  });
+});
+
+describe('Tenhou rule flags', () => {
+  const rules = (o: Partial<RuleSet>) => makeRules(DEFAULT_RULES, o);
+  const afterDiscard = rules({ openKanDora: 'afterDiscard' });
+
+  it('open quad dora after the discard: not counted for a win on the replacement tile', () => {
+    const g = scenario({ rules: afterDiscard, hands: ['9m', '999m123m456p78s55p'], rinshan: '9s' });
+    let { state } = play(g, [discard(0, '9m'), daiminkan(1)], { settle: false });
+    // Called 9m from the dealer, drew the replacement 9s: complete, with the new indicator still face down.
+    ({ state } = play(state, []));
+    expect(state.hand.doraRevealed).toBe(1);
+    expect(state.hand.pendingDora).toBe(1);
+    const won = play(state, [tsumo(1)]).state;
+    expect(winOf(won).wins[0].value.dora).toBe(0);
+
+    ({ state } = play(state, [discard(1, '5p')], { settle: false }));
+    expect(state.hand.doraRevealed).toBe(2);
+    expect(state.hand.pendingDora).toBe(0);
+  });
+
+  it('open quad dora after the discard: revealed before a second quad; concealed quads at once', () => {
+    const g = scenario({
+      rules: afterDiscard,
+      hands: ['1111z5m'],
+      melds: [[['pon', '999m']]],
+      draws: '9m',
+      rinshan: '5p',
+    });
+    let { state } = play(g, [kan(0, '9m')]);
+    expect([state.hand.doraRevealed, state.hand.pendingDora]).toEqual([1, 1]);
+    ({ state } = play(state, [kan(0, '1z')]));
+    expect([state.hand.doraRevealed, state.hand.pendingDora]).toEqual([3, 0]);
+
+    const ema = play(scenario({ hands: ['5m'], melds: [[['pon', '999m']]], draws: '9m' }), [kan(0, '9m')]).state;
+    expect([ema.hand.doraRevealed, ema.hand.pendingDora]).toEqual([2, 0]);
+  });
+
+  it('double ron with counters and deposits to the first winner only', () => {
+    const hands = ['4s', PINFU, '123m456p789s99m23s'];
+    const tenhou = rules({ honbaToAllRonWinners: false, depositsToFirstRonWinner: true });
+    const g = scenario({ rules: tenhou, hands, riichi: [2], riichiSticks: 2, honba: 1 });
+    const { state } = play(g, [discard(0, '4s'), ron(1), ron(2)]);
+    expect(winOf(state).deltas).toEqual([-3300, 4300, 2000, 0]);
+  });
+
+  it('a single wait on the fourth copy next to an own pon: noten (EMA reading), tenpai under Tenhou', () => {
+    const o = { hands: [undefined, '567m111s234p6s'], melds: [[], [['pon', '666s']]] as [MeldType, string][][], wallSize: 1 };
+    const ema = play(scenario(o), [discard(0)]).state;
+    expect(lastResult(ema)).toMatchObject({ tenpai: [false, false, false, false] });
+    const tenhou = play(scenario({ ...o, rules: rules({ deadWaitCopies: 'concealed' }) }), [discard(0)]).state;
+    expect(lastResult(tenhou)).toMatchObject({ tenpai: [false, true, false, false], deltas: [-1000, 3000, -1000, -1000] });
+  });
+
+  describe('nagashi mangan', () => {
+    const terminals = { discards: ['5m', '19m19p1z', '2p', '3s'], wallSize: 1, draws: '5s' };
+
+    it('pays a mangan by self-draw instead of the noten payments', () => {
+      const g = scenario({ rules: rules({ nagashiMangan: true }), hands: [PINFU], ...terminals });
+      const state = play(g, [discard(0)]).state;
+      expect(lastResult(state)).toMatchObject({ type: 'exhaustive', nagashi: [1], tenpai: [true, false, false, false] });
+      expect(lastResult(state).deltas).toEqual([-4000, 8000, -2000, -2000]);
+      expect(state.next).toEqual({ renchan: true, honba: 1 });
+    });
+
+    it('not if a discard was claimed, and not under EMA', () => {
+      const g = scenario({ rules: rules({ nagashiMangan: true }), ...terminals });
+      g.hand.players[1].discards[2].calledBy = 2;
+      expect(lastResult(play(g, [discard(0)]).state)).toMatchObject({ nagashi: [], deltas: [0, 0, 0, 0] });
+      const ema = scenario({ ...terminals });
+      expect(lastResult(play(ema, [discard(0)]).state)).toMatchObject({ nagashi: [], deltas: [0, 0, 0, 0] });
+    });
+  });
+
+  describe('end of game', () => {
+    const allLast = (r: RuleSet, o: Parameters<typeof scenario>[0] = {}) =>
+      play(scenario({ rules: r, dealer: 3, wallSize: 1, ...o }), [discard(3)]).state;
+    const stops = rules({ dealerStopsAllLast: true, tieBreak: 'seatOrder' });
+    const tenpaiDealer = [undefined, undefined, undefined, SHANPON];
+
+    it('a tenpai dealer in the last hand stops when leading with the return points', () => {
+      expect(allLast(stops, { hands: tenpaiDealer, scores: [20000, 25000, 25000, 30000] }).phase).toBe('gameOver');
+      expect(allLast(stops, { hands: tenpaiDealer, scores: [30000, 25000, 25000, 20000] }).phase).toBe('handOver');
+      expect(allLast(stops, { hands: tenpaiDealer, scores: [25000, 25000, 25000, 25000] }).phase).toBe('handOver');
+      // Ties: the dealer of the last hand ranks below the other seats.
+      expect(allLast(stops, { hands: tenpaiDealer, scores: [11000, 31000, 30000, 27000] }).phase).toBe('handOver');
+      expect(allLast(DEFAULT_RULES, { hands: tenpaiDealer, scores: [20000, 25000, 25000, 30000] }).phase).toBe(
+        'handOver',
+      );
+    });
+
+    it('not after an abortive draw', () => {
+      const g = scenario({
+        rules: stops,
+        dealer: 3,
+        hands: [undefined, undefined, undefined, '19m19p19s1234567z'],
+        uninterrupted: true,
+        scores: [20000, 25000, 25000, 30000],
+      });
+      const state = play(g, [kyuushu(3)]).state;
+      expect(lastResult(state)).toMatchObject({ type: 'abortive', reason: 'nineTerminals' });
+      expect(state.phase).toBe('handOver');
+    });
+
+    it('sudden death: below the return points the next round is played until someone reaches them', () => {
+      const sd = rules({ suddenDeath: true });
+      const even = allLast(sd, { scores: [25000, 25000, 25000, 25000] });
+      expect(even.phase).toBe('handOver');
+      const south = applyAction(even, { type: 'nextHand' }).state;
+      expect([south.roundWind, south.dealer]).toEqual([1, 0]);
+
+      const reached = { scores: [24000, 30000, 25000, 21000], roundWind: 1, dealer: 0, wallSize: 1 };
+      expect(play(scenario({ rules: sd, ...reached }), [discard(0)]).state.phase).toBe('gameOver');
+      const below = { ...reached, scores: [24000, 29000, 26000, 21000] };
+      expect(play(scenario({ rules: sd, ...below }), [discard(0)]).state.phase).toBe('handOver');
+      // The extra round is the last.
+      expect(allLast(sd, { roundWind: 1, scores: [25000, 25000, 25000, 25000] }).phase).toBe('gameOver');
+      expect(allLast(sd, { scores: [24000, 30000, 25000, 21000] }).phase).toBe('gameOver');
+      // A dealer who keeps the seat plays on, as in the last hand.
+      const renchan = { ...reached, hands: [SHANPON] };
+      expect(play(scenario({ rules: sd, ...renchan }), [discard(0)]).state.phase).toBe('handOver');
+    });
+
+    it('leftover deposits go to the first in seat order when ties rank by seat', () => {
+      const g = allLast(rules({ tieBreak: 'seatOrder' }), { scores: [35000, 35000, 29000, 20000], riichiSticks: 1 });
+      expect(g.final!.slice(0, 2).map((f) => [f.seat, f.points])).toEqual([
+        [0, 36000],
+        [1, 35000],
+      ]);
+    });
   });
 });

@@ -115,6 +115,7 @@ export function scenario(o: ScenarioOptions): GameState {
     doraIndicators: dora,
     uraIndicators: ura,
     doraRevealed: 1 + kans.length,
+    pendingDora: 0,
     deadExtra,
     players,
     step: { type: 'over' },
