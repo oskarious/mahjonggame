@@ -1,11 +1,21 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
+  import { onMount } from 'svelte';
   import type { AdminBot, AdminBotState } from '@mahjong/protocol';
   import RankBadge from '$lib/components/RankBadge.svelte';
   import Title from '$lib/components/Title.svelte';
 
   let { data, form } = $props();
+
+  // Only admins get this page: opening it once keeps this browser out of Plausible stats from then on.
+  onMount(() => {
+    try {
+      localStorage.plausible_ignore = 'true';
+    } catch {
+      // storage blocked: this browser stays counted
+    }
+  });
 
   const pool = $derived(data.pool);
   const s = $derived(data.pool?.settings ?? null);
