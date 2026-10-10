@@ -73,7 +73,7 @@
 
       <div class="start">
         {#if saved}
-          <a class="btn big primary" href="/play">
+          <a class="btn big primary continue" href="/play">
             <span>Continue</span>
             <span class="round">{WINDS[saved.round.wind]} {saved.round.dealer + 1}</span>
           </a>
@@ -141,7 +141,14 @@
     font-size: 1.15rem;
     text-decoration: none;
   }
+  /* Half the sheet is too narrow for "Continue East 1" on one line: the round goes under it. */
+  .continue {
+    flex-direction: column;
+    gap: 0;
+    line-height: 1.15;
+  }
   .round {
+    white-space: nowrap;
     font-size: 0.85rem;
     font-weight: 600;
     opacity: 0.75;

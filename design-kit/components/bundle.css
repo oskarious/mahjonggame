@@ -518,6 +518,11 @@ input {
   gap: 6px;
   margin: 0;
 }
+@container (max-width: 440px) {
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
 .stats div {
   padding: 10px;
   border-radius: var(--radius);

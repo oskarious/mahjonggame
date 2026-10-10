@@ -85,7 +85,7 @@ The sections in `lib/home/` (the ones below the discard hide themselves when the
 - **ContinueLearning** (the way into Learn): a card for the first lesson not completed ("Start learning" before any),
   `n/N` and a gold progress bar; once the course is done, "Course complete" linking to `/learn`.
 - **PlayerStats** (signed in): four tiles: rating with its 7-day change, games in 7 days, daily-set day streak, best
-  trainer streak.
+  trainer streak; two by two when the column is under 440 px.
 - **RecentGames** (signed in): the last three finished games: placement, length, points, rating change, age.
 - **Sign-up box** (guests, in place of the stats and recent games): a `panel` with a one-line pitch, a big gold
   Sign up and a quiet "Have an account? Sign in" link.

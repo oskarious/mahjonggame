@@ -45,6 +45,13 @@
     gap: 6px;
     margin: 8px 0;
   }
+  /* Four in a row leave too little room on phones ("1176 ◆ +26", "2 streak" wrap): two by two there. The page column
+     is the container. */
+  @container (max-width: 440px) {
+    .stats {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
   .stats div {
     padding: 10px;
     border-radius: var(--radius);
