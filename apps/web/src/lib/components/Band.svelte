@@ -41,8 +41,9 @@
     container-type: inline-size;
     box-sizing: border-box;
     width: var(--w);
-    margin: 18px calc(50% - var(--w) / 2) 0;
-    padding: 14px 4px 12px;
+    /* 18px above and below; collapses with the neighbours' own margins. */
+    margin: 18px calc(50% - var(--w) / 2);
+    padding: 12px 4px;
     border-radius: var(--radius);
     background: var(--surface-me);
     display: flex;
@@ -62,9 +63,11 @@
     gap: 8px;
     padding: 0 var(--band-inset);
   }
-  h2,
-  .aside {
+  /* `.band` raises these above page-level heading rules (ContentShell gives every h2 in its column a top margin). */
+  .band h2,
+  .band .aside {
     margin: 0;
+    line-height: 1;
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--ink-dim);

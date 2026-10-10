@@ -83,6 +83,16 @@ export async function vote(date: string, v: Voter, kind: Kind): Promise<Kind> {
   return (await myVote(date, v)) ?? kind;
 }
 
+/** How many have voted (bot players included): shown before the vote too, it says nothing about the picks. */
+export async function voteCount(date: string): Promise<number> {
+  const r = await db
+    .selectFrom('daily_discard_vote')
+    .select((eb) => eb.fn.countAll<string>().as('n'))
+    .where('date', '=', date)
+    .executeTakeFirst();
+  return Number(r?.n ?? 0);
+}
+
 /** Everyone's votes (bot players' included), most first. */
 export async function tally(date: string): Promise<Tally> {
   const rows = await db

@@ -13,14 +13,16 @@
 
   /**
    * The home page's poll: discard any tile, then see what everyone else threw. No right answer and no stats before
-   * the vote, so nothing nudges it.
+   * the vote (only how many have voted), so nothing nudges it. The results show the top three kinds; the rest scroll.
    */
   let {
     date,
     exercise,
     mine: initialMine,
+    votes,
     tally: initialTally,
-  }: { date: string; exercise: ExerciseOf<'discard'>; mine: Kind | null; tally: Tally | null } = $props();
+  }: { date: string; exercise: ExerciseOf<'discard'>; mine: Kind | null; votes: number; tally: Tally | null } =
+    $props();
 
   const g = stateOf(untrack(() => exercise))!;
   let mine = $state(untrack(() => initialMine));
@@ -84,6 +86,26 @@
     return `${Math.floor(s / 3600)}:${two(Math.floor(s / 60) % 60)}:${two(s % 60)}`;
   };
 
+  /** Before the vote only the count; after it the tally's (which includes the reader's vote). */
+  const total = $derived(tally?.total ?? votes);
+
+  /** Shows the top three rows and the start of the fourth (a hint that the rest scroll). */
+  function topRows(node: HTMLElement, _rows: number) {
+    // After the rows render (an update can run before the DOM has changed).
+    const fit = () =>
+      requestAnimationFrame(() => {
+        const r = node.querySelectorAll('tr');
+        if (r.length <= 3) {
+          node.style.maxHeight = '';
+          return;
+        }
+        const top = r[3].getBoundingClientRect().top - node.getBoundingClientRect().top + node.scrollTop;
+        node.style.maxHeight = `${top + r[3].offsetHeight * 0.4}px`;
+      });
+    fit();
+    return { update: fit };
+  }
+
   const pct = (n: number) => (tally && tally.total ? Math.round((100 * n) / tally.total) : 0);
 </script>
 
@@ -110,21 +132,23 @@
   {/if}
 
   {#if mine !== null && tally}
-    <table class="votes" aria-live="polite">
-      <tbody>
-        {#each tally.counts as c (c.kind)}
-          <tr class:mine={c.kind === mine}>
-            <td class="tile" aria-label={c.kind === mine ? 'Your discard' : undefined}>
-              <span class="dot" aria-hidden="true"></span><Tile tile={c.kind * 4 + 1} red={RED} plain />
-            </td>
-            <td class="bar"><span style:width="{pct(c.n)}%"></span></td>
-            <td class="n">{pct(c.n)}%</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-    <p class="total">{tally.total} {tally.total === 1 ? 'vote' : 'votes'}</p>
+    <div class="scroll" use:topRows={tally.counts.length}>
+      <table class="votes" aria-live="polite">
+        <tbody>
+          {#each tally.counts as c (c.kind)}
+            <tr class:mine={c.kind === mine}>
+              <td class="tile" aria-label={c.kind === mine ? 'Your discard' : undefined}>
+                <Tile tile={c.kind * 4 + 1} red={RED} plain />
+              </td>
+              <td class="bar"><span style:width="{pct(c.n)}%"></span></td>
+              <td class="n">{pct(c.n)}%</td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
   {/if}
+  {#if total}<p class="total">{total} {total === 1 ? 'vote' : 'votes'}</p>{/if}
 </Band>
 
 <style>
@@ -140,6 +164,10 @@
     margin: 0;
     color: var(--danger);
     font-size: 0.9rem;
+  }
+  .scroll {
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
   .votes {
     width: 100%;
@@ -161,19 +189,8 @@
   }
   .tile {
     --tw: 18px;
-    width: 34px;
+    width: 18px;
     white-space: nowrap;
-  }
-  .dot {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    margin-right: 4px;
-    border-radius: 50%;
-    vertical-align: middle;
-  }
-  .mine .dot {
-    background: var(--ink);
   }
   .bar span {
     display: block;

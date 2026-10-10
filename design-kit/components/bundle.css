@@ -203,8 +203,8 @@ select, input {
   --w: min(100vw, var(--band-max, 560px));
   container-type: inline-size;
   width: var(--w);
-  margin: 18px calc(50% - var(--w) / 2) 0;
-  padding: 14px 4px 12px;
+  margin: 18px calc(50% - var(--w) / 2);
+  padding: 12px 4px;
   border-radius: var(--radius);
   background: var(--surface-me);
   display: flex;
@@ -213,6 +213,84 @@ select, input {
 }
 @media (max-width: 560px) { .band { border-radius: 0; } }
 .band header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 0 var(--band-inset); }
-.band h2, .band .aside { margin: 0; font-size: 0.8rem; font-weight: 600; color: var(--ink-dim); }
+.band h2, .band .aside { margin: 0; line-height: 1; font-size: 0.8rem; font-weight: 600; color: var(--ink-dim); }
 .band h2 { text-transform: uppercase; letter-spacing: 0.06em; }
 .band .aside { font-variant-numeric: tabular-nums; }
+
+/* Site header (ContentShell.svelte): sticky on every page but the game. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 10px 16px;
+  padding-top: calc(10px + env(safe-area-inset-top));
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line);
+}
+.site-header .home img { display: block; height: 20px; }
+.site-header .section { color: var(--ink-dim); font-weight: 600; text-decoration: none; }
+.site-header .section.here { color: var(--ink); }
+.site-header .cta { margin-left: auto; }
+.site-header .cta .btn { min-height: 36px; padding: 4px 14px; white-space: nowrap; }
+.site-header .account { display: grid; place-items: center; width: 36px; height: 36px; margin-left: -4px; color: var(--ink-dim); }
+.site-header .account svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+@media (hover: hover) { .site-header .account:hover { color: var(--ink); } }
+
+/* Link card: a tappable panel that leads somewhere. Facts on the right; the progress variant adds a label line and a bar. */
+.card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-content: center;
+  gap: 2px 10px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  line-height: 1.4;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.card.today { background: var(--surface-me); }
+@media (hover: hover) { .card:hover { filter: brightness(1.1); } }
+.card .name { font-weight: 700; font-size: 1.1rem; }
+.card .what { grid-column: 1; color: var(--ink-dim); font-size: 0.9rem; }
+.card .facts {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+.card .facts b { color: var(--ink); }
+.card.progress .label { grid-column: 1; font-size: 0.8rem; font-weight: 600; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+.card.progress .facts { grid-row: 1; align-self: baseline; }
+.card.progress .name, .card.progress .what { grid-column: 1 / 3; }
+.card .bar { grid-column: 1 / 3; height: 3px; margin-top: 8px; border-radius: 2px; background: var(--panel-2); }
+.card .bar span { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+.cards-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* Stat tiles (PlayerStats.svelte): a row of read-only numbers about the player. */
+.stats { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 6px; margin: 0; }
+.stats div { padding: 10px; border-radius: var(--radius); background: var(--panel); min-width: 0; }
+.stats dt { font-size: 0.7rem; font-weight: 600; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+.stats dd {
+  margin: 2px 0 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 4px;
+  font-weight: 700;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+.stats .unit { font-size: 0.75rem; font-weight: 500; color: var(--ink-dim); }

@@ -1,39 +1,47 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { BOT_PRESETS, DEFAULT_BOT_ELO } from "$lib/bots";
-  import RankBadge from "$lib/components/RankBadge.svelte";
   import { page } from "$app/state";
+  import BotGameSheet from "$lib/components/BotGameSheet.svelte";
+  import ContentShell from "$lib/components/ContentShell.svelte";
+  import RankBadge from "$lib/components/RankBadge.svelte";
   import Seo from "$lib/components/Seo.svelte";
-  import { SITE_NAME, siteOrganization } from "$lib/site";
   import { type SavedGame, loadSave } from "$lib/game/saved";
-  import { WINDS } from "@mahjong/drills/labels";
+  import ContinueLearning from "$lib/home/ContinueLearning.svelte";
+  import LiveNow from "$lib/home/LiveNow.svelte";
+  import PlayerStats from "$lib/home/PlayerStats.svelte";
+  import RecentGames from "$lib/home/RecentGames.svelte";
+  import { trackOwner } from "$lib/progress/client.svelte";
+  import { SITE_NAME, siteOrganization } from "$lib/site";
   import DailyDiscard from "$lib/train/components/DailyDiscard.svelte";
+  import { DAILY, utcDate } from "$lib/train/daily";
+  import { dailyOf, dailyStreak, statsLoaded } from "$lib/train/stats.svelte";
+  import { WINDS } from "@mahjong/drills/labels";
   import { onMount } from "svelte";
 
   let { data } = $props();
 
-  let preset = $state("default");
-  let length = $state("east");
-  let bots = $state(DEFAULT_BOT_ELO);
-  let hints = $state("distance");
-  /** Read on mount: the page is server-rendered and the save lives in the browser. */
+  trackOwner();
+
+  let botSheet = $state(false);
+  /** Read on mount: the page is server-rendered and the save, the date and the daily set's progress live in the browser. */
   let saved: SavedGame | null = $state(null);
-
-  onMount(() => (saved = loadSave()));
-
-  function start() {
-    const params = new URLSearchParams({
-      preset,
-      length,
-      bots: String(bots),
-      hints,
-    });
-    goto(`/play?${params}`);
-  }
+  let today = $state("");
+  onMount(() => {
+    saved = loadSave();
+    today = utcDate();
+  });
+  const daily = $derived(statsLoaded() && today ? dailyOf(today) : null);
+  const streak = $derived(
+    statsLoaded() && today ? dailyStreak(today, DAILY.length) : 0,
+  );
 
   const origin = $derived(page.url.origin);
   const jsonld = $derived([
-    { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: origin },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: origin,
+    },
     { "@context": "https://schema.org", ...siteOrganization(origin) },
   ]);
 </script>
@@ -46,135 +54,71 @@
   {jsonld}
 />
 
-<main>
-  <nav class="account">
-    {#if data.user}
-      <a class="chip" href="/account">{data.user.name}</a>
-    {:else}
-      <a class="chip" href="/login">Sign in</a>
-      <a class="chip gold" href="/signup">Sign up</a>
-    {/if}
-  </nav>
+<ContentShell>
+  <h1>
+    <img src="/brand/logo-row.svg" alt={SITE_NAME} width="280" height="51" />
+  </h1>
 
-  <h1><img src="/brand/logo-row.svg" alt={SITE_NAME} /></h1>
-  <p class="tag">Riichi mahjong online. Free, no downloads.</p>
-
-  {#if data.online}
-    <a class="btn primary big online" href="/online">
+  {#if !data.user}
+    <a class="btn primary play" href="/signup?next=/online">Play online</a>
+  {:else if data.online}
+    <a class="btn primary play" href="/online">
       <span>Play online</span>
       <span class="elo"><RankBadge rating={data.online.rating} pill /></span>
     </a>
-    <p class="or">or</p>
+  {:else}
+    <!-- The game server is down: bots are the game on offer. -->
+    <button
+      class="btn primary play"
+      type="button"
+      onclick={() => (botSheet = true)}>Play vs bots</button
+    >
   {/if}
+  <LiveNow players={data.playing} />
 
-  <form
-    onsubmit={(e) => {
-      e.preventDefault();
-      start();
-    }}
-  >
-    <fieldset>
-      <legend>Length</legend>
-      <div class="seg">
-        <label class:on={length === "east"}
-          ><input type="radio" bind:group={length} value="east" />East only</label
-        >
-        <label class:on={length === "south"}
-          ><input type="radio" bind:group={length} value="south" />East + South</label
-        >
-      </div>
-    </fieldset>
+  <div class="pair">
+    <button class="card" type="button" onclick={() => (botSheet = true)}>
+      <span class="name">Bots</span>
+      <span class="what">
+        {#if saved}Continue {WINDS[saved.round.wind]}
+          {saved.round.dealer + 1}{:else}No account needed{/if}
+      </span>
+    </button>
+    <a class="card" href="/train">
+      <span class="name">Train</span>
+      <span class="what">Endless drills</span>
+    </a>
+  </div>
 
-    <fieldset>
-      <legend>Rules</legend>
-      <div class="seg">
-        <label class:on={preset === "default"}
-          ><input
-            type="radio"
-            bind:group={preset}
-            value="default"
-          />Online</label
-        >
-        <label class:on={preset === "ema"}
-          ><input type="radio" bind:group={preset} value="ema" />EMA 2025</label
-        >
-      </div>
-    </fieldset>
+  <ContinueLearning />
 
-    <fieldset>
-      <legend>Opponents</legend>
-      <div class="seg elo">
-        {#each BOT_PRESETS as elo (elo)}
-          <label class:on={bots === elo}
-            ><input type="radio" bind:group={bots} value={elo} />{elo}</label
-          >
-        {/each}
-      </div>
-    </fieldset>
-
-    <fieldset>
-      <legend>Hints</legend>
-      <select bind:value={hints}>
-        <option value="off">Off</option>
-        <option value="distance">Distance ("3 away")</option>
-        <option value="full">+ Discard advice</option>
-      </select>
-    </fieldset>
-
-    <div class="start">
-      {#if saved}
-        <a class="btn big" class:primary={!data.online} href="/play">
-          <span>Continue</span>
-          <span class="round"
-            >{WINDS[saved.round.wind]} {saved.round.dealer + 1}</span
-          >
-        </a>
-      {/if}
-      <button
-        class="btn big"
-        class:primary={!data.online && !saved}
-        type="submit"
-      >
-        {saved ? "New game" : "Play vs bots"}
-      </button>
-    </div>
-  </form>
+  <a class="card daily" href="/train/daily">
+    <span class="name">Daily set</span>
+    <span class="what">A mix of every drill</span>
+    <span class="facts">
+      {#if daily}<span><b>{daily.length}</b>/{DAILY.length}</span>{/if}
+      {#if streak}<span><b>{streak}</b> days</span>{/if}
+    </span>
+  </a>
 
   {#key data.discard.date}
     <DailyDiscard {...data.discard} />
   {/key}
 
-  <nav class="more">
-    <a class="learn" href="/learn">New to riichi mahjong? <strong>Learn to play</strong> →</a>
-    <a class="learn" href="/train">Sharpen your reads: <strong>Train</strong> →</a>
-  </nav>
-</main>
+  <!-- New sections, one after another for now: arrange freely. -->
+  {#if data.me}
+    <PlayerStats rating={data.me.rating} week={data.me.week} {today} />
+    <RecentGames games={data.me.recent} />
+  {/if}
+</ContentShell>
+
+{#if botSheet}
+  <BotGameSheet {saved} onclose={() => (botSheet = false)} />
+{/if}
 
 <style>
-  main {
-    max-width: 440px;
-    margin: 0 auto;
-    padding: 32px 18px calc(24px + env(safe-area-inset-bottom));
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-  .account {
-    display: flex;
-    justify-content: flex-end;
-    gap: 6px;
-    margin: -16px -4px 0;
-  }
-  .account .chip {
-    min-height: 36px;
-    padding: 0 14px;
-    font-size: 0.9rem;
-    color: var(--ink);
-    text-decoration: none;
-  }
   h1 {
-    margin: 16px 0 4px;
+    margin: 24px 0 8px !important;
     display: flex;
     justify-content: center;
   }
@@ -182,77 +126,70 @@
     width: min(280px, 100%);
     height: auto;
   }
-  .tag {
-    text-align: center;
-    margin: 0 0 16px;
-    color: var(--ink-dim);
-  }
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  fieldset {
-    border: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  legend {
-    font-size: 0.8rem;
-    color: var(--ink-dim);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-  .seg.elo {
-    grid-template-columns: repeat(5, 1fr);
-    font-variant-numeric: tabular-nums;
-  }
-  .big {
-    min-height: 56px;
-    font-size: 1.15rem;
-    margin-top: 8px;
-  }
-  .online {
-    text-decoration: none;
-    margin-top: 0;
-  }
-  .more {
-    display: flex;
-    flex-direction: column;
+  .play {
+    width: 100%;
+    min-height: 60px;
     margin-top: 10px;
-  }
-  .learn {
-    padding: 10px 12px;
-    text-align: center;
-    color: var(--ink-dim);
+    font-size: 1.25rem;
     text-decoration: none;
   }
-  .learn strong {
-    color: var(--ink);
-  }
-  .start {
-    display: flex;
-    gap: 8px;
-  }
-  .start .btn {
-    flex: 1;
-    text-decoration: none;
-  }
-  .online .elo,
-  .start .round {
+  .play .elo {
     font-size: 0.85rem;
     font-weight: 600;
     opacity: 0.75;
     font-variant-numeric: tabular-nums;
   }
-  .or {
-    margin: 0;
-    text-align: center;
+  .pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0;
+  }
+  .card {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-content: center;
+    gap: 2px 10px;
+    padding: 14px;
+    border-radius: var(--radius);
+    background: var(--panel);
+    color: var(--ink);
+    font: inherit;
+    line-height: 1.4;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .card.daily {
+    background: var(--surface-me);
+    margin-top: 8px;
+  }
+  @media (hover: hover) {
+    .card:hover {
+      filter: brightness(1.1);
+    }
+  }
+  .name {
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .what {
+    grid-column: 1;
     color: var(--ink-dim);
+    font-size: 0.9rem;
+  }
+  .facts {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
     font-size: 0.8rem;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .facts b {
+    color: var(--ink);
   }
 </style>

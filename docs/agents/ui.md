@@ -68,10 +68,27 @@ sounds, theme. Structure of the web app: [web.md](web.md).
 
 Content on a narrow page that needs the width (a hand of tiles) goes in a **band** (`lib/components/Band.svelte`,
 "Band" in the design system): it breaks out of the page column, edge to edge on phones (square corners) and
-`band-max` (560 px) centred on wider screens, on `surface-me`, with only 4 px side padding. Its heading is a label
+`band-max` (560 px) centred on wider screens, on `surface-me`, with only 4 px side padding. It keeps 18 px above and below
+(collapsing with the neighbours' margins). Its heading is a label
 (with an optional aside on the right, e.g. a countdown) in line with the page column; text rows inside indent by
 `--band-inset` to stay in line too. It is a size container, so tile rows inside measure the band. Pass
 `style="--tile-ratio: …"` when it holds tiles outside the play screen.
+
+## Home page
+
+Same frame as Learn and Train (`ContentShell`). Top to bottom: the logo row (the `h1`), one big gold **Play online** (signed
+in: `/online` with the rating; guests: sign up; signed in while the game server is down: the bot sheet), then cards:
+**Bots** and **Train** side by side (Bots opens `BotGameSheet` with every offline setting), **ContinueLearning**, the
+**Daily set** (`/train/daily`, with progress) and the daily discard band. No tagline: the meta tags carry the keywords.
+
+The sections in `lib/home/` (the ones below the discard hide themselves when they have nothing to show):
+- **ContinueLearning** (the way into Learn): a card for the first lesson not completed ("Start learning" before any),
+  `n/N` and a gold progress bar; once the course is done, "Course complete" linking to `/learn`.
+- **PlayerStats** (signed in): four tiles: rating with its 7-day change, games in 7 days, daily-set day streak, best
+  trainer streak.
+- **RecentGames** (signed in): the last three finished games: placement, length, points, rating change, age.
+- **LiveNow** (right under Play online): a green dot and the number of players seated in running games (no table
+  count: a table is always four).
 
 ## Learn pages
 
@@ -114,11 +131,12 @@ Content on a narrow page that needs the width (a hand of tiles) goes in a **band
   "Sign up to keep it". It shows only to guests who have made progress this visit, under the title of `/learn` and
   `/train`, above the CTA at the end of a lesson, and in the Rush and daily results. It never blocks a drill. The
   design system has no notice component; this follows the inline CTA row.
-- **Daily discard** (a `Band` on the home page, under the play form): the heading with a countdown to the next hand as its aside
+- **Daily discard** (a `Band` on the home page): the heading with a countdown to the next hand as its aside
   (H:MM:SS to UTC midnight, device clock; the page reloads at zero), then the lessons' hand slice with round and dora. Once
   voted the hand is shown only (`inspect={false}`, every tile but the pick dimmed via `lit`); after the
-  vote, one row per kind voted: tile, a bar and the share in %, the reader's own with an ink dot and ink bar, then the
-  vote count. No efficiency verdict anywhere (it's preference, not a quiz).
+  vote, one row per kind voted: tile, a bar and the share in %, the reader's own with an ink bar, in a
+  box that shows the top three rows and a peek of the fourth and scrolls the rest. The vote count sits under it, and
+  shows before the vote too (it says nothing about the picks). No efficiency verdict anywhere (it's preference, not a quiz).
 - The design system has no trainer components yet: these four are a noted deviation until added there.
 
 ## Hints

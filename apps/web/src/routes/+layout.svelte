@@ -20,7 +20,7 @@
   });
 </script>
 
-<!-- Content pages (Learn, Train) set `contentPage`: they have no fullscreen toggle. Metadata comes from each page
+<!-- Content pages (home, Learn, Train) set `contentPage`: they have no fullscreen toggle. Metadata comes from each page
      (`Seo`, or `Title` on app pages). -->
 <BgPattern />
 {@render children()}

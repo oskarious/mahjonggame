@@ -1,0 +1,8 @@
+Stat tiles: a row of read-only numbers about the player — rating, games this week, streaks.
+
+Source: `apps/web/src/lib/home/PlayerStats.svelte` (signed-in players on the home page).
+
+- A grid of up to four `panel` tiles, `space-6` apart, padding 10px, `radius`; the first may be wider (a rating with its rank badge).
+- Each tile: a `label` (0.7rem here) over a bold tabular number (1.05rem); its unit follows in 0.75rem `ink-dim` ("1 / 7d", "3 streak").
+- Not links: a number that leads somewhere belongs on a Card.
+- A change follows its number signed ("+9", "−19"). It is coloured `ok` / `danger` as text, an open deviation from status as fills (the sign carries the meaning too).

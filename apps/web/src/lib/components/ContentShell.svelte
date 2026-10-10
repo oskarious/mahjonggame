@@ -1,6 +1,6 @@
 <script lang="ts">
-  // The frame of the content pages (Learn, Train): a sticky header with the sections and the call to action, and one
-  // reading column.
+  // The frame of every page but the game (home, Learn, Train): a sticky header with the sections, the call to action
+  // and the account (sign in for guests), and one reading column.
   import type { Snippet } from 'svelte';
   import { page } from '$app/state';
   import Cta from '$lib/learn/components/Cta.svelte';
@@ -12,6 +12,7 @@
     { href: '/learn', label: 'Learn' },
     { href: '/train', label: 'Train' },
   ];
+  const user = $derived(page.data.user as { name: string } | null | undefined);
   const here = (href: string) => page.url.pathname === href || page.url.pathname.startsWith(`${href}/`);
 </script>
 
@@ -24,6 +25,9 @@
       >
     {/each}
     <span class="cta"><Cta variant="header" /></span>
+    <a class="account" href={user ? '/account' : '/login'} aria-label={user ? `Account: ${user.name}` : 'Sign in'}>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.75" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg>
+    </a>
   </header>
   <main>
     {@render children()}
@@ -40,8 +44,8 @@
     z-index: 10;
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 10px 16px;
+    gap: 12px;
+    padding: 10px 10px 10px 16px;
     padding-top: calc(10px + env(safe-area-inset-top));
     background: color-mix(in srgb, var(--bg) 92%, transparent);
     backdrop-filter: blur(6px);
@@ -61,6 +65,27 @@
   }
   .cta {
     margin-left: auto;
+  }
+  .account {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    margin-left: -4px;
+    color: var(--ink-dim);
+  }
+  .account svg {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  @media (hover: hover) {
+    .account:hover {
+      color: var(--ink);
+    }
   }
   main {
     /* Tile rows measure their width against this (see --col in app.css). */

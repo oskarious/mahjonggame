@@ -209,8 +209,19 @@ components:
   band:
     backgroundColor: "{colors.surface-me}"
     rounded: "{rounded.md}"
-    padding: 14px 4px 12px
+    padding: 12px 4px
     width: 560px
+  card:
+    backgroundColor: "{colors.panel}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    padding: 14px
+  card-today:
+    backgroundColor: "{colors.surface-me}"
+  stat-tile:
+    backgroundColor: "{colors.panel}"
+    rounded: "{rounded.md}"
+    padding: 10px
   tile:
     backgroundColor: "{colors.tile-face}"
     rounded: 14%
@@ -264,6 +275,8 @@ print and social use.
 - **Gold (`accent` #f2c14e)** — the single call to action per decision (Play online, Ron, Tsumo) and "you" (your
   seat in the logo, your bank time). Text on gold is `accent-ink`. In print on light grounds the gold is
   `brand-gold-on-light` #b07d0e.
+- **Gold bars mean your progress or your time** (the course progress bar, the Rush clock, bank time); any other bar
+  is neutral.
 - **Status as fills, never text colour alone:** `ok` with `ok-ink` (Tenpai), `danger` with `danger-ink` (Furiten,
   Leave game). Every status also carries a word.
 - **Tile colours:** ivory face `tile-face` #fbfaf4 over a `tile-edge` #d8d0b8 ledge; backs a 160° gradient from
@@ -294,6 +307,8 @@ in a group 6px.
 
 Content that needs the width (a hand of tiles) goes in a **band**: a full-bleed strip on `surface-me` that breaks out
 of the column, edge to edge on phones and 560px centred on wider screens, with a small uppercase label heading.
+Bands keep 18px above and below (collapsing with the neighbours' margins). Counts sit top right, on the line of the
+label they belong to (a band's countdown, a progress card's `2/26`), never in a column of their own.
 Sheets rise from the bottom, max 520px wide, over a 45% black scrim. On the play screen the player's own panel sits
 at the bottom; buttons overlay its sides two per row rather than adding a row, and room for timers is reserved so
 the board never jumps.
@@ -328,6 +343,11 @@ Each has a README and an HTML preview in `components/`.
 - **Segmented control** — a grid of 44px options; the chosen one inverts to an ink fill with green text.
 - **Sheet** — bottom sheet on `panel` for hand results, final standings and settings; one primary button to move on.
 - **Band** — full-bleed strip for a hand of tiles on a narrow page.
+- **Header** — sticky bar on every page but the game: wordmark, sections (current in ink), the compact CTA (Play / Sign
+  up) and the account icon. Fits 360px on one line.
+- **Card** — a tappable `panel` that leads somewhere: bold name, dimmed summary, facts on the right; `surface-me` for
+  today's. Progress variant: label line with the count on its right, a 3px gold bar. Never static.
+- **Stats** — a row of up to four read-only tiles: label over a bold tabular number with a dimmed unit.
 - **Tile** — ivory face, edge ledge, artwork, corner index on a light plate; states: gold glow (dora), blue glow
   (matching), raised (last/winning), green dot (hint), dimmed (not usable now), sideways (called / riichi), back.
 - **Timer bar** — 3px bar above the own panel; dim while in the turn allowance, gold with seconds when bank time runs.

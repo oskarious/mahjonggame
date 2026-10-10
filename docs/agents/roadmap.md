@@ -4,8 +4,9 @@ Read when designing a feature that touches game records, replays, leaderboards, 
 features.
 
 - Game records are stored (`game`, `game_seat`, `game_action`) but there is no replay/history UI, leaderboard or
-  profile yet. Bot players are designed to appear in those like humans; whether leaderboards include them is open
-  (the `bot` table allows either). Also open: a neutral "opponents may include AI players" line on an about page.
+  profile yet (the home page shows a player's last three games, `lib/server/home.ts`). Bot players are designed to
+  appear in those like humans (the home page's "playing now" count includes them); whether leaderboards include them
+  is open (the `bot` table allows either). Also open: a neutral "opponents may include AI players" line on an about page.
   Bot-only games store full action logs (~10k rows/hour at ~12 tables); prune old ones if it ever matters.
 - Open question: replays should not reveal the other players' hands to the player themself. Never serve the log of
   a running game (fair-play.md).

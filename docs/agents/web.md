@@ -37,7 +37,12 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
                         (the game server runs it with Node type stripping)
   src/lib/progress/     progress for Learn and Train (see "Progress" below): events.ts (shapes, request parsing, apply,
                         merge; shared with the server), client.svelte.ts (the store), ProgressNudge.svelte
-  src/lib/components/ContentShell.svelte   the frame of Learn and Train pages (header with both sections + CTA)
+  src/lib/components/ContentShell.svelte   the frame of every page but the game (home, Learn, Train): header with both
+                                           sections, the CTA and an account icon (`/account`, or `/login` for guests)
+  src/lib/components/BotGameSheet.svelte   the home page's offline game settings, a bottom sheet (Continue / New game)
+  src/lib/home/         the home page's sections below the daily discard (see ui.md); their queries are in
+                        src/lib/server/home.ts (players in running games, a player's week and recent games). Bot players
+                        count there like everyone else
   src/lib/components/Band.svelte           a full-bleed section of a narrow page (see ui.md)
   migrations/           Kysely migrations (NNNN_name.ts, import only from kysely); bundled and run on server start;
                         0001_auth = Better Auth tables; 0002_game_server = rating, game, game_seat, game_action
@@ -192,7 +197,7 @@ Kept **only on accounts**, a sign-up incentive (openspec account-only-progress).
 
 A poll, not a puzzle: one hand per UTC day for everyone (`dailyDiscard(date)`: an efficiency-trainer hand, with
 round and dora shown, under a "Daily discard" heading and no prompt): discard any tile. **No right answer is shown and no stats before the vote**,
-so nothing sways it: the home page load sends the tally only to voters, and `POST /daily-discard` answers a vote
+so nothing sways it: the home page load sends everyone only the vote count (`voteCount`) and the tally only to voters, and `POST /daily-discard` answers a vote
 with it. One vote per voter and day (the first stands): by `userId` (FK to `user`) when signed in, else by `guestId` from
 the httpOnly `riichi_voter` cookie (set on the first guest vote); exactly one is set, and both are checked, so signing in after voting doesn't
 reopen the ballot. Ballot stuffing by clearing cookies is possible and accepted (it's a fun poll, not a ranking).
@@ -206,8 +211,8 @@ A vote from a page left open past midnight UTC gets 409 and the page reloads to 
 ## Offline autosave
 
 Offline games autosave after every action (one slot, `saved.ts`) and resume by replaying the log: bare `/play`
-resumes, `/play?…` starts a new game and then replaces the URL with `/play`; the home page shows Continue next to
-New game. The save is cleared at game over; unreadable or non-replaying saves are dropped silently. A save
+resumes, `/play?…` starts a new game and then replaces the URL with `/play`; the home page's Bots card says
+Continue, and its sheet shows Continue next to New game. The save is cleared at game over; unreadable or non-replaying saves are dropped silently. A save
 stores the engine's `ENGINE_VERSION` and is discarded under any other (bump rule: engine.md).
 
 ## Deploys and open pages
