@@ -47,13 +47,13 @@ export const LESSONS: LessonMeta[] = [
     slug: 'how-to-play',
     unit: 'basics',
     title: 'How to play riichi mahjong',
-    seoTitle: 'How to play riichi mahjong: a beginner’s guide',
+    seoTitle: 'How to play mahjong for beginners: riichi rules',
     description:
-      'Learn riichi mahjong from scratch: the goal, the tiles, a turn and how to win, with interactive hands you play right in the page.',
+      'How to play mahjong (riichi, the Japanese version) for beginners: the goal, a turn and how to win, with hands you play in the page.',
     summary: 'The goal of the game and what a winning hand looks like.',
     related: ['tiles', 'sets-and-winning-hands', 'winning'],
     published: P,
-    updated: U,
+    updated: '2026-10-10',
   },
   {
     slug: 'tiles',
@@ -355,14 +355,26 @@ export const LESSONS: LessonMeta[] = [
   },
 ];
 
-/** Reference pages that are not lessons but belong to the course (index, sitemap, CTA). */
+/** The course's name (Course JSON-LD, the Learn index's h1, lesson breadcrumbs in JSON-LD). */
+export const COURSE_NAME = 'Learn riichi mahjong';
+
+/** Reference pages that are not lessons but belong to the course (index in this order, sitemap, CTA). */
 export const REFERENCE = {
+  rules: {
+    path: '/learn/rules',
+    title: 'Rules in one page',
+    seoTitle: 'Mahjong rules for beginners: riichi in one page',
+    description:
+      'Riichi mahjong rules for beginners on one page: the tiles, a turn, calls, winning, yaku, scoring and how a game ends.',
+    summary: 'The whole game on one page.',
+  },
   yaku: {
     path: '/learn/yaku',
     title: 'Yaku list',
     seoTitle: 'Riichi mahjong yaku list: every yaku with examples',
     description:
       'Every riichi mahjong yaku and yakuman with its han (closed and open), the rule in one line and an example hand.',
+    summary: 'Every yaku with an example hand.',
   },
   glossary: {
     path: '/learn/glossary',
@@ -370,6 +382,7 @@ export const REFERENCE = {
     seoTitle: 'Riichi mahjong glossary: Japanese terms explained',
     description:
       'Riichi mahjong terms in plain English: tenpai, shanten, furiten, yaku, han, fu, dora, tsumo, ron, pon, chii, kan and more.',
+    summary: 'Japanese terms in plain English.',
   },
 } as const;
 

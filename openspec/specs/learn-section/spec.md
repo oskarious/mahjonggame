@@ -4,9 +4,9 @@
 TBD - created by archiving change interactive-lessons. Update Purpose after archive.
 ## Requirements
 ### Requirement: Public, server-rendered pages
-The site SHALL serve `/learn` (course index), `/learn/<slug>` (one lesson per concept), `/learn/yaku` (yaku list) and
-`/learn/glossary` to anyone, without an account or login redirect. Every Learn page SHALL be server-rendered: the
-HTML sent before any script runs SHALL contain the full article (headings, all explanatory text, tile figures as
+The site SHALL serve `/learn` (course index), `/learn/<slug>` (one lesson per concept), `/learn/rules` (rules
+summary), `/learn/yaku` (yaku list) and `/learn/glossary` to anyone, without an account or login redirect. Every Learn
+page SHALL be server-rendered: the HTML sent before any script runs SHALL contain the full article (headings, all explanatory text, tile figures as
 images with text alternatives, tables, exercise prompts in their initial state). Unknown slugs SHALL answer 404.
 
 #### Scenario: Signed-out visitor
@@ -56,7 +56,7 @@ without horizontal scrolling.
 ### Requirement: Course index
 `/learn` SHALL present the course by unit in curriculum order, each lesson with its title, a one-line summary and,
 on this device, whether it is completed; it SHALL highlight the first lesson not yet completed as the place to
-continue, and link to the yaku list and glossary.
+continue, and link to the rules summary, the yaku list and the glossary.
 
 #### Scenario: Returning visitor
 - **WHEN** a visitor who completed the first three lessons opens `/learn`
@@ -105,7 +105,8 @@ buttons) and be a single readable column on every screen width.
 - **THEN** the first "shanten" is a link to `/learn/glossary#shanten`
 
 ### Requirement: Call to action on every page
-Every lesson page, the yaku list, the glossary and the index SHALL show a call to action to play on Riichi Arena:
+Every lesson page, the rules summary, the yaku list, the glossary and the index SHALL show a call to action to play on
+Riichi Arena:
 - at the end of the article, a prominent block: for guests "Sign up and play" linking to `/signup?next=/online` plus
   "Play a bot now" linking to offline play (no account); for signed-in players "Play online" linking to `/online`
   plus "Play a bot";
@@ -125,6 +126,17 @@ The call to action SHALL be part of the server-rendered HTML.
 #### Scenario: Sign-up returns to play
 - **WHEN** a guest follows "Sign up and play" and creates an account
 - **THEN** they land on `/online`
+
+### Requirement: Rules summary page
+`/learn/rules` SHALL summarize the whole game on one page for beginners searching for "mahjong rules": that riichi is
+the Japanese form of mahjong (and differs from American and Chinese mahjong), the tiles, a winning hand, a turn,
+calls, winning and yaku, riichi, dora, scoring and payments, and how a game ends, following the EMA Riichi Rules 2025
+and naming where Riichi Arena differs. Each section SHALL link to the lesson that teaches it. Lesson 1 SHALL link to
+it.
+
+#### Scenario: Reader wants the details
+- **WHEN** a reader finishes the scoring section
+- **THEN** it links to the han and fu lesson and the payments lesson
 
 ### Requirement: Yaku list page
 `/learn/yaku` SHALL list every yaku the engine scores (including yakuman), grouped by value, each with its Japanese
@@ -155,7 +167,7 @@ it). Progress SHALL be read only on the client, so server-rendered HTML never de
 
 ### Requirement: Discoverable by search engines
 The site SHALL serve `/robots.txt` and `/sitemap.xml`. The sitemap SHALL list the home page, `/learn`, every lesson,
-the yaku list and the glossary, generated from the lesson registry, so a new lesson appears without editing the
+the rules summary, the yaku list and the glossary, generated from the lesson registry, so a new lesson appears without editing the
 sitemap by hand. `/admin`, `/account`, `/online` and the auth API SHALL be disallowed in robots.txt and left out of
 the sitemap, and the sign-in and sign-up pages SHALL be left out of the sitemap. The home page SHALL link to `/learn`
 for every visitor.

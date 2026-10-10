@@ -99,7 +99,8 @@ Public pages are marketing: every route that robots.txt does not disallow must b
 ## Learn (public course)
 
 Free, public, server-rendered lessons (marketing: they must rank in search and lead to sign-up). One concept per URL
-(`/learn/<slug>`), plus `/learn/yaku` and `/learn/glossary`; `/sitemap.xml` is generated from the registry.
+(`/learn/<slug>`), plus the reference pages `/learn/rules`, `/learn/yaku` and `/learn/glossary`
+(`REFERENCE` in the registry); `/sitemap.xml` is generated from the registry.
 
 - **SSR, not prerendered**: the root layout resolves the session, and the call to action differs for signed-in
   players. The learn layout sets `contentPage` (no fullscreen toggle); each page sets its own meta via `Seo`.

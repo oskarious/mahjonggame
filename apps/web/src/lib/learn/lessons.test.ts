@@ -275,7 +275,8 @@ describe.each(LESSONS.map((l) => [l.slug, l] as const))('lesson %s', (slug, meta
 
   it('links only existing lessons', () => {
     for (const m of src.matchAll(/href="\/learn\/([a-z0-9-]+)/g)) {
-      const ok = LESSONS.some((l) => l.slug === m[1]) || m[1] === 'yaku' || m[1] === 'glossary';
+      const path = `/learn/${m[1]}`;
+      const ok = LESSONS.some((l) => l.slug === m[1]) || Object.values(REFERENCE).some((r) => r.path === path);
       expect(ok, `link /learn/${m[1]}`).toBe(true);
     }
   });

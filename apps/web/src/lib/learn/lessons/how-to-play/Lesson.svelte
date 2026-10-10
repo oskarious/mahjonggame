@@ -4,9 +4,11 @@
 
 <Part title="The goal: four sets and a pair">
   <p>
-    Riichi mahjong is the Japanese form of mahjong: four players race to complete a hand first. You hold 13 tiles and
-    win with 14: four sets of three and one pair.
+    Mahjong is a four-player tile game from China, played much like a card game such as rummy. Riichi mahjong is its
+    Japanese form, the one played here; American and Chinese mahjong use other rules. All the rules on one page:
+    <a href="/learn/rules">Rules in one page</a>.
   </p>
+  <p>Four players race to complete a hand first. You hold 13 tiles and win with 14: four sets of three and one pair.</p>
   <Tiles t="123m 456p 789s 55m 456p" caption="A complete hand: four sets and a pair" />
   <p>
     A set is a <Term id="sequence">sequence</Term> (three in a row in one suit, like <T t="456p" />) or a

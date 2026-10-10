@@ -7,11 +7,12 @@ site icons and one canonical origin.
 ## Requirements
 ### Requirement: SEO for every public page
 Every public page SHALL stay strong for search through every frontend change that adds or changes it (a public page
-is any route not disallowed in robots.txt and not `noindex`): server-rendered main content, a unique `<title>` and meta description written for
-the query it targets, exactly one `<h1>`, a canonical URL, Open Graph and Twitter tags (through the shared `Seo`
-component), JSON-LD where a schema.org type fits, descriptive link text and image alt text, and an entry in
-`sitemap.xml` (or a stated reason in the sitemap code for leaving it out). A route that should not be indexed SHALL
-be disallowed in robots.txt or carry `noindex`. A test SHALL check every route directory against these rules, so a new
+is any route not disallowed in robots.txt and not `noindex`): server-rendered main content, a unique
+`<title>` of at most 70 characters (site name included) and meta description written for the query it targets, exactly
+one `<h1>`, a canonical URL, Open Graph and Twitter tags (through the shared `Seo` component), JSON-LD where a
+schema.org type fits, descriptive link text and image alt text, and an entry in `sitemap.xml` (or a stated reason in the sitemap code for leaving it out). A route that should not be indexed SHALL
+be disallowed in robots.txt or carry `noindex`. A test SHALL check every route directory (and the lesson, reference
+and trainer titles in the registries) against these rules, so a new
 page without them fails `npm test`.
 
 #### Scenario: New page without metadata
@@ -22,6 +23,10 @@ page without them fails `npm test`.
 #### Scenario: New app-only page
 - **WHEN** a developer adds an app-only route and disallows it in robots.txt
 - **THEN** the route SEO test passes without metadata or a sitemap entry
+
+#### Scenario: Title too long
+- **WHEN** a page or registry title makes the full `<title>` longer than 70 characters
+- **THEN** the route SEO test fails and names the title
 
 ### Requirement: Home page metadata
 The home page SHALL have its own `<title>` and meta description written for "play riichi mahjong online", a canonical

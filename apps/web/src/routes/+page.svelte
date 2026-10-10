@@ -45,7 +45,7 @@
 </script>
 
 <Seo
-  title="Play riichi mahjong online"
+  title="Play riichi mahjong online free"
   description="Play riichi mahjong online for free: rated games against players at your level, bots, lessons and trainers. No downloads, made for your phone."
   path="/"
   type="website"

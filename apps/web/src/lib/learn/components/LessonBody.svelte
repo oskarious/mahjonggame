@@ -5,7 +5,7 @@
   import { markRead } from '$lib/learn/progress.svelte';
   import { trackOwner } from '$lib/progress/client.svelte';
   import ProgressNudge from '$lib/progress/ProgressNudge.svelte';
-  import type { LessonMeta, Unit } from '$lib/learn/registry';
+  import { COURSE_NAME, type LessonMeta, type Unit } from '$lib/learn/registry';
   import { trainerForLesson } from '$lib/train/registry';
   import Cta from './Cta.svelte';
   import Seo from '$lib/components/Seo.svelte';
@@ -58,7 +58,7 @@
       image: origin + OG_IMAGE,
       inLanguage: 'en',
       learningResourceType: 'Lesson',
-      isPartOf: { '@type': 'Course', name: 'Learn riichi mahjong', url: `${origin}/learn` },
+      isPartOf: { '@type': 'Course', name: COURSE_NAME, url: `${origin}/learn` },
       author: siteOrganization(origin),
       publisher: siteOrganization(origin),
     },

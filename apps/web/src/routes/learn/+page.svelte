@@ -7,7 +7,7 @@
   import { completed } from '$lib/learn/progress.svelte';
   import { progressLoaded, trackOwner } from '$lib/progress/client.svelte';
   import ProgressNudge from '$lib/progress/ProgressNudge.svelte';
-  import { REFERENCE, UNITS, published } from '$lib/learn/registry';
+  import { COURSE_NAME, REFERENCE, UNITS, published } from '$lib/learn/registry';
   import { siteOrganization } from '$lib/site';
 
   const lessons = published(dev);
@@ -28,7 +28,7 @@
     {
       '@context': 'https://schema.org',
       '@type': 'Course',
-      name: 'Learn riichi mahjong',
+      name: COURSE_NAME,
       description:
         'A free, interactive riichi mahjong course from the tiles to scoring and strategy, based on the EMA 2025 rules.',
       url: `${origin}/learn`,
@@ -41,14 +41,14 @@
 </script>
 
 <Seo
-  title="Learn riichi mahjong: a free interactive course"
-  description="Learn riichi mahjong step by step, from the tiles to scoring and strategy, with hands you play right in the page. Free, no account needed."
+  title="Learn mahjong: free riichi lessons for beginners"
+  description="A free mahjong tutorial for beginners: riichi lessons from the tiles to scoring and strategy, with hands you play in the page. No account needed."
   path="/learn"
   type="website"
   {jsonld}
 />
 
-<h1>Learn riichi mahjong</h1>
+<h1>{COURSE_NAME}</h1>
 <p>
   A free course from your first tile to scoring, building a hand, and attack and defense. Every lesson has hands you
   play right in the page, with the same controls as a real game. No account needed.
@@ -82,19 +82,11 @@
 <section class="unit">
   <h2>Reference</h2>
   <ol>
-    <li>
-      <a href={REFERENCE.yaku.path}
-        ><span class="title">{REFERENCE.yaku.title}</span><span class="summary">Every yaku with an example hand.</span
-        ></a
-      >
-    </li>
-    <li>
-      <a href={REFERENCE.glossary.path}
-        ><span class="title">{REFERENCE.glossary.title}</span><span class="summary"
-          >Japanese terms in plain English.</span
-        ></a
-      >
-    </li>
+    {#each Object.values(REFERENCE) as ref (ref.path)}
+      <li>
+        <a href={ref.path}><span class="title">{ref.title}</span><span class="summary">{ref.summary}</span></a>
+      </li>
+    {/each}
   </ol>
 </section>
 

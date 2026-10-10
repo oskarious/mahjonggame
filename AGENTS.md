@@ -85,8 +85,9 @@ Calibration: engine.md. Docker images: deployment.md.
 - **Re-run bot calibration after any bot change** and commit the generated `bot-ratings.ts`.
 - **The `user` table contains bot players**: anything that counts, lists or emails users must join `bot`.
 - **Every public page carries strong SEO**: when adding or changing a page that search engines may crawl, render
-  `Seo` (title, description, canonical, JSON-LD where a type fits) and list it in `lib/seo.ts` (sitemap, or unlisted
-  with a reason, or disallowed). `routes/seo.test.ts` enforces it. Details: web.md.
+  `Seo` (title of at most 70 characters including " · Riichi Arena", description, canonical, JSON-LD where a type
+  fits) and list it in `lib/seo.ts` (sitemap, or unlisted with a reason, or disallowed). `routes/seo.test.ts`
+  enforces it. Details: web.md.
 - **UI:** portrait one-handed; minimal text, visual cues with one meaning each; never hard-code the 4/3 tile ratio.
 - **Follow the design system** ([Riichi Arena Design System](https://claude.ai/artifact/DwEQduBX3mYVKbfkuYhnvp): tokens,
   type, components, brand marks; read its README first) by default. Deviate only when explicitly decided, and then
