@@ -123,7 +123,13 @@ export function mergeSettings(base: BotSettings, patch: unknown): { settings: Bo
   for (const [key, v] of Object.entries(patch)) {
     if (key in NUMBERS) {
       const rule = NUMBERS[key as NumberKey];
-      if (typeof v !== 'number' || !Number.isFinite(v) || v < rule.min || v > rule.max || (rule.int && !Number.isInteger(v))) {
+      if (
+        typeof v !== 'number' ||
+        !Number.isFinite(v) ||
+        v < rule.min ||
+        v > rule.max ||
+        (rule.int && !Number.isInteger(v))
+      ) {
         return { error: `${key} must be ${rule.int ? 'an integer' : 'a number'} from ${rule.min} to ${rule.max}` };
       }
       next[key as NumberKey] = v;
@@ -141,7 +147,9 @@ export function mergeSettings(base: BotSettings, patch: unknown): { settings: Bo
       next[key] = v;
     } else if (key === 'regions') {
       if (!validRegions(v)) {
-        return { error: `regions must be 1 to ${MAX_REGIONS} entries of { tz: a time zone such as Asia/Tokyo, weight > 0 }` };
+        return {
+          error: `regions must be 1 to ${MAX_REGIONS} entries of { tz: a time zone such as Asia/Tokyo, weight > 0 }`,
+        };
       }
       next.regions = v.map((r) => ({ tz: r.tz, weight: r.weight }));
     } else {

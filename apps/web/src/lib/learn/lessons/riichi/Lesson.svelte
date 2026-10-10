@@ -27,8 +27,10 @@
 <Part title="The rewards">
   <Tiles t="234m 567p 789s 99s 23s" caption="Riichi with pinfu" />
   <p>
-    Riichi stacks with other yaku. Win within one go-around for <Yaku id="ippatsu">ippatsu</Yaku> (+1 han), and a riichi winner gets extra
-    <Term id="ura-dora">ura dora</Term>. Declare riichi almost every time your closed hand is in tenpai; the few exceptions are in
+    Riichi stacks with other yaku. Win within one go-around for <Yaku id="ippatsu">ippatsu</Yaku> (+1 han), and a riichi winner
+    gets extra
+    <Term id="ura-dora">ura dora</Term>. Declare riichi almost every time your closed hand is in tenpai; the few
+    exceptions are in
     <a href="/learn/riichi-or-dama">Riichi or dama</a>.
   </p>
   <Exercise id="win" />

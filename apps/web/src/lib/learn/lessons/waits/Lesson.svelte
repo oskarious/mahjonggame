@@ -4,8 +4,8 @@
 
 <Part title="Two-sided and closed waits">
   <p>
-    <T t="45p" /> waits on either end, <T t="3p" /> or <T t="6p" />: a <Term id="ryanmen">ryanmen</Term>, the best
-    basic wait. <T t="35s" /> only waits on the middle tile: a <Term id="kanchan">kanchan</Term>. An edge like <T t="12p" />
+    <T t="45p" /> waits on either end, <T t="3p" /> or <T t="6p" />: a <Term id="ryanmen">ryanmen</Term>, the best basic
+    wait. <T t="35s" /> only waits on the middle tile: a <Term id="kanchan">kanchan</Term>. An edge like <T t="12p" />
     (only <T t="3p" />) is a <Term id="penchan">penchan</Term>.
   </p>
   <Exercise id="kanchan" />

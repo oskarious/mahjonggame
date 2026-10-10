@@ -47,6 +47,7 @@
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={image} />
   {#each ld as json, i (i)}
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -- our own JSON-LD, with "<" escaped -->
     {@html json}
   {/each}
 </svelte:head>

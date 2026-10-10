@@ -121,7 +121,6 @@ describe('analyzeSeat / viewFor', () => {
     const g = scenario({ hands: [undefined, '123m456p789s55m23s'], discards: [undefined, '1s'] });
     expect(analyzeSeat(g, 1).furiten).toBe(true);
   });
-
 });
 
 describe('hint levels in the player view', () => {
@@ -141,7 +140,11 @@ describe('hint levels in the player view', () => {
 
     expect(viewFor(tenpai, 1, { hints: 'distance' }).hints).toMatchObject({ tilesAway: 1, shanten: 0, tenpai: true });
     const complete = scenario({ hands: ['123m456p789s55m23s'], draws: '4s' });
-    expect(viewFor(complete, 0, { hints: 'distance' }).hints).toMatchObject({ tilesAway: 0, shanten: -1, complete: true });
+    expect(viewFor(complete, 0, { hints: 'distance' }).hints).toMatchObject({
+      tilesAway: 0,
+      shanten: -1,
+      complete: true,
+    });
   });
 
   it('full: improving tiles and ranked discards', () => {
@@ -154,7 +157,9 @@ describe('hint levels in the player view', () => {
 
 describe('tenpai waits in the player view (any hint level)', () => {
   const opts = (g: ReturnType<typeof scenario>, seat = 0) =>
-    Object.fromEntries(viewFor(g, seat).tenpai.map((o) => [o.kind === null ? '-' : kindToString(o.kind), kinds(o.waits)]));
+    Object.fromEntries(
+      viewFor(g, seat).tenpai.map((o) => [o.kind === null ? '-' : kindToString(o.kind), kinds(o.waits)]),
+    );
 
   it('on turn: the waits after each discard that leaves the hand tenpai, even with hints off', () => {
     const g = scenario({ hands: ['123m456p789s55m23s'], draws: '5m' });
@@ -195,7 +200,10 @@ describe('tenpai waits in the player view (any hint level)', () => {
     for (let i = 0; i < 200; i++) {
       // One suit per hand, so tenpai (and riichi) is common.
       const suit = 36 * randomInt(rng, 3);
-      const tiles = shuffle(rng, Array.from({ length: 36 }, (_, j) => j + suit)).slice(0, 14);
+      const tiles = shuffle(
+        rng,
+        Array.from({ length: 36 }, (_, j) => j + suit),
+      ).slice(0, 14);
       const str = (ts: Tile[]) => ts.map((t) => kindToString(kindOf(t))).join('');
       const g = scenario({ hands: [str(tiles.slice(0, 13))], draws: str(tiles.slice(13)) });
       const v = viewFor(g, 0);
@@ -214,12 +222,22 @@ describe('tenpai waits in the player view (any hint level)', () => {
 
 describe('consistency with the rules (random hands)', () => {
   const rng = seedRng('analysis');
-  const deal = (n: number) => shuffle(rng, Array.from({ length: 136 }, (_, i) => i)).slice(0, n);
+  const deal = (n: number) =>
+    shuffle(
+      rng,
+      Array.from({ length: 136 }, (_, i) => i),
+    ).slice(0, n);
 
   it('13 tiles: tenpai matches waits(), ukeire tiles really reduce shanten', () => {
     for (let i = 0; i < 300; i++) {
       // Bias towards near-complete hands by drawing from a narrow set of kinds half the time.
-      const tiles = i % 2 ? deal(13) : shuffle(rng, Array.from({ length: 36 }, (_, j) => j)).slice(0, 13);
+      const tiles =
+        i % 2
+          ? deal(13)
+          : shuffle(
+              rng,
+              Array.from({ length: 36 }, (_, j) => j),
+            ).slice(0, 13);
       const unseen = unseenOf(tiles);
       const a = analyzeHand(tiles, [], unseen);
       expect(a.tenpai).toBe(waits(tiles, []).length > 0);
@@ -236,7 +254,13 @@ describe('consistency with the rules (random hands)', () => {
 
   it('14 tiles: the best discard matches the 14-tile shanten', () => {
     for (let i = 0; i < 200; i++) {
-      const tiles = i % 2 ? deal(14) : shuffle(rng, Array.from({ length: 36 }, (_, j) => j)).slice(0, 14);
+      const tiles =
+        i % 2
+          ? deal(14)
+          : shuffle(
+              rng,
+              Array.from({ length: 36 }, (_, j) => j),
+            ).slice(0, 14);
       const raw = shanten(countKinds(tiles), 0);
       const best = analyzeDiscards(tiles, [], unseenOf(tiles))[0];
       if (raw >= 1) expect(best.shanten).toBe(raw);

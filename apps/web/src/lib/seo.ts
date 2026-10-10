@@ -7,7 +7,8 @@ import { TRAINERS } from './train/registry';
 /** Path prefixes disallowed in robots.txt: private and app-only areas. */
 export const DISALLOW = ['/admin', '/account', '/online', '/play', '/api/', '/ws'];
 
-export const disallowed = (path: string) => DISALLOW.some((d) => path === d || path.startsWith(d.endsWith('/') ? d : `${d}/`));
+export const disallowed = (path: string) =>
+  DISALLOW.some((d) => path === d || path.startsWith(d.endsWith('/') ? d : `${d}/`));
 
 /** Public routes deliberately left out of the sitemap, with the reason. */
 export const UNLISTED: Record<string, string> = {

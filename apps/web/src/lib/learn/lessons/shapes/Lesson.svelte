@@ -5,9 +5,10 @@
 <Part title="Two-sided first">
   <Tiles t="45p 57p 12p" caption="Two-sided, closed, edge" />
   <p>
-    A two-sided shape accepts 8 tiles, a closed (<Term id="kanchan">kanchan</Term>) or edge
-    (<Term id="penchan">penchan</Term>) shape only 4. Lone tiles rank the same way: a middle tile can join the most
-    shapes, then 2s and 8s, then 1s and 9s, then honors.
+    A two-sided shape accepts 8 tiles, a closed (<Term id="kanchan">kanchan</Term>) or edge (<Term id="penchan"
+      >penchan</Term
+    >) shape only 4. Lone tiles rank the same way: a middle tile can join the most shapes, then 2s and 8s, then 1s and
+    9s, then honors.
   </p>
   <Exercise id="first" />
 </Part>
@@ -15,8 +16,8 @@
 <Part title="Four in a row">
   <Tiles t="3456s" caption="A set plus a spare, or two two-sided shapes" />
   <p>
-    Some four-tile shapes are worth more than they look. <T t="3456s" /> is a set with a spare tile, and almost any
-    nearby tile turns it into something useful. Keep shapes like this until you are close to tenpai.
+    Some four-tile shapes are worth more than they look. <T t="3456s" /> is a set with a spare tile, and almost any nearby
+    tile turns it into something useful. Keep shapes like this until you are close to tenpai.
   </p>
   <Exercise id="row" />
 </Part>

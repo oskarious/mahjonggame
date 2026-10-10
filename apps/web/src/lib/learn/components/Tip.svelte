@@ -96,7 +96,12 @@
 </script>
 
 {#if active}
-  <span class="wrap" bind:this={wrap} role="presentation" onpointerleave={(e) => e.pointerType === 'mouse' && hideSoon()}>
+  <span
+    class="wrap"
+    bind:this={wrap}
+    role="presentation"
+    onpointerleave={(e) => e.pointerType === 'mouse' && hideSoon()}
+  >
     <a
       class="term"
       {href}
@@ -111,8 +116,7 @@
         role="tooltip"
         bind:this={tip}
         style:--shift="{shift}px"
-        onpointerenter={() => clearTimeout(closeTimer)}
-        >{@render content()}<a class="more" {href}>{more}</a></span
+        onpointerenter={() => clearTimeout(closeTimer)}>{@render content()}<a class="more" {href}>{more}</a></span
       >{/if}
   </span>
 {:else}

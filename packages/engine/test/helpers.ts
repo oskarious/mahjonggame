@@ -27,7 +27,9 @@ export { scenario } from '../src/index.ts';
 // ---------------------------------------------------------------------------
 // Direct hand scoring
 
-export interface ScoreOpts extends Partial<Omit<WinContext, 'concealed' | 'melds' | 'winTile' | 'doraIndicators' | 'uraIndicators'>> {
+export interface ScoreOpts extends Partial<
+  Omit<WinContext, 'concealed' | 'melds' | 'winTile' | 'doraIndicators' | 'uraIndicators'>
+> {
   melds?: [MeldType, string][];
   dora?: string;
   ura?: string;
@@ -106,8 +108,7 @@ export function discard(seat: Seat, tile = 'drawn', riichi = false): Scripted {
       const red = tile.startsWith('0');
       const cands = p.hand.filter((t) => kindOf(t) === k && (!red || isRedTile(t, g.rules.redFives)));
       if (!cands.length) throw new Error(`Seat ${seat} has no ${tile}`);
-      const pick =
-        cands.find((t) => t === p.drawn) ?? cands.find((t) => !isRedTile(t, g.rules.redFives)) ?? cands[0];
+      const pick = cands.find((t) => t === p.drawn) ?? cands.find((t) => !isRedTile(t, g.rules.redFives)) ?? cands[0];
       return { type: 'discard', seat, tile: pick, riichi };
     },
   };
@@ -134,9 +135,7 @@ export function chii(seat: Seat, tiles?: string): Scripted {
 function findCall(g: GameState, seat: Seat, type: 'pon' | 'chii', tiles?: string): Action {
   const kinds = tiles ? parseTiles(tiles).map(kindOf).sort() : null;
   const a = legalActions(g, seat).find(
-    (x) =>
-      x.type === type &&
-      (!kinds || JSON.stringify(x.tiles.map(kindOf).sort()) === JSON.stringify(kinds)),
+    (x) => x.type === type && (!kinds || JSON.stringify(x.tiles.map(kindOf).sort()) === JSON.stringify(kinds)),
   );
   if (!a) throw new Error(`No legal ${type} ${tiles ?? ''} for seat ${seat}`);
   return a;
@@ -169,7 +168,9 @@ export function play(
     const seat = 'build' in step ? null : 'seat' in step ? step.seat : null;
     const pending = pendingSeats(g);
     const answersWindow =
-      isResponse && (g.hand.step.type === 'calls' || g.hand.step.type === 'chankan') && (seat === null || pending.includes(seat));
+      isResponse &&
+      (g.hand.step.type === 'calls' || g.hand.step.type === 'chankan') &&
+      (seat === null || pending.includes(seat));
     if (!answersWindow) g = settle(g, events);
     const action = 'build' in step ? step.build(g) : step;
     const r = applyAction(g, action);

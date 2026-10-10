@@ -1,5 +1,11 @@
 // One WebSocket: handshake (`hello`), message validation, rate limit, heartbeat. Game logic lives in the hub.
-import { MAX_MESSAGE_BYTES, PROTOCOL_VERSION, type RatingInfo, type ServerMessage, parseClientMessage } from '@mahjong/protocol';
+import {
+  MAX_MESSAGE_BYTES,
+  PROTOCOL_VERSION,
+  type RatingInfo,
+  type ServerMessage,
+  parseClientMessage,
+} from '@mahjong/protocol';
 import type { WebSocket } from 'ws';
 import type { AuthUser } from './auth.ts';
 import type { Config } from './config.ts';
@@ -52,8 +58,12 @@ export class Connection implements HubClient {
       return this.close(1008, 'rate limit');
     }
     const buf = data as Buffer | Buffer[] | ArrayBuffer;
-    const size = Array.isArray(buf) ? buf.reduce((n, b) => n + b.length, 0) : (buf as Buffer).byteLength ?? 0;
-    const text = isBinary ? '' : Array.isArray(buf) ? Buffer.concat(buf).toString() : Buffer.from(buf as Buffer).toString();
+    const size = Array.isArray(buf) ? buf.reduce((n, b) => n + b.length, 0) : ((buf as Buffer).byteLength ?? 0);
+    const text = isBinary
+      ? ''
+      : Array.isArray(buf)
+        ? Buffer.concat(buf).toString()
+        : Buffer.from(buf as Buffer).toString();
     const msg = isBinary || size > MAX_MESSAGE_BYTES ? null : parseClientMessage(text, size);
     if (!msg) {
       this.send({ type: 'error', code: 'badMessage' });

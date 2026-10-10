@@ -19,7 +19,13 @@ const formatters = new Map<string, Intl.DateTimeFormat>();
 function formatter(tz: string): Intl.DateTimeFormat {
   let f = formatters.get(tz);
   if (!f) {
-    f = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', weekday: 'short', hour: 'numeric', minute: 'numeric' });
+    f = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      hourCycle: 'h23',
+      weekday: 'short',
+      hour: 'numeric',
+      minute: 'numeric',
+    });
     formatters.set(tz, f);
   }
   return f;
@@ -170,8 +176,19 @@ export function parseSchedule(v: unknown): BotSchedule | null {
   if (typeof v !== 'object' || v === null) return null;
   const o = v as Record<string, unknown>;
   const win = (w: unknown): w is [number, number] =>
-    Array.isArray(w) && w.length === 2 && w.every((x) => Number.isFinite(x)) && w[0] >= 0 && w[0] < DAY_MIN && w[1] >= w[0] && w[1] < 2 * DAY_MIN;
+    Array.isArray(w) &&
+    w.length === 2 &&
+    w.every((x) => Number.isFinite(x)) &&
+    w[0] >= 0 &&
+    w[0] < DAY_MIN &&
+    w[1] >= w[0] &&
+    w[1] < 2 * DAY_MIN;
   if (!isValidTimeZone(o.tz) || !win(o.weekday) || !win(o.weekend)) return null;
   if (typeof o.appetiteMin !== 'number' || !(o.appetiteMin >= 0 && o.appetiteMin <= DAY_MIN)) return null;
-  return { tz: o.tz, weekday: [o.weekday[0], o.weekday[1]], weekend: [o.weekend[0], o.weekend[1]], appetiteMin: o.appetiteMin };
+  return {
+    tz: o.tz,
+    weekday: [o.weekday[0], o.weekday[1]],
+    weekend: [o.weekend[0], o.weekend[1]],
+    appetiteMin: o.appetiteMin,
+  };
 }

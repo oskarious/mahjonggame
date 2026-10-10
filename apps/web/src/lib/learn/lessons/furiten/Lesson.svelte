@@ -13,8 +13,9 @@
 
 <Part title="It covers every wait">
   <p>
-    Waiting on <T t="1s" /> or <T t="4s" /> with a <T t="4s" /> in your <Term id="river">river</Term>? You can't ron the <T t="1s" /> either:
-    furiten is about the whole hand.
+    Waiting on <T t="1s" /> or <T t="4s" /> with a <T t="4s" /> in your <Term id="river">river</Term>? You can't ron the <T
+      t="1s"
+    /> either: furiten is about the whole hand.
   </p>
   <Exercise id="whole" />
 </Part>
@@ -25,7 +26,10 @@
 </Part>
 
 <Part title="Avoiding furiten">
-  <p>When you can choose your wait, check your own <Term id="river">river</Term> first. A smaller wait you can ron on is usually better.</p>
+  <p>
+    When you can choose your wait, check your own <Term id="river">river</Term> first. A smaller wait you can ron on is usually
+    better.
+  </p>
   <Exercise id="avoid" />
 </Part>
 

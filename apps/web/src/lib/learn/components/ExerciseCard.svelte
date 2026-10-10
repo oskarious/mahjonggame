@@ -1,13 +1,6 @@
 <script lang="ts">
   import { type Snippet, setContext, untrack } from 'svelte';
-  import {
-    type Action,
-    type Kind,
-    type YakuId,
-    doraFromIndicator,
-    kindOf,
-    viewFor,
-  } from '@mahjong/engine';
+  import { type Action, type Kind, type YakuId, doraFromIndicator, kindOf, viewFor } from '@mahjong/engine';
   import PlayerArea from '$lib/components/PlayerArea.svelte';
   import Tile from '$lib/components/Tile.svelte';
   import { TILE_MARKS, type TileMarks } from '$lib/marks';
@@ -95,7 +88,9 @@
   const marks: TileMarks = $state({
     // Dora glow only where the exercise shows the dora: an unexplained gold tile is noise for a beginner.
     dora: new Set(
-      g && ex.show?.dora ? g.hand.doraIndicators.slice(0, g.hand.doraRevealed).map((t) => doraFromIndicator(kindOf(t))) : [],
+      g && ex.show?.dora
+        ? g.hand.doraIndicators.slice(0, g.hand.doraRevealed).map((t) => doraFromIndicator(kindOf(t)))
+        : [],
     ),
     focus: null,
   });
@@ -112,7 +107,10 @@
   const score = ex.kind === 'score' ? scoreQuiz(ex, g!) : null;
   const steps = ex.kind === 'fu' ? fuSteps(g!) : [];
   const indicatorNotation = g
-    ? g.hand.doraIndicators.slice(0, g.hand.doraRevealed).map((t) => tok(kindOf(t)).slice(1, -1)).join(' ')
+    ? g.hand.doraIndicators
+        .slice(0, g.hand.doraRevealed)
+        .map((t) => tok(kindOf(t)).slice(1, -1))
+        .join(' ')
     : '';
   const truth: Verdict | null = ex.kind === 'can-win' ? verdict(g!) : null;
 
@@ -120,8 +118,7 @@
   const baseView = g ? viewFor(g, 0, { hints: 'off' }) : null;
   const view = $derived.by(() => {
     if (!baseView) return null;
-    const live =
-      ex.kind === 'discard' ? !finished : ex.kind === 'call' ? !finished : false;
+    const live = ex.kind === 'discard' ? !finished : ex.kind === 'call' ? !finished : false;
     const actions = !live
       ? []
       : ex.kind === 'discard'
@@ -133,9 +130,7 @@
   const info = { round: !!ex.show?.round, dora: !!ex.show?.dora, wall: !!ex.show?.wall };
   const infoShown = info.round || info.dora || info.wall;
   /** Answers marked with the green dot once solved or revealed. */
-  const marked = $derived(
-    finished && ex.kind === 'discard' ? discardOk : new Set<Kind>(),
-  );
+  const marked = $derived(finished && ex.kind === 'discard' ? discardOk : new Set<Kind>());
 
   /** Every discard tried, in order. */
   let discarded: Kind[] = $state([]);
@@ -159,12 +154,19 @@
   /** An option that is only tiles (like "{6z}") shows them at tile size, not text size. */
   const tilesOnly = (o: string) => segments(o).every((x) => 'tiles' in x || !x.text.trim());
 
-  const CALL_LABEL: Record<CallChoice, string> = { ron: 'Ron', pon: 'Pon', chii: 'Chii', daiminkan: 'Kan', pass: 'Pass' };
+  const CALL_LABEL: Record<CallChoice, string> = {
+    ron: 'Ron',
+    pon: 'Pon',
+    chii: 'Chii',
+    daiminkan: 'Kan',
+    pass: 'Pass',
+  };
 
   // pick / yaku: toggle then check
   let picked: Set<number | string> = $state(new Set());
   function toggle(v: number | string) {
     if (finished) return;
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a local copy, assigned to the state whole
     const next = new Set(picked);
     if (next.has(v)) next.delete(v);
     else next.add(v);
@@ -184,7 +186,10 @@
       if (!missing.length && !extra.length) right(yakuSummary());
       else
         wrong(
-          [extra.length ? `Not: ${extra.map(yakuName).join(', ')}.` : '', missing.length ? `${missing.length} missing.` : '']
+          [
+            extra.length ? `Not: ${extra.map(yakuName).join(', ')}.` : '',
+            missing.length ? `${missing.length} missing.` : '',
+          ]
             .filter(Boolean)
             .join(' '),
         );
@@ -255,7 +260,6 @@
         return ex.options[ex.answer];
     }
   }
-
 </script>
 
 <section class="exercise" class:done={finished || doneBefore} aria-labelledby="ex-{id}">
@@ -348,8 +352,11 @@
     {:else if ex.kind === 'score' && score}
       <div class="options">
         {#each score.options as o, i (o)}
-          <button class="btn opt" class:on={chosen === i} class:right={finished && score.answer === i} onclick={() => choose(i)}
-            >{o}</button
+          <button
+            class="btn opt"
+            class:on={chosen === i}
+            class:right={finished && score.answer === i}
+            onclick={() => choose(i)}>{o}</button
           >
         {/each}
       </div>

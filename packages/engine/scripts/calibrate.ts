@@ -41,7 +41,10 @@ type GameResult = { skills: number[]; ranks: number[] };
 function playGame(i: number, seed: string): GameResult {
   const rng = seedRng(`${seed}-${i}`);
   const random = () => randomInt(rng, 1_000_000) / 1_000_000;
-  const skills = shuffle(rng, SKILLS.map((_, j) => j)).slice(0, 4);
+  const skills = shuffle(
+    rng,
+    SKILLS.map((_, j) => j),
+  ).slice(0, 4);
   const profiles = skills.map((j) => botProfile(SKILLS[j]));
   let g: GameState = createGame(DEFAULT_RULES, `${seed}-game-${i}`).state;
   for (let steps = 0; steps < 50_000 && g.phase !== 'gameOver'; steps++) {
@@ -139,7 +142,9 @@ if (!isMainThread) {
   SKILLS.forEach((s, i) => {
     const ranks = results.flatMap((r) => r.skills.flatMap((k, seat) => (k === i ? [r.ranks[seat]] : [])));
     const avg = ranks.reduce((a, b) => a + b, 0) / ranks.length;
-    console.log(`${s.toFixed(2).padStart(5)}  ${elo[i].toFixed(0).padStart(5)}  ${String(games[i]).padStart(5)}  ${avg.toFixed(3)}`);
+    console.log(
+      `${s.toFixed(2).padStart(5)}  ${elo[i].toFixed(0).padStart(5)}  ${String(games[i]).padStart(5)}  ${avg.toFixed(3)}`,
+    );
   });
 
   if (args.includes('--write')) {

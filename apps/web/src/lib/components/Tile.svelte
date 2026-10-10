@@ -165,7 +165,9 @@
     left: 4%;
     top: 2%;
     z-index: 1;
-    font: 800 max(calc(var(--w) * 0.34), 7px) / 1 system-ui, sans-serif;
+    font:
+      800 max(calc(var(--w) * 0.34), 7px) / 1 system-ui,
+      sans-serif;
     letter-spacing: -0.04em;
     padding: 0 calc(var(--w) * 0.04);
     border-radius: calc(var(--w) * 0.06);
@@ -294,5 +296,4 @@
     border-radius: 50%;
     background: #3aa85a;
   }
-
 </style>

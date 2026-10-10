@@ -10,7 +10,8 @@ export interface AuthUser {
 }
 
 // Same hosts the web app accepts in development (see apps/web/src/lib/server/auth.ts).
-const DEV_HOST = /^(localhost|127\.0\.0\.1|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/;
+const DEV_HOST =
+  /^(localhost|127\.0\.0\.1|\[::1\]|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/;
 
 /** Whether a browser on this origin may open a game connection. */
 export function originAllowed(origin: string | undefined, config: Pick<Config, 'origin'>): boolean {
@@ -36,7 +37,9 @@ export async function sessionFromCookie(
   if (!cookie) return null;
   let res: Response;
   try {
-    res = await fetchFn(`${config.webInternalUrl}/api/auth/get-session`, { headers: { cookie, accept: 'application/json' } });
+    res = await fetchFn(`${config.webInternalUrl}/api/auth/get-session`, {
+      headers: { cookie, accept: 'application/json' },
+    });
   } catch {
     return null;
   }
@@ -50,8 +53,7 @@ export async function sessionFromCookie(
   const user = (body as { user?: Record<string, unknown> } | null)?.user;
   if (!user || typeof user.id !== 'string') return null;
   const name = [user.displayUsername, user.username, user.name].find((v) => typeof v === 'string' && v) as
-    | string
-    | undefined;
+    string | undefined;
   return { id: user.id, name: name ?? 'Player' };
 }
 

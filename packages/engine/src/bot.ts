@@ -106,7 +106,8 @@ export function skillForElo(elo: number): number {
   for (let i = 1; i < CURVE.length; i++) {
     const a = CURVE[i - 1];
     const b = CURVE[i];
-    if (elo <= b.elo) return b.elo === a.elo ? a.skill : a.skill + ((elo - a.elo) / (b.elo - a.elo)) * (b.skill - a.skill);
+    if (elo <= b.elo)
+      return b.elo === a.elo ? a.skill : a.skill + ((elo - a.elo) / (b.elo - a.elo)) * (b.skill - a.skill);
   }
   return CURVE[CURVE.length - 1].skill;
 }
@@ -320,7 +321,12 @@ class Context {
 
     if (random() < prof.blunderRate) return plain[Math.floor(random() * plain.length)];
 
-    const options = analyzeDiscards(p.hand, p.melds, this.unseen, p.discards.map((d) => kindOf(d.tile)));
+    const options = analyzeDiscards(
+      p.hand,
+      p.melds,
+      this.unseen,
+      p.discards.map((d) => kindOf(d.tile)),
+    );
     const byKind = new Map(options.map((o) => [o.kind, o]));
     const best = options[0];
     const w = this.defenseWeight(best);
@@ -333,7 +339,9 @@ class Context {
       const better =
         !cur ||
         a.tile === p.drawn ||
-        (cur.tile !== p.drawn && isRedTile(cur.tile, this.g.rules.redFives) && !isRedTile(a.tile, this.g.rules.redFives));
+        (cur.tile !== p.drawn &&
+          isRedTile(cur.tile, this.g.rules.redFives) &&
+          !isRedTile(a.tile, this.g.rules.redFives));
       if (better) candidates.set(k, a);
     }
 
@@ -385,7 +393,11 @@ class Context {
   wantsAbort(): boolean {
     // Strong bots keep hands with a real shot at thirteen orphans.
     const tiles = this.me.hand;
-    return !(this.prof.skill >= 0.6 && distinctTerminalsAndHonors(tiles) >= 11 && kokushiShanten(countKinds(tiles)) <= 2);
+    return !(
+      this.prof.skill >= 0.6 &&
+      distinctTerminalsAndHonors(tiles) >= 11 &&
+      kokushiShanten(countKinds(tiles)) <= 2
+    );
   }
 
   wantsKan(kind: Kind): boolean {
@@ -439,11 +451,7 @@ class Context {
     const meldKinds = melds.flatMap((m) => m.tiles.map(kindOf));
     const handKinds = hand.map(kindOf);
     // All simples: melds all simple and at most one outside tile left to throw.
-    if (
-      this.g.rules.openTanyao &&
-      meldKinds.every(isSimple) &&
-      handKinds.filter(isTerminalOrHonor).length <= 1
-    ) {
+    if (this.g.rules.openTanyao && meldKinds.every(isSimple) && handKinds.filter(isTerminalOrHonor).length <= 1) {
       return true;
     }
     // Half/full flush: every meld in one suit (or honours) and at most one off-suit tile in hand.

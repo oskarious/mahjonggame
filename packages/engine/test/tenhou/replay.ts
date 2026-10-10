@@ -213,11 +213,17 @@ function replayHand(state: GameState, h: TenhouHand, replay: HandReplay): GameSt
   const ids = new Map<Tile, Tile>();
   const id = (t: Tile) => ids.get(t) ?? t;
   const shape = (tiles: Tile[]) =>
-    tiles.map((t) => `${kindOf(t)}${isRedTile(t, g.rules.redFives) ? 'r' : ''}`).sort().join();
+    tiles
+      .map((t) => `${kindOf(t)}${isRedTile(t, g.rules.redFives) ? 'r' : ''}`)
+      .sort()
+      .join();
   const claim = (type: 'chii' | 'pon', seat: Seat, logTiles: Tile[]): Action => {
     const tiles = logTiles.map(id);
-    const options = legalActions(g, seat).filter((a): a is Extract<Action, { type: 'chii' | 'pon' }> => a.type === type);
-    const option = options.find((a) => sameList([...a.tiles].sort(), [...tiles].sort())) ??
+    const options = legalActions(g, seat).filter(
+      (a): a is Extract<Action, { type: 'chii' | 'pon' }> => a.type === type,
+    );
+    const option =
+      options.find((a) => sameList([...a.tiles].sort(), [...tiles].sort())) ??
       options.find((a) => shape(a.tiles) === shape(tiles));
     if (!option) return { type, seat, tiles };
     // Map the log's copies to the ones the engine melds, swapping ids with their twins still in the hand.
@@ -259,7 +265,13 @@ function replayHand(state: GameState, h: TenhouHand, replay: HandReplay): GameSt
         } else if (m.type === 'daiminkan') {
           resolve([{ type: 'daiminkan', seat: e.seat }]);
         } else {
-          resolve([claim(m.type, e.seat, m.tiles.filter((t) => t !== m.called))]);
+          resolve([
+            claim(
+              m.type,
+              e.seat,
+              m.tiles.filter((t) => t !== m.called),
+            ),
+          ]);
         }
         break;
       }
@@ -302,7 +314,8 @@ function compareResult(g: GameState, h: TenhouHand, out: string[]): void {
     }
     const seats = r.wins.map((w) => w.seat);
     const tenhouSeats = h.agari.map((a) => a.who);
-    if (!sameList([...seats].sort(), [...tenhouSeats].sort())) out.push(`winners: ours ${seats}, Tenhou ${tenhouSeats}`);
+    if (!sameList([...seats].sort(), [...tenhouSeats].sort()))
+      out.push(`winners: ours ${seats}, Tenhou ${tenhouSeats}`);
     const indicators = g.hand.doraIndicators.slice(0, g.hand.doraRevealed);
     if (!sameList(indicators, h.agari[0].doraIndicators)) {
       out.push(`dora indicators: ours ${indicators}, Tenhou ${h.agari[0].doraIndicators}`);

@@ -887,11 +887,7 @@ function win(g: GameState, winners: Seat[], from: Seat | null, tile: Tile, chank
       deltas[w] += amount;
     };
     const ids = value.yakuman.map((y) => y.id);
-    const pao = ids.includes('daisangen')
-      ? p.pao.daisangen
-      : ids.includes('daisuushii')
-        ? p.pao.daisuushii
-        : null;
+    const pao = ids.includes('daisangen') ? p.pao.daisangen : ids.includes('daisuushii') ? p.pao.daisuushii : null;
 
     if (tsumo) {
       if (pao !== null) {
@@ -1029,7 +1025,7 @@ function finishGame(g: GameState, ev: GameEvent[]): void {
 
   const order = [0, 1, 2, 3].sort((a, b) => g.scores[b] - g.scores[a] || a - b);
   const final: FinalStanding[] = [];
-  for (let i = 0; i < 4; ) {
+  for (let i = 0; i < 4;) {
     let j = i + 1;
     if (rules.tieBreak === 'split') while (j < 4 && g.scores[order[j]] === g.scores[order[i]]) j++;
     const uma = rules.uma.slice(i, j).reduce((a, b) => a + b, 0) / (j - i);

@@ -30,8 +30,8 @@
 
 <Part title="Simples and terminals">
   <p>
-    <Term id="simples">Simples</Term> are 2 to 8, like <T t="5p" />. <Term id="terminals">Terminals</Term> are the
-    1s and 9s, like <T t="1p" /> and <T t="9s" />. Many scoring rules use these two words.
+    <Term id="simples">Simples</Term> are 2 to 8, like <T t="5p" />. <Term id="terminals">Terminals</Term> are the 1s and
+    9s, like <T t="1p" /> and <T t="9s" />. Many scoring rules use these two words.
   </p>
   <Exercise id="terminals" />
 </Part>

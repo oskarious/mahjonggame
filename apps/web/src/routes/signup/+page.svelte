@@ -24,7 +24,13 @@
     }
     busy = true;
     try {
-      const res = await authClient.signUp.email({ email, password, name: username, username, displayUsername: username });
+      const res = await authClient.signUp.email({
+        email,
+        password,
+        name: username,
+        username,
+        displayUsername: username,
+      });
       if (res.error) {
         error = authError(res.error);
         return;

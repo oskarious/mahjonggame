@@ -23,7 +23,11 @@ interface Job {
 export const JOBS: Job[] = [
   // Hourly rather than daily: a missed run (server down at midnight) is made up within the hour.
   { name: 'daily-discard-hands', cron: '7 * * * *', atStart: true, run: ({ db }) => ensureHands(db) },
-  { name: 'daily-discard-bot-votes', cron: '* * * * *', run: ({ db, bots }) => botVotes(db, bots.onlineIds(), bots.activeCount(), Math.random) },
+  {
+    name: 'daily-discard-bot-votes',
+    cron: '* * * * *',
+    run: ({ db, bots }) => botVotes(db, bots.onlineIds(), bots.activeCount(), Math.random),
+  },
 ];
 
 async function runJob(job: Job, deps: JobDeps): Promise<void> {

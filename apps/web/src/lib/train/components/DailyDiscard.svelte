@@ -21,8 +21,13 @@
     mine: initialMine,
     votes,
     tally: initialTally,
-  }: { date: string; exercise: ExerciseOf<'discard'>; mine: Kind | null; votes: number; tally: Tally | null } =
-    $props();
+  }: {
+    date: string;
+    exercise: ExerciseOf<'discard'>;
+    mine: Kind | null;
+    votes: number;
+    tally: Tally | null;
+  } = $props();
 
   const g = stateOf(untrack(() => exercise))!;
   let mine = $state(untrack(() => initialMine));

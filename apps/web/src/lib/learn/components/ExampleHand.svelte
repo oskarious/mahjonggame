@@ -30,7 +30,9 @@
 
 <figure class="example" style:--n={built.rest.length + 1.4 + meldSlots(built.melds)}>
   <span class="row" role="img" aria-label="{describe(example.hand)}{example.melds?.length ? ', with called sets' : ''}">
-    <span class="group">{#each built.rest as t (t)}<Tile tile={t} red={RED} plain />{/each}</span>
+    <span class="group"
+      >{#each built.rest as t (t)}<Tile tile={t} red={RED} plain />{/each}</span
+    >
     <span class="group"><Tile tile={built.win} red={RED} plain mark="win" /></span>
     {#if built.melds.length}<Melds melds={built.melds} seat={0} red={RED} />{/if}
   </span>

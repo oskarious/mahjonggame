@@ -26,7 +26,9 @@
     {/each}
     <span class="cta"><Cta variant="header" /></span>
     <a class="account" href={user ? '/account' : '/login'} aria-label={user ? `Account: ${user.name}` : 'Sign in'}>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.75" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true"
+        ><circle cx="12" cy="8.5" r="3.75" /><path d="M4.5 20a7.5 7.5 0 0 1 15 0" /></svg
+      >
     </a>
   </header>
   <main>

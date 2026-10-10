@@ -11,8 +11,7 @@ import {
 } from '../src/index.ts';
 import { discard, play, scenario } from './helpers.ts';
 
-const kindOfAction = (a: Action | null) =>
-  a && 'tile' in a ? kindToString(kindOf(a.tile)) : a?.type ?? null;
+const kindOfAction = (a: Action | null) => (a && 'tile' in a ? kindToString(kindOf(a.tile)) : (a?.type ?? null));
 /** Deterministic: no blunders, and softmax (if any) picks the best option. */
 const noLuck = () => 0.999;
 

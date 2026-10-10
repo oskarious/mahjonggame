@@ -11,7 +11,10 @@ import { db } from './db';
 /** Every lesson (drafts too: dev shows them) with its sets' variant counts, the trainers and the daily set's size. */
 export const CATALOG: Catalog = {
   lessons: Object.fromEntries(
-    LESSONS.map((l) => [l.slug, Object.fromEntries(Object.entries(exercisesOf(l.slug)).map(([id, s]) => [id, s.length]))]),
+    LESSONS.map((l) => [
+      l.slug,
+      Object.fromEntries(Object.entries(exercisesOf(l.slug)).map(([id, s]) => [id, s.length])),
+    ]),
   ),
   trainers: TRAINERS.map((t) => t.id),
   dailySize: DAILY.length,
@@ -19,7 +22,11 @@ export const CATALOG: Catalog = {
 
 /** The player's progress; empty when they have none yet. */
 export async function getProgress(userId: string): Promise<Docs> {
-  const row = await db.selectFrom('user_progress').select(['learn', 'train']).where('userId', '=', userId).executeTakeFirst();
+  const row = await db
+    .selectFrom('user_progress')
+    .select(['learn', 'train'])
+    .where('userId', '=', userId)
+    .executeTakeFirst();
   return row ? { learn: readProgress(row.learn), train: readTrain(row.train) } : emptyDocs();
 }
 

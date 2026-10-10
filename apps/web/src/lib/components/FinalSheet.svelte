@@ -24,7 +24,11 @@
     <h2>{ORD[mine.rank - 1]} place</h2>
     <table>
       <thead>
-        <tr><th></th><th>Player</th><th class="num">Points</th><th class="num">Result</th>{#if ratings}<th class="num">Rating</th>{/if}</tr>
+        <tr
+          ><th></th><th>Player</th><th class="num">Points</th><th class="num">Result</th>{#if ratings}<th class="num"
+              >Rating</th
+            >{/if}</tr
+        >
       </thead>
       <tbody>
         {#each final as f (f.seat)}
@@ -36,7 +40,10 @@
             {#if ratings}
               {@const r = change(f.seat)}
               <td class="num rating">
-                {#if r}<span class:up={r.after > r.before} class:down={r.after < r.before}>{signed(r.after - r.before)}</span> → <RankBadge rating={r.after} />{/if}
+                {#if r}<span class:up={r.after > r.before} class:down={r.after < r.before}
+                    >{signed(r.after - r.before)}</span
+                  >
+                  → <RankBadge rating={r.after} />{/if}
               </td>
             {/if}
           </tr>

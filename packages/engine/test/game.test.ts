@@ -123,7 +123,14 @@ describe('calls', () => {
   it('a call that would leave only forbidden discards is not offered', () => {
     const g = scenario({
       hands: ['3m', '4536m'],
-      melds: [[], [['pon', '111p'], ['pon', '999p'], ['pon', '111s']]],
+      melds: [
+        [],
+        [
+          ['pon', '111p'],
+          ['pon', '999p'],
+          ['pon', '111s'],
+        ],
+      ],
     });
     const { state } = play(g, [discard(0, '3m')], { settle: false });
     expect(actionTypes(state, 1).has('chii')).toBe(false);
@@ -346,7 +353,14 @@ describe('quads', () => {
   it('no fifth quad', () => {
     const g = scenario({
       hands: ['1111z'],
-      melds: [[['ankan', '9999m']], [['ankan', '1111p'], ['ankan', '9999p'], ['ankan', '1111s']]],
+      melds: [
+        [['ankan', '9999m']],
+        [
+          ['ankan', '1111p'],
+          ['ankan', '9999p'],
+          ['ankan', '1111s'],
+        ],
+      ],
     });
     expect(actionTypes(g, 0).has('kan')).toBe(false);
   });
@@ -378,8 +392,9 @@ describe('last tile', () => {
     expect(lastResult(two).deltas).toEqual([1500, -1500, 1500, -1500]);
     expect(two.next).toEqual({ renchan: true, honba: 1 });
 
-    const three = play(scenario({ hands: [SHANPON, undefined, PINFU, '123p456s789m55z66z'], wallSize: 1 }), [discard(0)])
-      .state;
+    const three = play(scenario({ hands: [SHANPON, undefined, PINFU, '123p456s789m55z66z'], wallSize: 1 }), [
+      discard(0),
+    ]).state;
     expect(lastResult(three).deltas).toEqual([1000, -3000, 1000, 1000]);
 
     const none = play(scenario({ wallSize: 1, riichiSticks: 2 }), [discard(0)]).state;
@@ -390,7 +405,18 @@ describe('last tile', () => {
 
 describe('liability (pao)', () => {
   const setup = (hands: (string | undefined)[], draws: string) =>
-    scenario({ rules: noEma, hands, melds: [[], [['pon', '555z'], ['pon', '666z']]], draws });
+    scenario({
+      rules: noEma,
+      hands,
+      melds: [
+        [],
+        [
+          ['pon', '555z'],
+          ['pon', '666z'],
+        ],
+      ],
+      draws,
+    });
 
   it('feeding the third dragon triplet: the feeder pays a self-drawn big three dragons alone', () => {
     const g = setup(['7z', '77z123m4p5p'], '? ? ? ? 4p');
@@ -461,7 +487,9 @@ describe('abortive draws', () => {
     expect(state.next).toEqual({ renchan: true, honba: 1 });
 
     expect(actionTypes(scenario({ hands: ['19m19p19s123z'] }), 0).has('kyuushu')).toBe(false);
-    expect(actionTypes(scenario({ rules: noEma, hands: ['19m19p19s123z'], uninterrupted: true }), 0).has('kyuushu')).toBe(false);
+    expect(
+      actionTypes(scenario({ rules: noEma, hands: ['19m19p19s123z'], uninterrupted: true }), 0).has('kyuushu'),
+    ).toBe(false);
   });
 
   it('four identical winds as the first discards', () => {
@@ -482,7 +510,14 @@ describe('abortive draws', () => {
   it('four quads by different players abort after the next discard; by one player play continues', () => {
     const split = scenario({
       hands: ['2222z'],
-      melds: [[], [['ankan', '1111p'], ['ankan', '9999p'], ['ankan', '1111s']]],
+      melds: [
+        [],
+        [
+          ['ankan', '1111p'],
+          ['ankan', '9999p'],
+          ['ankan', '1111s'],
+        ],
+      ],
     });
     expect(lastResult(play(split, [kan(0, '2z'), discard(0)]).state)).toMatchObject({
       type: 'abortive',
@@ -491,7 +526,13 @@ describe('abortive draws', () => {
 
     const single = scenario({
       hands: ['2222z'],
-      melds: [[['ankan', '1111p'], ['ankan', '9999p'], ['ankan', '1111s']]],
+      melds: [
+        [
+          ['ankan', '1111p'],
+          ['ankan', '9999p'],
+          ['ankan', '1111s'],
+        ],
+      ],
     });
     const { state } = play(single, [kan(0, '2z'), discard(0)]);
     expect(state.result).toBeNull();
@@ -556,7 +597,9 @@ describe('end of game', () => {
     expect(below.phase).toBe('gameOver');
     const zero = play(scenario({ hands, wallSize: 1, scores: [30000, 30000, 59000, 1000] }), [discard(0)]).state;
     expect(zero.phase).toBe('handOver');
-    const ema = play(scenario({ rules: noEma, hands, wallSize: 1, scores: [30000, 30000, 59500, 500] }), [discard(0)]).state;
+    const ema = play(scenario({ rules: noEma, hands, wallSize: 1, scores: [30000, 30000, 59500, 500] }), [
+      discard(0),
+    ]).state;
     expect(ema.phase).toBe('handOver');
   });
 
@@ -571,7 +614,10 @@ describe('end of game', () => {
   });
 
   it('ties can instead go to the seat closest to the first dealer', () => {
-    const g = allLast({ rules: makeRules(DEFAULT_RULES, { tieBreak: 'seatOrder' }), scores: [40000, 30000, 30000, 20000] });
+    const g = allLast({
+      rules: makeRules(DEFAULT_RULES, { tieBreak: 'seatOrder' }),
+      scores: [40000, 30000, 30000, 20000],
+    });
     expect(g.final!.map((f) => [f.seat, f.rank, f.score])).toEqual([
       [0, 1, 25],
       [1, 2, 5],
@@ -588,7 +634,8 @@ describe('end of game', () => {
 });
 
 describe('last discard', () => {
-  const last = (g: GameState) => g.hand.lastDiscard && { seat: g.hand.lastDiscard.seat, kind: kindToString(kindOf(g.hand.lastDiscard.tile)) };
+  const last = (g: GameState) =>
+    g.hand.lastDiscard && { seat: g.hand.lastDiscard.seat, kind: kindToString(kindOf(g.hand.lastDiscard.tile)) };
 
   it('stays through the next draw and moves on the next discard', () => {
     const g = scenario({ hands: ['1z', undefined, undefined], draws: '? 9s' });
@@ -663,11 +710,18 @@ describe('Tenhou rule flags', () => {
   });
 
   it('a single wait on the fourth copy next to an own pon: noten (EMA reading), tenpai under Tenhou', () => {
-    const o = { hands: [undefined, '567m111s234p6s'], melds: [[], [['pon', '666s']]] as [MeldType, string][][], wallSize: 1 };
+    const o = {
+      hands: [undefined, '567m111s234p6s'],
+      melds: [[], [['pon', '666s']]] as [MeldType, string][][],
+      wallSize: 1,
+    };
     const ema = play(scenario(o), [discard(0)]).state;
     expect(lastResult(ema)).toMatchObject({ tenpai: [false, false, false, false] });
     const tenhou = play(scenario({ ...o, rules: rules({ deadWaitCopies: 'concealed' }) }), [discard(0)]).state;
-    expect(lastResult(tenhou)).toMatchObject({ tenpai: [false, true, false, false], deltas: [-1000, 3000, -1000, -1000] });
+    expect(lastResult(tenhou)).toMatchObject({
+      tenpai: [false, true, false, false],
+      deltas: [-1000, 3000, -1000, -1000],
+    });
   });
 
   describe('nagashi mangan', () => {
@@ -676,7 +730,11 @@ describe('Tenhou rule flags', () => {
     it('pays a mangan by self-draw instead of the noten payments', () => {
       const g = scenario({ rules: rules({ nagashiMangan: true }), hands: [PINFU], ...terminals });
       const state = play(g, [discard(0)]).state;
-      expect(lastResult(state)).toMatchObject({ type: 'exhaustive', nagashi: [1], tenpai: [true, false, false, false] });
+      expect(lastResult(state)).toMatchObject({
+        type: 'exhaustive',
+        nagashi: [1],
+        tenpai: [true, false, false, false],
+      });
       expect(lastResult(state).deltas).toEqual([-4000, 8000, -2000, -2000]);
       expect(state.next).toEqual({ renchan: true, honba: 1 });
     });

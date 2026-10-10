@@ -12,7 +12,7 @@ export function gameServerUrl(): string {
 export async function gameServerAvailable(): Promise<boolean> {
   const now = Date.now();
   if (cached && now - cached.at < TTL_MS) return cached.ok;
-  let ok = false;
+  let ok: boolean;
   try {
     const res = await fetch(`${gameServerUrl()}/healthz`, { signal: AbortSignal.timeout(1500) });
     ok = res.ok;

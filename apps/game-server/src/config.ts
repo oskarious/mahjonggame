@@ -84,7 +84,8 @@ export function configFromEnv(env: Record<string, string | undefined> = process.
   const d = DEFAULT_CONFIG;
   if (!env.DATABASE_URL) throw new Error('Set DATABASE_URL');
   if (env.NODE_ENV === 'production' && !env.ORIGIN) throw new Error('Set ORIGIN in production');
-  if (env.INTERNAL_TOKEN && env.INTERNAL_TOKEN.length < 32) throw new Error('INTERNAL_TOKEN must be at least 32 characters');
+  if (env.INTERNAL_TOKEN && env.INTERNAL_TOKEN.length < 32)
+    throw new Error('INTERNAL_TOKEN must be at least 32 characters');
   return {
     ...d,
     port: num('PORT', d.port),

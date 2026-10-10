@@ -38,8 +38,27 @@ describe('Tenhou replays', () => {
       }
     }
     const wanted = [
-      'chii', 'pon', 'daiminkan', 'shouminkan', 'ankan', 'chankan', 'rinshan', 'haitei', 'houtei', 'double ron',
-      'exhaustive', 'yao9', 'kan4', 'nm', 'bankruptcy', 'west round', 'yakuman', 'pao', 'reach4', 'ron3', 'kaze4',
+      'chii',
+      'pon',
+      'daiminkan',
+      'shouminkan',
+      'ankan',
+      'chankan',
+      'rinshan',
+      'haitei',
+      'houtei',
+      'double ron',
+      'exhaustive',
+      'yao9',
+      'kan4',
+      'nm',
+      'bankruptcy',
+      'west round',
+      'yakuman',
+      'pao',
+      'reach4',
+      'ron3',
+      'kaze4',
     ];
     expect(wanted.filter((w) => !seen.has(w))).toEqual([]);
   });

@@ -4,7 +4,8 @@ export const exercises: Record<string, ExerciseSet> = {
   safe: [
     {
       kind: 'discard',
-      prompt: 'The player across declared riichi, then the player on your left discarded {7s}. Discard a completely safe tile.',
+      prompt:
+        'The player across declared riichi, then the player on your left discarded {7s}. Discard a completely safe tile.',
       position: {
         hands: ['23m456p789s55m3z7s1p'],
         discards: [undefined, undefined, '9m4p6s2z1z8m', '5z7s'],
@@ -35,7 +36,8 @@ export const exercises: Record<string, ExerciseSet> = {
     },
     {
       kind: 'discard',
-      prompt: 'The player across declared riichi, and a turn later the player on your right discarded {8p}. Discard a completely safe tile.',
+      prompt:
+        'The player across declared riichi, and a turn later the player on your right discarded {8p}. Discard a completely safe tile.',
       position: {
         hands: ['56789m345s77s1p8p2z'],
         discards: [undefined, '3z8p', '1z5m9p6s'],

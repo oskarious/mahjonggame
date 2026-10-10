@@ -28,7 +28,9 @@
         <td class="away">{o.shanten === 0 ? 'Tenpai' : `${o.shanten} away`}</td>
         <td class="n">{o.total}</td>
         <td>
-          <span class="keeps">{#each keeps as t (t.kind)}<Tile tile={t.kind * 4 + 1} red={RED} plain />{/each}</span>
+          <span class="keeps"
+            >{#each keeps as t (t.kind)}<Tile tile={t.kind * 4 + 1} red={RED} plain />{/each}</span
+          >
         </td>
       </tr>
     {/each}

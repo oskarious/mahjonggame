@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Exercise, Part, T, Term } from '$lib/learn/components';
+  import { Exercise, Part, Term } from '$lib/learn/components';
 </script>
 
 <Part title="Two of three">
@@ -13,17 +13,17 @@
 
 <Part title="When to push">
   <p>
-    If two are yes, <Term id="push">push</Term>: keep playing your hand. From one tile away, push only with a big
-    hand and two-sided shapes; otherwise fold.
+    If two are yes, <Term id="push">push</Term>: keep playing your hand. From one tile away, push only with a big hand
+    and two-sided shapes; otherwise fold.
   </p>
   <Exercise id="push" />
 </Part>
 
 <Part title="The safety ladder">
   <p>
-    Folding, take the safest tile you have: <Term id="genbutsu">genbutsu</Term>; then honors others have discarded,
-    suji 1s and 9s, and <Term id="no-chance">no-chance</Term> tiles; then suji 2s and 8s; then suji 3s and 7s. The
-    most dangerous are 4s, 5s and 6s that are not suji. Two tiles from tenpai, stay near the top of the ladder.
+    Folding, take the safest tile you have: <Term id="genbutsu">genbutsu</Term>; then honors others have discarded, suji
+    1s and 9s, and <Term id="no-chance">no-chance</Term> tiles; then suji 2s and 8s; then suji 3s and 7s. The most dangerous
+    are 4s, 5s and 6s that are not suji. Two tiles from tenpai, stay near the top of the ladder.
   </p>
   <Exercise id="ladder" />
 </Part>

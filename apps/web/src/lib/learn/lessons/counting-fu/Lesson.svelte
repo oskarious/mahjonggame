@@ -6,7 +6,9 @@
   <p>Start at 20 <Term id="fu">fu</Term>, add, then round up to the next 10:</p>
   <ul>
     <li>Closed hand won by ron: +10. Self-draw: +2.</li>
-    <li>Triplets: 2 (open simple), 4 (open 1/9/honor, or closed simple), 8 (closed 1/9/honor). Quads: four times that.</li>
+    <li>
+      Triplets: 2 (open simple), 4 (open 1/9/honor, or closed simple), 8 (closed 1/9/honor). Quads: four times that.
+    </li>
     <li>A pair of value tiles: +2.</li>
     <li>A closed, edge or single-tile wait: +2.</li>
   </ul>
@@ -39,9 +41,9 @@
 
 <Part title="A quick estimate">
   <p>
-    Most hands land on a few values: <Yaku id="pinfu">pinfu</Yaku> 30 by ron, <Yaku id="chiitoitsu">seven pairs</Yaku> 25, an open hand about 30,
-    any other closed hand about 40 by ron (30 by self-draw). Count exactly when the hand has a quad or a closed triplet
-    of 1s, 9s or honors.
+    Most hands land on a few values: <Yaku id="pinfu">pinfu</Yaku> 30 by ron, <Yaku id="chiitoitsu">seven pairs</Yaku> 25,
+    an open hand about 30, any other closed hand about 40 by ron (30 by self-draw). Count exactly when the hand has a quad
+    or a closed triplet of 1s, 9s or honors.
   </p>
   <Exercise id="estimate" />
 </Part>

@@ -50,8 +50,8 @@
 
 <h1>Learn riichi mahjong</h1>
 <p>
-  A free course from your first tile to scoring, building a hand, and attack and defense. Every lesson has hands you play right in the page,
-  with the same controls as a real game. No account needed.
+  A free course from your first tile to scoring, building a hand, and attack and defense. Every lesson has hands you
+  play right in the page, with the same controls as a real game. No account needed.
 </p>
 <ProgressNudge />
 
@@ -65,7 +65,9 @@
           <li class:next={l.slug === next} class:done={done(l.slug)}>
             <a href="/learn/{l.slug}">
               <span class="title">{l.title}</span>
-              <span class="summary">{l.summary} <span class="steps">· {Object.keys(exercisesOf(l.slug)).length} steps</span></span>
+              <span class="summary"
+                >{l.summary} <span class="steps">· {Object.keys(exercisesOf(l.slug)).length} steps</span></span
+              >
             </a>
             {#if done(l.slug)}<span class="mark" aria-label="Completed">✓</span>{:else if l.slug === next}<span
                 class="chip gold">Continue</span
@@ -82,12 +84,14 @@
   <ol>
     <li>
       <a href={REFERENCE.yaku.path}
-        ><span class="title">{REFERENCE.yaku.title}</span><span class="summary">Every yaku with an example hand.</span></a
+        ><span class="title">{REFERENCE.yaku.title}</span><span class="summary">Every yaku with an example hand.</span
+        ></a
       >
     </li>
     <li>
       <a href={REFERENCE.glossary.path}
-        ><span class="title">{REFERENCE.glossary.title}</span><span class="summary">Japanese terms in plain English.</span
+        ><span class="title">{REFERENCE.glossary.title}</span><span class="summary"
+          >Japanese terms in plain English.</span
         ></a
       >
     </li>

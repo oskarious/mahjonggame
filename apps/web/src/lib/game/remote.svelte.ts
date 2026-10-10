@@ -207,7 +207,8 @@ export class RemoteGame implements GameSource {
     if (v.phase !== 'playing' || !v.actions.length) return;
     const legal = v.actions;
     let action: Action | null = null;
-    if (this.autoRiichiDiscard && v.players[v.seat].riichi && legal.every((a) => a.type === 'discard')) action = legal[0];
+    if (this.autoRiichiDiscard && v.players[v.seat].riichi && legal.every((a) => a.type === 'discard'))
+      action = legal[0];
     else if (this.skipCalls && legal.some((a) => a.type === 'pass') && !legal.some((a) => a.type === 'ron')) {
       action = legal.find((a) => a.type === 'pass')!;
     }

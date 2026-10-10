@@ -10,7 +10,11 @@ export function requireAdmin(locals: App.Locals): void {
 export type InternalResult<T> = { ok: true; data: T } | { ok: false; status: number; error: string };
 
 /** Calls the game server's internal admin API with the shared token. Never throws. */
-export async function internalApi<T>(method: 'GET' | 'POST' | 'PATCH' | 'PUT', path: string, body?: unknown): Promise<InternalResult<T>> {
+export async function internalApi<T>(
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT',
+  path: string,
+  body?: unknown,
+): Promise<InternalResult<T>> {
   const token = env.INTERNAL_TOKEN;
   if (!token) return { ok: false, status: 503, error: 'INTERNAL_TOKEN is not set for the web app' };
   let res: Response;
@@ -32,5 +36,9 @@ export async function internalApi<T>(method: 'GET' | 'POST' | 'PATCH' | 'PUT', p
   }
   if (res.ok) return { ok: true, data: data as T };
   const message = (data as { error?: string } | null)?.error;
-  return { ok: false, status: res.status, error: message ?? (res.status === 404 ? 'Admin API disabled on the game server' : `HTTP ${res.status}`) };
+  return {
+    ok: false,
+    status: res.status,
+    error: message ?? (res.status === 404 ? 'Admin API disabled on the game server' : `HTTP ${res.status}`),
+  };
 }

@@ -13,7 +13,12 @@ import {
 import { DEFAULT_BOT_SETTINGS } from '../src/settings.ts';
 import { seeded } from './helpers.ts';
 
-const evening: BotSchedule = { tz: 'Europe/Stockholm', weekday: [18 * 60, 24 * 60], weekend: [18 * 60, 24 * 60], appetiteMin: 90 };
+const evening: BotSchedule = {
+  tz: 'Europe/Stockholm',
+  weekday: [18 * 60, 24 * 60],
+  weekend: [18 * 60, 24 * 60],
+  appetiteMin: 90,
+};
 const SESSION: [number, number] = [20, 150];
 /** 2026-10-07, a Wednesday, 00:00 UTC. */
 const WED = Date.UTC(2026, 9, 7);

@@ -1,7 +1,12 @@
 <script lang="ts">
   /** A Rush in progress: time left (a bar and seconds), problems solved, and strikes as pips. No labels. */
-  let { left, total, score, strikes, max }: { left: number; total: number; score: number; strikes: number; max: number } =
-    $props();
+  let {
+    left,
+    total,
+    score,
+    strikes,
+    max,
+  }: { left: number; total: number; score: number; strikes: number; max: number } = $props();
 
   const secs = $derived(Math.ceil(left / 1000));
   const clock = $derived(`${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`);

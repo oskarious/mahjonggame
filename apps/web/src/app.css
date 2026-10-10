@@ -3,7 +3,7 @@
      drifting from top-right to bottom-left. Keep theme-color in app.html equal to --bg. */
   --bg: #48754d;
   /* 044 */
-  --bg-pattern: url("/patterns/pattern_044.svg");
+  --bg-pattern: url('/patterns/pattern_044.svg');
   /* The tiles are black and white; the black parts darken. 1 = swap, for tiles whose motif is white. */
   --bg-pattern-invert: 1;
   --bg-pattern-size: 128px;
@@ -15,16 +15,8 @@
   /* Surfaces are --bg lightened towards --tint (a cool white: the default --bg reproduces the old greys exactly). */
   --tint: #c4ddff;
   /* Seat rows and bars on the board: translucent, so the pattern shows through subdued. */
-  --surface: color-mix(
-    in srgb,
-    color-mix(in srgb, var(--bg), var(--tint) 6%) 82%,
-    transparent
-  );
-  --surface-me: color-mix(
-    in srgb,
-    color-mix(in srgb, var(--bg), var(--tint) 11.4%) 82%,
-    transparent
-  );
+  --surface: color-mix(in srgb, color-mix(in srgb, var(--bg), var(--tint) 6%) 82%, transparent);
+  --surface-me: color-mix(in srgb, color-mix(in srgb, var(--bg), var(--tint) 11.4%) 82%, transparent);
   /* Sheets, dialogs and buttons: opaque tints of the background. */
   --panel: color-mix(in srgb, var(--bg), var(--tint) 4.4%);
   --panel-2: color-mix(in srgb, var(--bg), var(--tint) 13.2%);
@@ -39,10 +31,10 @@
   color-scheme: dark;
   /* The logo's typeface, self-hosted (+layout.svelte imports it); variable weight and optical size. */
   font-family:
-    "Bricolage Grotesque Variable",
+    'Bricolage Grotesque Variable',
     system-ui,
     -apple-system,
-    "Segoe UI",
+    'Segoe UI',
     Roboto,
     sans-serif;
   color: var(--ink);

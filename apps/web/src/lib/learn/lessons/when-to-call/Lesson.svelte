@@ -4,7 +4,9 @@
 
 <Part title="Know your yaku before you call">
   <p>
-    An <Term id="open-hand">open hand</Term> needs a yaku from its tiles: <Yaku id="yakuhai">value triplets</Yaku>, <Yaku id="tanyao">all simples</Yaku>, a
+    An <Term id="open-hand">open hand</Term> needs a yaku from its tiles: <Yaku id="yakuhai">value triplets</Yaku>, <Yaku
+      id="tanyao">all simples</Yaku
+    >, a
     <Yaku id="honitsu">flush</Yaku>, <Yaku id="toitoi">all triplets</Yaku>, a <Yaku id="ittsu">straight</Yaku> or
     <Yaku id="sanshokuDoujun">triple sequence</Yaku>. If you can't name one, don't call.
   </p>
@@ -13,8 +15,9 @@
 
 <Part title="Pon a value tile">
   <p>
-    A pair of dragons, your seat wind or the round wind is the classic call: the pon gives the <Yaku id="yakuhai">yaku</Yaku> and a set at once.
-    Call it, unless the hand would stay cheap and still far from tenpai.
+    A pair of dragons, your seat wind or the round wind is the classic call: the pon gives the <Yaku id="yakuhai"
+      >yaku</Yaku
+    > and a set at once. Call it, unless the hand would stay cheap and still far from tenpai.
   </p>
   <Exercise id="dragon" />
 </Part>

@@ -2,9 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { Matchmaker, type QueueEntry } from '../src/matchmaking.ts';
 import { TEST_CONFIG } from './helpers.ts';
 
-const entry = (userId: string, rating: number, joinedAt = 0): QueueEntry => ({ userId, name: userId, rating, games: 0, joinedAt });
+const entry = (userId: string, rating: number, joinedAt = 0): QueueEntry => ({
+  userId,
+  name: userId,
+  rating,
+  games: 0,
+  joinedAt,
+});
 /** A bot player queued for `forUserId`, whose window counts from that human's `joinedAt`. */
-const botEntry = (userId: string, rating: number, forUserId: string, windowFrom: number, joinedAt = windowFrom): QueueEntry => ({
+const botEntry = (
+  userId: string,
+  rating: number,
+  forUserId: string,
+  windowFrom: number,
+  joinedAt = windowFrom,
+): QueueEntry => ({
   ...entry(userId, rating, joinedAt),
   bot: { skill: 0.3, forUserId, windowFrom },
 });
@@ -32,7 +44,14 @@ describe('Matchmaker', () => {
     const [m] = mm.tick(12_000);
     expect(humans(m)).toEqual(['a']);
     expect(bots(m)).toEqual(['x', 'y', 'z']);
-    expect(m.seats.find((s) => s.userId === 'z')).toEqual({ kind: 'bot', skill: 0.3, userId: 'z', name: 'z', rating: 1100, games: 0 });
+    expect(m.seats.find((s) => s.userId === 'z')).toEqual({
+      kind: 'bot',
+      skill: 0.3,
+      userId: 'z',
+      name: 'z',
+      rating: 1100,
+      games: 0,
+    });
     expect(mm.size).toBe(0);
   });
 
@@ -50,7 +69,12 @@ describe('Matchmaker', () => {
     mm.join(entry('p1900', 1900, 2), 'east');
     mm.join(entry('p1230', 1230, 3), 'east');
     expect(mm.tick(5_000)).toEqual([]);
-    expect(mm.groupFor('p1210', 5_000).map((e) => e.userId).sort()).toEqual(['p1210', 'p1230', 'p1250']);
+    expect(
+      mm
+        .groupFor('p1210', 5_000)
+        .map((e) => e.userId)
+        .sort(),
+    ).toEqual(['p1210', 'p1230', 'p1250']);
     mm.join(botEntry('bot', 1220, 'p1210', 0, 5_000), 'east');
     const [m] = mm.tick(5_000);
     expect(humans(m)).toEqual(['p1210', 'p1230', 'p1250']);

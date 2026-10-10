@@ -63,7 +63,11 @@
 
 <div class="marks" aria-label="Today's results">
   {#each data.problems as _, i (i)}
-    <span class="mark" class:right={results[i] === true} class:missed={results[i] === false} class:now={i === shown && !done}
+    <span
+      class="mark"
+      class:right={results[i] === true}
+      class:missed={results[i] === false}
+      class:now={i === shown && !done}
     ></span>
   {/each}
   {#if streak}<span class="streak"><b>{streak}</b> days</span>{/if}

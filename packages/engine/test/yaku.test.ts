@@ -202,13 +202,9 @@ describe('Chiitoitsu (seven pairs)', () => {
   });
 
   it('combines with riichi, ippatsu, tsumo and haitei', () => {
-    expect(yakuOf(score('11m33m55p77p99s22z6z6z', { riichi: 'riichi', ippatsu: true, tsumo: true, haitei: true }))).toEqual([
-      'chiitoitsu',
-      'haitei',
-      'ippatsu',
-      'menzenTsumo',
-      'riichi',
-    ]);
+    expect(
+      yakuOf(score('11m33m55p77p99s22z6z6z', { riichi: 'riichi', ippatsu: true, tsumo: true, haitei: true })),
+    ).toEqual(['chiitoitsu', 'haitei', 'ippatsu', 'menzenTsumo', 'riichi']);
   });
 
   it('is closed only', () => {
@@ -306,7 +302,16 @@ describe('Sankantsu / Toitoi', () => {
   });
 
   it('toitoi is 2 han and combines with sanankou', () => {
-    expect(yakuOf(score('555s888s4z4z', { melds: [['pon', '111m'], ['pon', '333p']] }))).toEqual(['toitoi']);
+    expect(
+      yakuOf(
+        score('555s888s4z4z', {
+          melds: [
+            ['pon', '111m'],
+            ['pon', '333p'],
+          ],
+        }),
+      ),
+    ).toEqual(['toitoi']);
     // 3 concealed triplets + an open one.
     expect(yakuOf(score('555s888s222p4z4z', { melds: [['pon', '111m']] }))).toEqual(['sanankou', 'toitoi']);
   });
@@ -386,9 +391,36 @@ describe('Yakuman', () => {
   });
 
   it('open yakuman: daisangen, daisuushii, chinroutou, suukantsu', () => {
-    expect(yakumanOf(score('777z123m4p4p', { melds: [['pon', '555z'], ['pon', '666z']] }))).toEqual(['daisangen']);
-    expect(yakumanOf(score('333z444z5m5m', { melds: [['pon', '111z'], ['pon', '222z']] }))).toEqual(['daisuushii']);
-    expect(yakumanOf(score('111s999s9m9m', { melds: [['pon', '111m'], ['pon', '999p']] }))).toEqual(['chinroutou']);
+    expect(
+      yakumanOf(
+        score('777z123m4p4p', {
+          melds: [
+            ['pon', '555z'],
+            ['pon', '666z'],
+          ],
+        }),
+      ),
+    ).toEqual(['daisangen']);
+    expect(
+      yakumanOf(
+        score('333z444z5m5m', {
+          melds: [
+            ['pon', '111z'],
+            ['pon', '222z'],
+          ],
+        }),
+      ),
+    ).toEqual(['daisuushii']);
+    expect(
+      yakumanOf(
+        score('111s999s9m9m', {
+          melds: [
+            ['pon', '111m'],
+            ['pon', '999p'],
+          ],
+        }),
+      ),
+    ).toEqual(['chinroutou']);
     const kans = score('5z5z', {
       melds: [
         ['ankan', '1111m'],

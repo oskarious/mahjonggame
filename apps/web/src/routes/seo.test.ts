@@ -16,7 +16,10 @@ const src = fileURLToPath(new URL('..', import.meta.url));
 const pages = readdirSync(routes, { recursive: true, encoding: 'utf8' })
   .filter((f) => f.endsWith(`${sep}+page.svelte`) || f === '+page.svelte')
   .map((f) => {
-    const segments = f.split(sep).slice(0, -1).filter((s) => !/^\(.*\)$/.test(s));
+    const segments = f
+      .split(sep)
+      .slice(0, -1)
+      .filter((s) => !/^\(.*\)$/.test(s));
     return { path: `/${segments.join('/')}`, file: join(routes, f) };
   });
 
@@ -47,7 +50,9 @@ describe('route SEO', () => {
 
   describe.each(publicPages.map((p) => [p.path, p.file] as const))('%s', (path, file) => {
     it('renders Seo', () => {
-      expect(rendersSeo(file), `${path}: render <Seo> in the page or a component it renders, or disallow it`).toBe(true);
+      expect(rendersSeo(file), `${path}: render <Seo> in the page or a component it renders, or disallow it`).toBe(
+        true,
+      );
     });
 
     it('is in the sitemap, or left out with a reason', () => {
@@ -78,7 +83,10 @@ describe('route SEO', () => {
   it('keeps UNLISTED to public pages', () => {
     for (const path of Object.keys(UNLISTED)) {
       expect(disallowed(path), path).toBe(false);
-      expect(pages.some((p) => p.path === path), `${path} has no page`).toBe(true);
+      expect(
+        pages.some((p) => p.path === path),
+        `${path} has no page`,
+      ).toBe(true);
     }
   });
 });

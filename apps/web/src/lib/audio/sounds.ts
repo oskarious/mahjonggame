@@ -7,7 +7,7 @@ export type SoundEntry = string | { file: string; volume?: number } | null;
 export const SOUNDS = {
   // Tiles
   /** Any discard, every seat. */
-  tilePlace: "tile-place.mp3",
+  tilePlace: 'tile-place.mp3',
   /** Own draw. */
   tileDraw: null,
   /** Called tiles slide into the meld area. */
@@ -21,13 +21,13 @@ export const SOUNDS = {
   callChii: null,
   callPon: null,
   callKan: null,
-  callRiichi: "other-riichi-call.mp3",
+  callRiichi: 'other-riichi-call.mp3',
   callRon: null,
   callTsumo: null,
   callChiiOther: null,
   callPonOther: null,
   callKanOther: null,
-  callRiichiOther: "other-riichi-call.mp3",
+  callRiichiOther: 'other-riichi-call.mp3',
   callRonOther: null,
   callTsumoOther: null,
 

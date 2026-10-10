@@ -18,12 +18,16 @@ await hub.bots.load();
 const recovered = await hub.recover((g) => replayGame(g.rules, g.seed, g.actions));
 if (recovered) console.log(`Resumed ${recovered} unfinished game(s)`);
 const created = await hub.bots.ensurePool();
-console.log(`Bot players: ${hub.bots.bots.size}${created ? ` (${created} new)` : ''}${config.botsBackground ? '' : ', background games off'}`);
+console.log(
+  `Bot players: ${hub.bots.bots.size}${created ? ` (${created} new)` : ''}${config.botsBackground ? '' : ', background games off'}`,
+);
 
 const stopJobs = await startJobs({ db, bots: hub.bots });
 const server = createGameServer(hub, config);
 const tick = setInterval(() => hub.tick().catch((e) => console.error('[hub] tick failed', e)), 1000);
-server.http.listen(config.port, () => console.log(`Game server on :${config.port} (auth via ${config.webInternalUrl})`));
+server.http.listen(config.port, () =>
+  console.log(`Game server on :${config.port} (auth via ${config.webInternalUrl})`),
+);
 
 let stopping = false;
 async function stop(signal: string) {

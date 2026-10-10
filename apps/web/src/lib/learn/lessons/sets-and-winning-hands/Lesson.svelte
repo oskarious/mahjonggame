@@ -5,8 +5,7 @@
 <Part title="Sequences">
   <Tiles t="123m 456p 789s" caption="Three sequences" />
   <p>
-    A <Term id="sequence">sequence</Term> is three numbers in a row in one suit. <T t="3p4m5s" /> is not one: the
-    suits differ.
+    A <Term id="sequence">sequence</Term> is three numbers in a row in one suit. <T t="3p4m5s" /> is not one: the suits differ.
   </p>
   <Exercise id="finish" />
 </Part>
@@ -37,7 +36,8 @@
 <Part title="Seven pairs">
   <Tiles t="11m 33m 55p 77p 22s 66s 77z" caption="Seven pairs (chiitoitsu)" />
   <p>
-    <Yaku id="chiitoitsu">Seven different pairs</Yaku> also win, and count as a scoring pattern by themselves. (The other exception,
+    <Yaku id="chiitoitsu">Seven different pairs</Yaku> also win, and count as a scoring pattern by themselves. (The other
+    exception,
     <Yaku id="kokushi">thirteen orphans</Yaku>, is on the <a href="/learn/yaku">yaku list</a>.)
   </p>
   <Exercise id="pairs" />

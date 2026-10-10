@@ -1,7 +1,7 @@
 // Everything that is not one game: connected users, the queue, the bot players, the rooms, and routing of client
 // messages.
 import { DEFAULT_RULES, ENGINE_VERSION, makeRules } from '@mahjong/engine';
-import type { ClientMessage, Format, GameInfo, RatingInfo, ServerMessage } from '@mahjong/protocol';
+import type { ClientMessage, GameInfo, RatingInfo, ServerMessage } from '@mahjong/protocol';
 import { randomUUID } from 'node:crypto';
 import { BotPool } from './bots.ts';
 import type { Config } from './config.ts';
@@ -122,7 +122,13 @@ export class Hub {
         }
         if (this.#stopped) return;
         this.matchmaker.join(
-          { userId: id, name: client.user.name, rating: client.rating.rating, games: client.rating.games, joinedAt: this.#now() },
+          {
+            userId: id,
+            name: client.user.name,
+            rating: client.rating.rating,
+            games: client.rating.games,
+            joinedAt: this.#now(),
+          },
           msg.format,
         );
         client.send({ type: 'queue.status', format: msg.format, waitedMs: 0 });
@@ -132,7 +138,8 @@ export class Hub {
         return;
       case 'act':
         if (!active) return client.send({ type: 'error', code: 'notInGame', requestSeq: msg.seq });
-        if (active.room.id !== msg.gameId) return client.send({ type: 'error', code: 'wrongGame', requestSeq: msg.seq });
+        if (active.room.id !== msg.gameId)
+          return client.send({ type: 'error', code: 'wrongGame', requestSeq: msg.seq });
         active.room.act(active.seat, msg.seq, msg.action, client);
         return;
       case 'ready':
@@ -141,7 +148,8 @@ export class Hub {
       case 'resync': {
         if (active) return active.room.resync(active.seat);
         const format = this.matchmaker.formatOf(id);
-        if (format) client.send({ type: 'queue.status', format, waitedMs: this.matchmaker.waitedMs(id, this.#now()) ?? 0 });
+        if (format)
+          client.send({ type: 'queue.status', format, waitedMs: this.matchmaker.waitedMs(id, this.#now()) ?? 0 });
         return;
       }
     }
@@ -195,7 +203,14 @@ export class Hub {
       }
       try {
         const state = replay(g);
-        const room = this.#makeRoom({ id: g.id, format: g.format, rules: g.rules, seed: g.seed, seats: g.seats, state });
+        const room = this.#makeRoom({
+          id: g.id,
+          format: g.format,
+          rules: g.rules,
+          seed: g.seed,
+          seats: g.seats,
+          state,
+        });
         room.start();
         n++;
       } catch (e) {

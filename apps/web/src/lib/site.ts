@@ -2,7 +2,8 @@
 export const SITE_NAME = 'Riichi Arena';
 
 /** The default description, for pages without their own. */
-export const SITE_DESCRIPTION = 'Play riichi mahjong online: rated games, bots, lessons and trainers. Free, no downloads.';
+export const SITE_DESCRIPTION =
+  'Play riichi mahjong online: rated games, bots, lessons and trainers. Free, no downloads.';
 
 /** Shared link-preview image (1200×630). */
 export const OG_IMAGE = '/brand/og.png';

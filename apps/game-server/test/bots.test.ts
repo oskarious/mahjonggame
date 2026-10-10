@@ -19,11 +19,22 @@ interface Setup {
 
 async function setup(
   ratings: number[],
-  o: { seed?: string; config?: Partial<Config>; settings?: Partial<BotSettings>; games?: number; store?: MemoryStore } = {},
+  o: {
+    seed?: string;
+    config?: Partial<Config>;
+    settings?: Partial<BotSettings>;
+    games?: number;
+    store?: MemoryStore;
+  } = {},
 ): Promise<Setup> {
   const store = o.store ?? new MemoryStore();
   await addBots(store, ratings, o.games ?? 30);
-  const hub = new Hub({ store, config: { ...TEST_CONFIG, ...o.config }, random: seeded(o.seed ?? 'bots'), log: () => {} });
+  const hub = new Hub({
+    store,
+    config: { ...TEST_CONFIG, ...o.config },
+    random: seeded(o.seed ?? 'bots'),
+    log: () => {},
+  });
   await hub.bots.load();
   // No automatic top-up to the default pool size: tests work with the bots they add. Schedules off unless a test turns
   // them on (every bot online).
@@ -68,7 +79,8 @@ describe('summoning bot players for waiting humans', () => {
     expect(times.every((t) => t !== undefined && t >= 3_000)).toBe(true);
     expect(new Set(times).size).toBe(3);
     // Close to the player's rating.
-    for (const id of botsOf(room)) expect(Math.abs(hub.bots.bots.get(id)!.rating - 1000)).toBeLessThanOrEqual(150 + 20 * 40);
+    for (const id of botsOf(room))
+      expect(Math.abs(hub.bots.bots.get(id)!.rating - 1000)).toBeLessThanOrEqual(150 + 20 * 40);
   });
 
   it('the wait is different from game to game', async () => {
@@ -243,8 +255,12 @@ describe('the pool', () => {
       expect(b.rating).toBeGreaterThanOrEqual(1099);
       expect(b.rating).toBeLessThanOrEqual(1251);
     }
-    expect(await hub.bots.updateSettings({ botPoolMin: 50, botPoolMax: 40 })).toEqual({ error: 'botPoolMin must not be above botPoolMax' });
-    expect(await hub.bots.updateSettings({ summonAfterMs: [5, 1] })).toMatchObject({ error: expect.stringContaining('summonAfterMs') });
+    expect(await hub.bots.updateSettings({ botPoolMin: 50, botPoolMax: 40 })).toEqual({
+      error: 'botPoolMin must not be above botPoolMax',
+    });
+    expect(await hub.bots.updateSettings({ summonAfterMs: [5, 1] })).toMatchObject({
+      error: expect.stringContaining('summonAfterMs'),
+    });
     expect(await hub.bots.updateSettings({ nope: 1 })).toEqual({ error: 'Unknown setting nope' });
     expect(hub.bots.settings.botPoolMax).toBe(1000);
   });
@@ -311,7 +327,8 @@ describe('schedules', () => {
     for (const id of ids) hub.bots.bots.get(id)!.onlineUntil = Date.now() + 1_000;
     await tickUntil(hub, () => false, 10).catch(() => {});
     // Still playing, so still online.
-    for (const id of ids) expect(hub.bots.snapshot().bots.find((b) => b.id === id)).toMatchObject({ state: 'busy', online: true });
+    for (const id of ids)
+      expect(hub.bots.snapshot().bots.find((b) => b.id === id)).toMatchObject({ state: 'busy', online: true });
     hub.detach(a);
     await vi.advanceTimersByTimeAsync(5 * 60_000);
     await vi.runAllTimersAsync();
@@ -373,9 +390,15 @@ describe('schedules', () => {
     expect(await hub.bots.updateSettings({ regions: [{ tz: 'Asia/Tokyo', weight: 0 }] })).toMatchObject({
       error: expect.stringContaining('regions'),
     });
-    expect(await hub.bots.updateSettings({ sessionMin: [0, 60] })).toMatchObject({ error: expect.stringContaining('minutes') });
-    expect(await hub.bots.updateSettings({ appetiteMin: [200, 100] })).toMatchObject({ error: expect.stringContaining('appetiteMin') });
-    expect(await hub.bots.updateSettings({ schedulesEnabled: 'yes' })).toMatchObject({ error: expect.stringContaining('schedulesEnabled') });
+    expect(await hub.bots.updateSettings({ sessionMin: [0, 60] })).toMatchObject({
+      error: expect.stringContaining('minutes'),
+    });
+    expect(await hub.bots.updateSettings({ appetiteMin: [200, 100] })).toMatchObject({
+      error: expect.stringContaining('appetiteMin'),
+    });
+    expect(await hub.bots.updateSettings({ schedulesEnabled: 'yes' })).toMatchObject({
+      error: expect.stringContaining('schedulesEnabled'),
+    });
     const ok = await hub.bots.updateSettings({ regions: [{ tz: 'Europe/Paris', weight: 2 }], sessionMin: [30, 60] });
     expect(ok).toMatchObject({ settings: { regions: [{ tz: 'Europe/Paris', weight: 2 }], sessionMin: [30, 60] } });
   });
@@ -417,7 +440,10 @@ describe('background games', () => {
   });
 
   it('keeps the idle reserve free for humans', async () => {
-    const few = await setup([1000, 1010, 1020, 1030, 1040, 1050], { ...on, settings: { idleReserve: 3, backgroundEveryMs: 1_000 } });
+    const few = await setup([1000, 1010, 1020, 1030, 1040, 1050], {
+      ...on,
+      settings: { idleReserve: 3, backgroundEveryMs: 1_000 },
+    });
     await tickUntil(few.hub, () => false, 30).catch(() => {});
     expect(few.hub.rooms.size).toBe(0);
     const enough = await setup([1000, 1010, 1020, 1030, 1040, 1050, 1060], { ...on, settings: { idleReserve: 3 } });
@@ -471,7 +497,12 @@ describe('background games', () => {
     expect(cut).toBeGreaterThan(5);
     first.hub.shutdown();
 
-    const hub2 = new Hub({ store, config: { ...TEST_CONFIG, botsBackground: false }, random: seeded('restart'), log: () => {} });
+    const hub2 = new Hub({
+      store,
+      config: { ...TEST_CONFIG, botsBackground: false },
+      random: seeded('restart'),
+      log: () => {},
+    });
     await hub2.bots.load();
     expect(await hub2.recover((g) => replayGame(g.rules, g.seed, g.actions))).toBe(1);
     const room2 = hub2.rooms.get(room1.id)!;

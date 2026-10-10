@@ -4,7 +4,9 @@ import { score } from './helpers.ts';
 
 const parts = (hand: string, opts: Parameters<typeof score>[1] = {}) => {
   const v = score(hand, { riichi: 'riichi', ...opts });
-  return v!.fuParts.map(({ reason, fu, open }: FuPart) => (open === undefined ? `${reason}:${fu}` : `${reason}:${fu}:${open ? 'open' : 'closed'}`));
+  return v!.fuParts.map(({ reason, fu, open }: FuPart) =>
+    open === undefined ? `${reason}:${fu}` : `${reason}:${fu}:${open ? 'open' : 'closed'}`,
+  );
 };
 const fu = (hand: string, opts: Parameters<typeof score>[1] = {}) => score(hand, { riichi: 'riichi', ...opts })!.fu;
 
@@ -56,9 +58,9 @@ describe('fu components (EMA 4.1.1)', () => {
     expect(parts('123m456p789s11z23s4s')).toContain('valuePair:2'); // round
     expect(parts('123m456p789s44z23s4s')).not.toContain('valuePair:2'); // guest wind
     expect(parts('123m456p789s11z23s4s', { seatWind: EAST })).toContain('valuePair:2');
-    expect(parts('123m456p789s11z23s4s', { seatWind: EAST, rules: makeRules(EMA_2025, { doubleWindPairFu: 4 }) })).toContain(
-      'valuePair:4',
-    );
+    expect(
+      parts('123m456p789s11z23s4s', { seatWind: EAST, rules: makeRules(EMA_2025, { doubleWindPairFu: 4 }) }),
+    ).toContain('valuePair:4');
   });
 
   it('waits: edge, closed and pair waits are 2 fu; two-sided and triplet waits 0', () => {
@@ -105,36 +107,82 @@ describe('payments (EMA scoring tables)', () => {
   const base = (han: number, fu: number, rules = ema) => limitFor(han, fu, rules)[1];
 
   it.each([
-    [1, 30, 1000], [1, 40, 1300], [1, 50, 1600], [1, 60, 2000], [1, 70, 2300],
-    [1, 80, 2600], [1, 90, 2900], [1, 100, 3200], [1, 110, 3600],
-    [2, 25, 1600], [2, 30, 2000], [2, 40, 2600], [2, 50, 3200], [2, 60, 3900],
-    [2, 70, 4500], [2, 80, 5200], [2, 90, 5800], [2, 100, 6400], [2, 110, 7100],
-    [3, 25, 3200], [3, 30, 3900], [3, 40, 5200], [3, 50, 6400], [3, 60, 8000],
-    [4, 25, 6400], [4, 30, 8000], [4, 40, 8000],
+    [1, 30, 1000],
+    [1, 40, 1300],
+    [1, 50, 1600],
+    [1, 60, 2000],
+    [1, 70, 2300],
+    [1, 80, 2600],
+    [1, 90, 2900],
+    [1, 100, 3200],
+    [1, 110, 3600],
+    [2, 25, 1600],
+    [2, 30, 2000],
+    [2, 40, 2600],
+    [2, 50, 3200],
+    [2, 60, 3900],
+    [2, 70, 4500],
+    [2, 80, 5200],
+    [2, 90, 5800],
+    [2, 100, 6400],
+    [2, 110, 7100],
+    [3, 25, 3200],
+    [3, 30, 3900],
+    [3, 40, 5200],
+    [3, 50, 6400],
+    [3, 60, 8000],
+    [4, 25, 6400],
+    [4, 30, 8000],
+    [4, 40, 8000],
   ])('non-dealer ron %i han %i fu = %i', (han, fu, points) => {
     expect(ronPoints(base(han, fu), false)).toBe(points);
   });
 
   it.each([
-    [1, 30, 1500], [1, 40, 2000], [1, 50, 2400], [1, 60, 2900], [1, 70, 3400],
-    [1, 80, 3900], [1, 90, 4400], [1, 100, 4800],
-    [2, 25, 2400], [2, 30, 2900], [2, 40, 3900], [3, 25, 4800], [3, 30, 5800],
-    [3, 60, 12000], [4, 25, 9600], [4, 30, 12000],
+    [1, 30, 1500],
+    [1, 40, 2000],
+    [1, 50, 2400],
+    [1, 60, 2900],
+    [1, 70, 3400],
+    [1, 80, 3900],
+    [1, 90, 4400],
+    [1, 100, 4800],
+    [2, 25, 2400],
+    [2, 30, 2900],
+    [2, 40, 3900],
+    [3, 25, 4800],
+    [3, 30, 5800],
+    [3, 60, 12000],
+    [4, 25, 9600],
+    [4, 30, 12000],
   ])('dealer ron %i han %i fu = %i', (han, fu, points) => {
     expect(ronPoints(base(han, fu), true)).toBe(points);
   });
 
   it.each([
-    [1, 30, 300, 500], [1, 40, 400, 700], [2, 20, 400, 700], [2, 25, 400, 800],
-    [2, 30, 500, 1000], [3, 20, 700, 1300], [3, 25, 800, 1600], [3, 30, 1000, 2000],
-    [4, 20, 1300, 2600], [4, 25, 1600, 3200],
+    [1, 30, 300, 500],
+    [1, 40, 400, 700],
+    [2, 20, 400, 700],
+    [2, 25, 400, 800],
+    [2, 30, 500, 1000],
+    [3, 20, 700, 1300],
+    [3, 25, 800, 1600],
+    [3, 30, 1000, 2000],
+    [4, 20, 1300, 2600],
+    [4, 25, 1600, 3200],
   ])('non-dealer tsumo %i han %i fu = %i / %i', (han, fu, others, dealer) => {
     expect(tsumoPoints(base(han, fu), false)).toEqual({ fromOthers: others, fromDealer: dealer });
   });
 
   it.each([
-    [1, 30, 500], [2, 20, 700], [2, 25, 800], [2, 30, 1000], [3, 20, 1300],
-    [3, 25, 1600], [4, 20, 2600], [4, 25, 3200],
+    [1, 30, 500],
+    [2, 20, 700],
+    [2, 25, 800],
+    [2, 30, 1000],
+    [3, 20, 1300],
+    [3, 25, 1600],
+    [4, 20, 2600],
+    [4, 25, 3200],
   ])('dealer tsumo %i han %i fu = %i all', (han, fu, each) => {
     expect(tsumoPoints(base(han, fu), true).fromOthers).toBe(each);
   });

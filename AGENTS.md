@@ -29,6 +29,7 @@ packages/drills/        @mahjong/drills: pure TS on the engine: lesson positions
                         trainer generator (bot self-play → problems), the daily discard hand and bot weights, yaku labels
 packages/protocol/      @mahjong/protocol: client↔server WebSocket messages (types, PROTOCOL_VERSION) + hand-written
                         guards; username.ts (username rules, shared), admin.ts (types of the game server's /internal API)
+packages/eslint-config/ @mahjong/eslint-config: the ESLint flat config (own workspace so it can pin TS 6; see dev.md)
 apps/game-server/       @mahjong/game-server: Node 22 + ws, no build step; rooms, timers, matchmaking, bot players, Elo,
                         scheduled jobs (node-cron)
 apps/web/               SvelteKit (Svelte 5 runes, adapter-node): UI, offline play, accounts, /admin, DB migrations
@@ -65,6 +66,8 @@ npm run dev                  # web on :5173 (also LAN) + game server on :3001; m
 npm run db:migrate --workspace @mahjong/web   # run migrations without starting the server
 npm test                     # engine (~300), protocol, drills, game-server and web tests
 npm run typecheck            # engine + scripts + protocol + game-server + svelte-check
+npm run format               # Prettier, whole repo (format:check to only check)
+npm run lint                 # ESLint, whole repo
 npm run build --workspace @mahjong/web
 ```
 
@@ -92,6 +95,8 @@ Calibration: engine.md. Docker images: deployment.md.
   pattern and font copied from the app) in the same change, so the two never drift.
 - **Keep DB types in sync:** a migration touching game-server tables also updates `apps/game-server/src/db.ts`.
 - **Stop the dev servers you started** once your browser check is done; reuse the existing launch configs.
+- **Format and lint every change** (Prettier + ESLint; Claude Code's hook does it per edited file, see dev.md). Fix
+  lint errors rather than disabling rules; an inline disable needs a `-- reason`.
 - **Leave no dead code behind.** When a change makes something unused or redundant (a function, field, setting,
   option, hint level, config key, test, doc line), remove it in the same change, across all workspaces. Before
   finishing, ask what the change made obsolete and grep for it.

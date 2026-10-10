@@ -122,7 +122,9 @@ describe('full game simulation', () => {
   it('rejects illegal actions', () => {
     const { state } = createGame(DEFAULT_RULES, 'illegal');
     const notDealer = 1;
-    expect(() => applyAction(state, { type: 'discard', seat: notDealer, tile: state.hand.players[1].hand[0] })).toThrow();
+    expect(() =>
+      applyAction(state, { type: 'discard', seat: notDealer, tile: state.hand.players[1].hand[0] }),
+    ).toThrow();
     expect(() => applyAction(state, { type: 'discard', seat: 0, tile: state.hand.players[1].hand[0] })).toThrow();
     expect(() => applyAction(state, { type: 'nextHand' })).toThrow();
   });

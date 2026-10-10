@@ -104,16 +104,12 @@ describe('cuesFor', () => {
 
   it('draws', () => {
     expect(ids([handEnd({ type: 'exhaustive', tenpai: [], hands: [], deltas: [] })])).toEqual(['drawExhaustive']);
-    expect(ids([handEnd({ type: 'abortive', reason: 'fourWinds', seat: null, deltas: [] })])).toEqual([
-      'drawAbortive',
-    ]);
+    expect(ids([handEnd({ type: 'abortive', reason: 'fourWinds', seat: null, deltas: [] })])).toEqual(['drawAbortive']);
   });
 
   it('game end by own placement', () => {
     const final = (first: Seat) => ev({ type: 'gameEnd', final: [{ seat: first }, { seat: (first + 1) % 4 }] });
-    expect(cuesFor([final(ME)], idle, initialCueState()).cues).toEqual([
-      { id: 'gameEndFirst', delay: GAME_END_DELAY },
-    ]);
+    expect(cuesFor([final(ME)], idle, initialCueState()).cues).toEqual([{ id: 'gameEndFirst', delay: GAME_END_DELAY }]);
     expect(ids([final(2)])).toEqual(['gameEnd']);
   });
 

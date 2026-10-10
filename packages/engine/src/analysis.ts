@@ -59,7 +59,8 @@ export function unseenCounts(g: GameState, seat: Seat): Counts {
   return c.map((n) => Math.max(0, 4 - n));
 }
 
-const toCounts = (kinds: Kind[], unseen: Counts): TileCount[] => kinds.map((kind) => ({ kind, remaining: unseen[kind] }));
+const toCounts = (kinds: Kind[], unseen: Counts): TileCount[] =>
+  kinds.map((kind) => ({ kind, remaining: unseen[kind] }));
 const sumRemaining = (list: TileCount[]) => list.reduce((a, t) => a + t.remaining, 0);
 
 /** Analyzes a hand of 13 - 3 * melds concealed tiles. */
@@ -130,7 +131,11 @@ export const GOOD_WAIT = 5;
  * measure of shape quality next to `analyzeHand`'s ukeire, which counts every draw that reaches tenpai alike.
  * Empty for a hand that is not 1-shanten.
  */
-export function goodWaitAcceptance(concealed: readonly Tile[], melds: readonly Meld[], unseen: Counts): {
+export function goodWaitAcceptance(
+  concealed: readonly Tile[],
+  melds: readonly Meld[],
+  unseen: Counts,
+): {
   tiles: TileCount[];
   total: number;
 } {
@@ -199,8 +204,7 @@ export function analyzeSeat(g: GameState, seat: Seat): SeatAnalysis {
 
   if (size === 13) {
     const a = analyzeHand(p.hand, p.melds, unseen);
-    const furiten =
-      p.tempFuriten || p.riichiFuriten || (a.tenpai && a.waits.some((w) => ownDiscards.includes(w.kind)));
+    const furiten = p.tempFuriten || p.riichiFuriten || (a.tenpai && a.waits.some((w) => ownDiscards.includes(w.kind)));
     return { ...a, complete: false, furiten, discards: null };
   }
 

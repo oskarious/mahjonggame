@@ -68,7 +68,9 @@ function connect(cookie: string | null, opts: { origin?: string; autoPong?: bool
     if (i >= 0) waiters.splice(i, 1)[0].resolve(m);
     else received.push(m);
   });
-  const closed = new Promise<{ code: number; reason: string }>((r) => ws.on('close', (code, reason) => r({ code, reason: reason.toString() })));
+  const closed = new Promise<{ code: number; reason: string }>((r) =>
+    ws.on('close', (code, reason) => r({ code, reason: reason.toString() })),
+  );
   const sock: Sock = {
     ws,
     received,

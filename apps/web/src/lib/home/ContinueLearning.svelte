@@ -12,9 +12,7 @@
   const lessons = published(dev);
   const variantCounts = (slug: string) =>
     Object.fromEntries(Object.entries(exercisesOf(slug)).map(([id, set]) => [id, set.length]));
-  const index = $derived(
-    progressLoaded() ? lessons.findIndex((l) => !completed(l.slug, variantCounts(l.slug))) : 0,
-  );
+  const index = $derived(progressLoaded() ? lessons.findIndex((l) => !completed(l.slug, variantCounts(l.slug))) : 0);
   const lesson = $derived(index < 0 ? null : lessons[index]);
 </script>
 

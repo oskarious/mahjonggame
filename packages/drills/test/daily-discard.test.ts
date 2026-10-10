@@ -3,7 +3,8 @@ import { kindOf, seedRng, nextUint32 } from '@mahjong/engine';
 import { discardAnswers, stateOf } from '../src/goals.ts';
 import { BOT_SHARE, botShare, botWeights, dailyDiscard, discardKinds, pickWeighted } from '../src/daily-discard.ts';
 
-const days = (n: number) => Array.from({ length: n }, (_, i) => new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10));
+const days = (n: number) =>
+  Array.from({ length: n }, (_, i) => new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10));
 
 describe('daily discard', () => {
   it('is the same hand all day, a different one the next', () => {

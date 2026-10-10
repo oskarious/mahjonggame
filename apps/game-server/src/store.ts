@@ -111,7 +111,14 @@ export class PgStore implements Store {
     await this.#db.transaction().execute(async (trx) => {
       await trx
         .insertInto('game')
-        .values({ id: game.id, format: game.format, rules: JSON.stringify(game.rules), seed: game.seed, engineVersion: ENGINE_VERSION, status: 'running' })
+        .values({
+          id: game.id,
+          format: game.format,
+          rules: JSON.stringify(game.rules),
+          seed: game.seed,
+          engineVersion: ENGINE_VERSION,
+          status: 'running',
+        })
         .execute();
       await trx
         .insertInto('game_seat')
@@ -129,10 +136,18 @@ export class PgStore implements Store {
   }
 
   async appendAction(gameId: string, seq: number, action: Action): Promise<void> {
-    await this.#db.insertInto('game_action').values({ gameId, seq, action: JSON.stringify(action) }).execute();
+    await this.#db
+      .insertInto('game_action')
+      .values({ gameId, seq, action: JSON.stringify(action) })
+      .execute();
   }
 
-  async finishGame(gameId: string, final: FinalStanding[], seats: SeatResult[], ratings: RatingUpdate[]): Promise<void> {
+  async finishGame(
+    gameId: string,
+    final: FinalStanding[],
+    seats: SeatResult[],
+    ratings: RatingUpdate[],
+  ): Promise<void> {
     await this.#db.transaction().execute(async (trx) => {
       await trx
         .updateTable('game')
@@ -151,7 +166,9 @@ export class PgStore implements Store {
         await trx
           .insertInto('rating')
           .values({ userId: r.userId, rating: r.rating, games: r.games, updatedAt: new Date() })
-          .onConflict((oc) => oc.column('userId').doUpdateSet({ rating: r.rating, games: r.games, updatedAt: new Date() }))
+          .onConflict((oc) =>
+            oc.column('userId').doUpdateSet({ rating: r.rating, games: r.games, updatedAt: new Date() }),
+          )
           .execute();
       }
     });
@@ -204,7 +221,15 @@ export class PgStore implements Store {
         return r.botSkill !== null ? { kind: 'bot', skill: r.botSkill, ...player } : { kind: 'human', ...player };
       });
       if (seats.length !== 4) continue;
-      out.push({ id: g.id, format: g.format, rules: g.rules, seed: g.seed, engineVersion: g.engineVersion, seats, actions: actions.map((a) => a.action) });
+      out.push({
+        id: g.id,
+        format: g.format,
+        rules: g.rules,
+        seed: g.seed,
+        engineVersion: g.engineVersion,
+        seats,
+        actions: actions.map((a) => a.action),
+      });
     }
     return out;
   }
@@ -237,7 +262,11 @@ export class PgStore implements Store {
   }
 
   async setBotSchedule(id: string, schedule: BotSchedule): Promise<void> {
-    await this.#db.updateTable('bot').set({ schedule: JSON.stringify(schedule) }).where('userId', '=', id).execute();
+    await this.#db
+      .updateTable('bot')
+      .set({ schedule: JSON.stringify(schedule) })
+      .where('userId', '=', id)
+      .execute();
   }
 
   async createBot(bot: NewBot): Promise<BotRow | null> {
@@ -257,9 +286,23 @@ export class PgStore implements Store {
         .onConflict((oc) => oc.doNothing())
         .executeTakeFirst();
       if (!res.numInsertedOrUpdatedRows) return null;
-      await trx.insertInto('bot').values({ userId: id, skill: bot.skill, schedule: JSON.stringify(bot.schedule) }).execute();
-      await trx.insertInto('rating').values({ userId: id, rating: bot.rating, games: 0, updatedAt: new Date() }).execute();
-      return { id, name: bot.name, skill: bot.skill, active: true, rating: bot.rating, games: 0, schedule: bot.schedule };
+      await trx
+        .insertInto('bot')
+        .values({ userId: id, skill: bot.skill, schedule: JSON.stringify(bot.schedule) })
+        .execute();
+      await trx
+        .insertInto('rating')
+        .values({ userId: id, rating: bot.rating, games: 0, updatedAt: new Date() })
+        .execute();
+      return {
+        id,
+        name: bot.name,
+        skill: bot.skill,
+        active: true,
+        rating: bot.rating,
+        games: 0,
+        schedule: bot.schedule,
+      };
     });
   }
 
@@ -271,14 +314,22 @@ export class PgStore implements Store {
         if (patch.skill !== undefined || patch.active !== undefined) {
           await trx
             .updateTable('bot')
-            .set({ ...(patch.skill !== undefined && { skill: patch.skill }), ...(patch.active !== undefined && { active: patch.active }) })
+            .set({
+              ...(patch.skill !== undefined && { skill: patch.skill }),
+              ...(patch.active !== undefined && { active: patch.active }),
+            })
             .where('userId', '=', id)
             .execute();
         }
         if (patch.name !== undefined) {
           await trx
             .updateTable('user')
-            .set({ name: patch.name, username: patch.name.toLowerCase(), displayUsername: patch.name, updatedAt: new Date() })
+            .set({
+              name: patch.name,
+              username: patch.name.toLowerCase(),
+              displayUsername: patch.name,
+              updatedAt: new Date(),
+            })
             .where('id', '=', id)
             .execute();
         }
@@ -308,7 +359,10 @@ export class PgStore implements Store {
 /** In-memory store for tests; records the same things in plain objects. */
 export class MemoryStore implements Store {
   ratings = new Map<string, RatingRow>();
-  games = new Map<string, StoredGame & { status: 'running' | 'finished' | 'aborted'; final: FinalStanding[] | null; results: SeatResult[] }>();
+  games = new Map<
+    string,
+    StoredGame & { status: 'running' | 'finished' | 'aborted'; final: FinalStanding[] | null; results: SeatResult[] }
+  >();
   /** Every appended action in order, across games (for assertions on persist-before-send). */
   log: { gameId: string; seq: number; action: Action }[] = [];
   /** Optional hook to delay or fail writes in tests. */
@@ -320,7 +374,14 @@ export class MemoryStore implements Store {
 
   async createGame(game: GameRecord): Promise<void> {
     await this.beforeWrite?.();
-    this.games.set(game.id, { ...game, engineVersion: ENGINE_VERSION, actions: [], status: 'running', final: null, results: [] });
+    this.games.set(game.id, {
+      ...game,
+      engineVersion: ENGINE_VERSION,
+      actions: [],
+      status: 'running',
+      final: null,
+      results: [],
+    });
   }
 
   async appendAction(gameId: string, seq: number, action: Action): Promise<void> {
@@ -332,7 +393,12 @@ export class MemoryStore implements Store {
     this.log.push({ gameId, seq, action });
   }
 
-  async finishGame(gameId: string, final: FinalStanding[], seats: SeatResult[], ratings: RatingUpdate[]): Promise<void> {
+  async finishGame(
+    gameId: string,
+    final: FinalStanding[],
+    seats: SeatResult[],
+    ratings: RatingUpdate[],
+  ): Promise<void> {
     await this.beforeWrite?.();
     const g = this.games.get(gameId);
     if (!g) throw new Error(`No game ${gameId}`);

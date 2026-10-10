@@ -32,7 +32,13 @@
   }
 </script>
 
-<Seo title="Sign in" description="Sign in to Riichi Arena to play rated riichi mahjong online." path="/login" type="website" noindex />
+<Seo
+  title="Sign in"
+  description="Sign in to Riichi Arena to play rated riichi mahjong online."
+  path="/login"
+  type="website"
+  noindex
+/>
 
 <main class="page">
   <a class="back" href="/" aria-label="Home">←</a>

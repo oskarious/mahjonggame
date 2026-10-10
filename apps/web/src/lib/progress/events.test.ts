@@ -60,13 +60,21 @@ describe('parseRequest: merge', () => {
           v: 2,
           lessons: { tiles: { read: true, solved: { a: [0, 2, 3, 7, 2], c: [0] } }, gone: { read: true, solved: {} } },
         },
-        train: { v: 1, trainers: { waits: { answered: 2, firstTry: 1, streak: 0, bestStreak: 1, rushBest: 0 } }, daily: {} },
+        train: {
+          v: 1,
+          trainers: { waits: { answered: 2, firstTry: 1, streak: 0, bestStreak: 1, rushBest: 0 } },
+          daily: {},
+        },
       },
     };
     expect(parseRequest(body, catalog, today)).toEqual({
       merge: {
         learn: { v: 2, lessons: { tiles: { read: true, solved: { a: [0, 2] } } } },
-        train: { v: 1, trainers: { waits: { answered: 2, firstTry: 1, streak: 0, bestStreak: 1, rushBest: 0 } }, daily: {} },
+        train: {
+          v: 1,
+          trainers: { waits: { answered: 2, firstTry: 1, streak: 0, bestStreak: 1, rushBest: 0 } },
+          daily: {},
+        },
       },
     });
   });

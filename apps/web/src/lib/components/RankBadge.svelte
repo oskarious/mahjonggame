@@ -30,7 +30,7 @@
 >
   <span class="num">{rating}</span>
   {#if icon}
-    <!-- Build-time asset from lib/assets/ranks, not user input. -->
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -- build-time asset from lib/assets/ranks, not user input -->
     <span class="icon" role="img" aria-label={info.label}>{@html icon}</span>
   {:else}
     <span class="chip">{info.label}</span>

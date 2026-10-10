@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { kindOf, parseTiles, scenario, tileToString } from '../src/index.ts';
 
-const kinds = (s: string) => parseTiles(s).map(kindOf).sort((a, b) => a - b);
+const kinds = (s: string) =>
+  parseTiles(s)
+    .map(kindOf)
+    .sort((a, b) => a - b);
 const handKinds = (tiles: number[]) => tiles.map(kindOf).sort((a, b) => a - b);
 
 describe('scenario', () => {

@@ -70,15 +70,7 @@ export type YakumanId =
 export type Wait = 'ryanmen' | 'kanchan' | 'penchan' | 'tanki' | 'shanpon';
 
 export type FuReason =
-  | 'base'
-  | 'chiitoitsu'
-  | 'closedRon'
-  | 'tsumo'
-  | 'triplet'
-  | 'quad'
-  | 'valuePair'
-  | 'wait'
-  | 'openPinfu';
+  'base' | 'chiitoitsu' | 'closedRon' | 'tsumo' | 'triplet' | 'quad' | 'valuePair' | 'wait' | 'openPinfu';
 
 /** One line of the fu calculation, e.g. { reason: 'triplet', fu: 8, kind: 27, open: false }. */
 export interface FuPart {

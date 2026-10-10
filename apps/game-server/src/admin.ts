@@ -46,7 +46,12 @@ function readJson(req: IncomingMessage): Promise<unknown> {
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Handles a request under /internal/. */
-export async function handleInternal(req: IncomingMessage, res: ServerResponse, hub: Hub, config: Pick<Config, 'internalToken'>): Promise<void> {
+export async function handleInternal(
+  req: IncomingMessage,
+  res: ServerResponse,
+  hub: Hub,
+  config: Pick<Config, 'internalToken'>,
+): Promise<void> {
   if (!config.internalToken) return send(res, 404, { error: 'Not found' });
   if (!tokenMatches(req.headers.authorization, config.internalToken)) return send(res, 401, { error: 'Unauthorized' });
   const path = (req.url ?? '').split('?')[0];

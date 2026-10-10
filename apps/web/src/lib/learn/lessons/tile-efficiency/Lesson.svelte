@@ -15,8 +15,8 @@
 <Part title="Lone honors go first, while you need a block">
   <p>
     A hand is five <Term id="block">blocks</Term>: four sets and a pair. While one is missing, a lone honor can only
-    become a pair, a lone <T t="9s" /> can still join <T t="78s" />, a lone <T t="5s" /> even more. Cut lone honors,
-    then 1s and 9s, then 2s and 8s.
+    become a pair, a lone <T t="9s" /> can still join <T t="78s" />, a lone <T t="5s" /> even more. Cut lone honors, then
+    1s and 9s, then 2s and 8s.
   </p>
   <Exercise id="honor" />
 </Part>

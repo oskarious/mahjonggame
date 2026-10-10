@@ -199,7 +199,9 @@ export class BotPool {
   /** Active bots online now (by schedule, or in a game): the ones that may do things around the site. */
   onlineIds(): string[] {
     const now = this.#now();
-    return [...this.#bots.values()].filter((b) => b.active && (b.state !== 'idle' || this.#online(b, now))).map((b) => b.id);
+    return [...this.#bots.values()]
+      .filter((b) => b.active && (b.state !== 'idle' || this.#online(b, now)))
+      .map((b) => b.id);
   }
 
   // ---------------------------------------------------------------------------
@@ -253,8 +255,10 @@ export class BotPool {
     }
     if ('count' in req) {
       const { count, minRating, maxRating } = req;
-      if (!Number.isInteger(count) || count < 1 || count > 500) return { error: 'count must be an integer from 1 to 500' };
-      if (![minRating, maxRating].every(Number.isFinite) || minRating > maxRating) return { error: 'Give a rating range, low to high' };
+      if (!Number.isInteger(count) || count < 1 || count > 500)
+        return { error: 'count must be an integer from 1 to 500' };
+      if (![minRating, maxRating].every(Number.isFinite) || minRating > maxRating)
+        return { error: 'Give a rating range, low to high' };
       for (let i = 0; i < count; i++) {
         const rating = minRating + ((maxRating - minRating) * (i + this.#random())) / count;
         const b = await this.#create(skillForElo(rating));
@@ -289,8 +293,10 @@ export class BotPool {
     if (patch.skill !== undefined && (typeof patch.skill !== 'number' || !(patch.skill >= 0 && patch.skill <= 1))) {
       return { error: 'skill must be from 0 to 1' };
     }
-    if (patch.active !== undefined && typeof patch.active !== 'boolean') return { error: 'active must be true or false' };
-    if (patch.active === true && !b.active && this.activeCount() >= this.settings.botPoolMax) return { error: this.#overMax() };
+    if (patch.active !== undefined && typeof patch.active !== 'boolean')
+      return { error: 'active must be true or false' };
+    if (patch.active === true && !b.active && this.activeCount() >= this.settings.botPoolMax)
+      return { error: this.#overMax() };
     const clean: BotPatch = {};
     if (patch.name !== undefined) clean.name = patch.name;
     if (patch.skill !== undefined) clean.skill = patch.skill;
@@ -321,7 +327,15 @@ export class BotPool {
   // ---------------------------------------------------------------------------
 
   #fresh(row: BotRow & { schedule: BotSchedule }): PoolBot {
-    return { ...row, state: 'idle', forUserId: null, roomId: null, restUntil: 0, lastOpponents: new Set(), onlineUntil: 0 };
+    return {
+      ...row,
+      state: 'idle',
+      forUserId: null,
+      roomId: null,
+      restUntil: 0,
+      lastOpponents: new Set(),
+      onlineUntil: 0,
+    };
   }
 
   #online(b: PoolBot, now: number): boolean {
@@ -355,7 +369,8 @@ export class BotPool {
     this.#lastSessionsAt = now;
     for (const b of this.#bots.values()) {
       if (!b.active || b.onlineUntil > now) continue;
-      if (this.#random() < sessionStartChance(b.schedule, now, this.settings.sessionMin, dt)) this.#startSession(b, now);
+      if (this.#random() < sessionStartChance(b.schedule, now, this.settings.sessionMin, dt))
+        this.#startSession(b, now);
     }
   }
 
@@ -431,7 +446,12 @@ export class BotPool {
       seen.add(entry.userId);
       let d = this.#demand.get(entry.userId);
       if (!d || d.joinedAt !== entry.joinedAt) {
-        d = { joinedAt: entry.joinedAt, summonAt: entry.joinedAt + this.#between(s.summonAfterMs), arrivalAt: null, growing: false };
+        d = {
+          joinedAt: entry.joinedAt,
+          summonAt: entry.joinedAt + this.#between(s.summonAfterMs),
+          arrivalAt: null,
+          growing: false,
+        };
         this.#demand.set(entry.userId, d);
       }
       if (now < d.summonAt) continue;
@@ -492,7 +512,9 @@ export class BotPool {
   /** Nobody fits this human: create a bot near their rating, or at the size limit send the nearest idle bot anyway. */
   #grow(human: QueueEntry, format: Format, d: Demand, now: number): void {
     if (this.activeCount() >= this.settings.botPoolMax) {
-      const nearest = this.#available(now, true).sort((a, b) => Math.abs(a.rating - human.rating) - Math.abs(b.rating - human.rating))[0];
+      const nearest = this.#available(now, true).sort(
+        (a, b) => Math.abs(a.rating - human.rating) - Math.abs(b.rating - human.rating),
+      )[0];
       if (nearest) {
         if (!this.#online(nearest, now)) this.#startSession(nearest, now);
         this.#enqueue(nearest, human, format, now);
@@ -527,7 +549,14 @@ export class BotPool {
       b.state = 'busy';
       b.roomId = null;
     }
-    const seats: SeatInit[] = table.map((b) => ({ kind: 'bot', skill: b.skill, userId: b.id, name: b.name, rating: b.rating, games: b.games }));
+    const seats: SeatInit[] = table.map((b) => ({
+      kind: 'bot',
+      skill: b.skill,
+      userId: b.id,
+      name: b.name,
+      rating: b.rating,
+      games: b.games,
+    }));
     const format: Format = this.#random() < 0.5 ? 'east' : 'south';
     this.#startGame({ format, seats: shuffle(seats, this.#random) }, { fast: warm }).then(
       (room) => {

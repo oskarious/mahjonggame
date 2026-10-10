@@ -135,14 +135,16 @@ export const exercises: Record<string, ExerciseSet> = {
     },
     {
       kind: 'choice',
-      prompt: 'Your closed hand is one tile from tenpai, with pinfu and two dora in reach. Should you chii to get there faster?',
+      prompt:
+        'Your closed hand is one tile from tenpai, with pinfu and two dora in reach. Should you chii to get there faster?',
       options: ['No, it turns a big hand into a small one', 'Yes, faster is always better'],
       answer: 0,
       why: 'Opening throws away riichi and pinfu, 2 han, from a hand that is close anyway.',
     },
     {
       kind: 'choice',
-      prompt: 'A chii would give your hand all simples, but leave it worth 1000 points and still two tiles from tenpai. Is it worth calling?',
+      prompt:
+        'A chii would give your hand all simples, but leave it worth 1000 points and still two tiles from tenpai. Is it worth calling?',
       options: ['Yes, it has a yaku now', 'No, it stays cheap and slow'],
       answer: 1,
       why: 'A yaku is not enough: the call costs riichi and leaves a cheap hand still far from tenpai.',

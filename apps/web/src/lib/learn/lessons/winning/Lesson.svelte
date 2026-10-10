@@ -22,8 +22,8 @@
 
 <Part title="Riichi makes any closed hand winnable">
   <p>
-    Declaring <Term id="riichi">riichi</Term> when your closed hand is in tenpai is a <Yaku id="riichi">yaku</Yaku> too. That is why closed hands
-    usually declare it. See <a href="/learn/riichi">Riichi</a>.
+    Declaring <Term id="riichi">riichi</Term> when your closed hand is in tenpai is a <Yaku id="riichi">yaku</Yaku> too. That
+    is why closed hands usually declare it. See <a href="/learn/riichi">Riichi</a>.
   </p>
   <Exercise id="riichi" />
 </Part>
@@ -31,8 +31,8 @@
 <Part title="All simples: the easiest yaku">
   <Tiles t="234m 456p 678s 55m 33s" caption="Only tiles 2 to 8" />
   <p>
-    A hand with only tiles 2 to 8, no 1s, 9s or honors, has the yaku <Yaku id="tanyao">tanyao</Yaku> (all simples). It
-    wins by ron or self-draw, open or closed.
+    A hand with only tiles 2 to 8, no 1s, 9s or honors, has the yaku <Yaku id="tanyao">tanyao</Yaku> (all simples). It wins
+    by ron or self-draw, open or closed.
   </p>
   <p>
     <strong>Your first plan:</strong> keep the middle tiles and a pair of dragons, and keep your hand closed so you can
@@ -43,9 +43,12 @@
 
 <Part title="Open hands: the yaku is in the tiles">
   <p>
-    After a call there is no <Yaku id="riichi">riichi</Yaku> and no <Yaku id="menzenTsumo">self-draw</Yaku> yaku. <Yaku id="tanyao">All simples</Yaku>
-    still works, and so does a <Yaku id="yakuhai">triplet of dragons</Yaku> (<T t="555z" />, <T t="666z" />, <T t="777z" />),
-    of your seat wind or of the round wind.
+    After a call there is no <Yaku id="riichi">riichi</Yaku> and no <Yaku id="menzenTsumo">self-draw</Yaku> yaku. <Yaku
+      id="tanyao">All simples</Yaku
+    >
+    still works, and so does a <Yaku id="yakuhai">triplet of dragons</Yaku> (<T t="555z" />, <T t="666z" />, <T
+      t="777z"
+    />), of your seat wind or of the round wind.
   </p>
   <Exercise id="open" />
 </Part>

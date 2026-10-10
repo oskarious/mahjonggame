@@ -224,7 +224,9 @@ describe('lesson registry', () => {
   });
 
   it('uses every exercise kind somewhere', () => {
-    const used = new Set(LESSONS.flatMap((l) => Object.values(exercisesOf(l.slug)).flatMap((set) => set.map((e) => e.kind))));
+    const used = new Set(
+      LESSONS.flatMap((l) => Object.values(exercisesOf(l.slug)).flatMap((set) => set.map((e) => e.kind))),
+    );
     expect([...used].sort()).toEqual([...EXERCISE_KINDS].sort());
   });
 });
@@ -264,7 +266,7 @@ describe.each(LESSONS.map((l) => [l.slug, l] as const))('lesson %s', (slug, meta
     // The text outside <Yaku> (a gloss in brackets right after one counts as covered), headings and captions.
     const text = src
       .replace(/<script[\s\S]*?<\/script>/, '')
-      .replace(/<Yaku [^>]*>[\s\S]*?<\/Yaku>(\s+\([^)]*\))?/g, ' ')
+      .replace(/<Yaku\s[^>]*>[\s\S]*?<\/Yaku\s*>(\s+\([^)]*\))?/g, ' ')
       .replace(/<[^>]*>/g, ' ')
       .replace(/\s+/g, ' ');
     for (const name of YAKU_NAMES)

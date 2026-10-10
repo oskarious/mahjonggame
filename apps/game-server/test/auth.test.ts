@@ -15,7 +15,13 @@ describe('originAllowed', () => {
 
   it('accepts localhost and private LAN hosts in development', () => {
     const c = { origin: null };
-    for (const o of ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://192.168.1.20:5173', 'http://10.0.0.5', 'http://172.20.0.1:3000']) {
+    for (const o of [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://192.168.1.20:5173',
+      'http://10.0.0.5',
+      'http://172.20.0.1:3000',
+    ]) {
       expect(originAllowed(o, c), o).toBe(true);
     }
     for (const o of ['http://evil.example', 'http://172.99.0.1', 'file://', 'null', undefined]) {
@@ -31,9 +37,15 @@ describe('sessionFromCookie', () => {
     const fetchFn = vi.fn(async (url: string, init: { headers: Record<string, string> }) => {
       expect(url).toBe('http://web:3000/api/auth/get-session');
       expect(init.headers.cookie).toBe('better-auth.session_token=abc');
-      return json(200, { session: { id: 's' }, user: { id: 'u1', name: 'n', username: 'oskar', displayUsername: 'Oskar' } });
+      return json(200, {
+        session: { id: 's' },
+        user: { id: 'u1', name: 'n', username: 'oskar', displayUsername: 'Oskar' },
+      });
     });
-    await expect(sessionFromCookie('better-auth.session_token=abc', config, fetchFn)).resolves.toEqual({ id: 'u1', name: 'Oskar' });
+    await expect(sessionFromCookie('better-auth.session_token=abc', config, fetchFn)).resolves.toEqual({
+      id: 'u1',
+      name: 'Oskar',
+    });
   });
 
   it('falls back through username and name', async () => {
@@ -50,7 +62,9 @@ describe('sessionFromCookie', () => {
     await expect(sessionFromCookie('c', config, fetchFn)).resolves.toBeNull();
     await expect(sessionFromCookie('c', config, async () => json(401, { error: 'x' }))).resolves.toBeNull();
     await expect(sessionFromCookie('c', config, async () => json(200, { user: { id: 5 } }))).resolves.toBeNull();
-    await expect(sessionFromCookie('c', config, async () => new Response('<html>', { status: 200 }))).resolves.toBeNull();
+    await expect(
+      sessionFromCookie('c', config, async () => new Response('<html>', { status: 200 })),
+    ).resolves.toBeNull();
     await expect(
       sessionFromCookie('c', config, async () => {
         throw new Error('ECONNREFUSED');

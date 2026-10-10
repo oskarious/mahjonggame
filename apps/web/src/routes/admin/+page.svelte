@@ -56,11 +56,16 @@
 
   /** `Asia/Tokyo` → `Tokyo`. */
   const city = (tz: string) => tz.slice(tz.lastIndexOf('/') + 1).replaceAll('_', ' ');
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a plain cache, read only by localTime()
   const clocks = new Map<string, Intl.DateTimeFormat>();
   /** The bot's local time now (as of the last load), e.g. `21:04`. */
   const localTime = (tz: string) => {
     let f = clocks.get(tz);
-    if (!f) clocks.set(tz, (f = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })));
+    if (!f)
+      clocks.set(
+        tz,
+        (f = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })),
+      );
     return f.format(data.loadedAt);
   };
   const hhmm = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
@@ -95,8 +100,11 @@
       <span class="chip">{pool.live.humanRooms} with players</span>
       <span class="chip">{pool.live.humansQueued} queued players</span>
       {#if pool.warmingUp}<span class="chip gold">warm-up</span>{/if}
-      {#if !pool.backgroundAllowed}<span class="chip bad">BOTS=off</span>{:else if !pool.settings.backgroundEnabled}<span class="chip bad">background off</span>{/if}
-      {#if pool.lastGrownAt}<span class="chip bad" title="No idle bot fitted a waiting player">grew {ago(pool.lastGrownAt)}</span>{/if}
+      {#if !pool.backgroundAllowed}<span class="chip bad">BOTS=off</span
+        >{:else if !pool.settings.backgroundEnabled}<span class="chip bad">background off</span>{/if}
+      {#if pool.lastGrownAt}<span class="chip bad" title="No idle bot fitted a waiting player"
+          >grew {ago(pool.lastGrownAt)}</span
+        >{/if}
     </section>
 
     <section class="table-tools">
@@ -112,7 +120,16 @@
       <form class="edit" method="POST" action="?/update" use:enhance>
         <input type="hidden" name="id" value={selected.id} />
         <label class="field">Name <input name="name" value={selected.name} maxlength="20" /></label>
-        <label class="field">Skill <input name="skill" type="number" min="0" max="1" step="0.01" value={selected.skill.toFixed(2)} /></label>
+        <label class="field"
+          >Skill <input
+            name="skill"
+            type="number"
+            min="0"
+            max="1"
+            step="0.01"
+            value={selected.skill.toFixed(2)}
+          /></label
+        >
         <p class="schedule">
           {selected.schedule.tz} · {localTime(selected.schedule.tz)} now · weekdays {win(selected.schedule.weekday)} · weekends
           {win(selected.schedule.weekend)} · about {selected.schedule.appetiteMin} min a day
@@ -134,7 +151,10 @@
         <thead>
           <tr>
             {#each [['name', 'Name'], ['rating', 'Rating'], ['games', 'Games'], ['skill', 'Skill'], ['state', 'State']] as [k, label] (k)}
-              <th class:num={k !== 'name' && k !== 'state'} aria-sort={sortKey === k ? (sortDesc ? 'descending' : 'ascending') : 'none'}>
+              <th
+                class:num={k !== 'name' && k !== 'state'}
+                aria-sort={sortKey === k ? (sortDesc ? 'descending' : 'ascending') : 'none'}
+              >
                 <button onclick={() => sortBy(k as SortKey)}>
                   {label}{sortKey === k ? (sortDesc ? ' ↓' : ' ↑') : ''}
                 </button>
@@ -151,8 +171,12 @@
               <td class="num">{b.games}</td>
               <td class="num">{b.skill.toFixed(2)}</td>
               <td><span class="state {b.state}">{b.state}</span></td>
-              <td class="local" title="{b.schedule.tz} · weekdays {win(b.schedule.weekday)} · weekends {win(b.schedule.weekend)}">
-                {city(b.schedule.tz)} {localTime(b.schedule.tz)}
+              <td
+                class="local"
+                title="{b.schedule.tz} · weekdays {win(b.schedule.weekday)} · weekends {win(b.schedule.weekend)}"
+              >
+                {city(b.schedule.tz)}
+                {localTime(b.schedule.tz)}
               </td>
             </tr>
           {/each}
@@ -170,7 +194,9 @@
       </form>
       <form class="grid" method="POST" action="?/create" use:enhance>
         <label class="field">Name <input name="name" maxlength="20" placeholder="random" /></label>
-        <label class="field">Skill <input name="skill" type="number" min="0" max="1" step="0.01" placeholder="random" /></label>
+        <label class="field"
+          >Skill <input name="skill" type="number" min="0" max="1" step="0.01" placeholder="random" /></label
+        >
         <button class="btn" type="submit">Add one</button>
       </form>
       {#if msg('create')?.error}<p class="form-error" role="alert">{msg('create')?.error}</p>{/if}
@@ -179,7 +205,11 @@
 
     <details open={msg('settings') !== null}>
       <summary>Settings</summary>
-      {#snippet range(k: 'summonAfterMs' | 'botArrivalMs' | 'botRestMs' | 'thinkForcedMs' | 'thinkCallMs', label: string, hint: string)}
+      {#snippet range(
+        k: 'summonAfterMs' | 'botArrivalMs' | 'botRestMs' | 'thinkForcedMs' | 'thinkCallMs',
+        label: string,
+        hint: string,
+      )}
         <fieldset class="field range">
           <legend>{label}</legend>
           <input name="{k}.lo" type="number" min="0" step="0.01" value={sec(s[k][0])} aria-label="{label} from" />
@@ -197,18 +227,32 @@
           <small class="hint">{hint}</small>
         </fieldset>
       {/snippet}
-      <form class="settings" method="POST" action="?/settings" use:enhance={() => ({ update }) => update({ reset: false })}>
+      <form
+        class="settings"
+        method="POST"
+        action="?/settings"
+        use:enhance={() =>
+          ({ update }) =>
+            update({ reset: false })}
+      >
         <section>
           <h3>Pool</h3>
           <p class="intro">Bot players are accounts that look like real players. Retired bots don't count.</p>
           <div class="grid">
             <label class="field">
               Minimum pool <input name="botPoolMin" type="number" min="0" value={s.botPoolMin} />
-              <small class="hint">Active bots to keep. Raising it creates the missing ones right away, spread over the bot rating range (about 960–1310); lowering it removes none (retire bots for that). With active hours on, only some are online at a time. Default 400.</small>
+              <small class="hint"
+                >Active bots to keep. Raising it creates the missing ones right away, spread over the bot rating range
+                (about 960–1310); lowering it removes none (retire bots for that). With active hours on, only some are
+                online at a time. Default 400.</small
+              >
             </label>
             <label class="field">
               Maximum pool <input name="botPoolMax" type="number" min="0" value={s.botPoolMax} />
-              <small class="hint">Most active bots. Bots created for waiting players, added here or reactivated stop at this number; then a waiting player gets the nearest idle bot even if its rating is far off. Default 1000.</small>
+              <small class="hint"
+                >Most active bots. Bots created for waiting players, added here or reactivated stop at this number; then
+                a waiting player gets the nearest idle bot even if its rating is far off. Default 1000.</small
+              >
             </label>
           </div>
         </section>
@@ -216,38 +260,69 @@
         <section>
           <h3>Waiting players</h3>
           <p class="intro">
-            When someone queues and no other players are around, bots join the queue one at a time, so the table fills at
-            a natural pace that varies from game to game. Times are picked at random between the two values.
+            When someone queues and no other players are around, bots join the queue one at a time, so the table fills
+            at a natural pace that varies from game to game. Times are picked at random between the two values.
           </p>
           <div class="grid">
-            {@render range('summonAfterMs', 'First bot after (s)', 'How long a player waits before the first bot joins. Gives other players time to be matched with them first. Default 3–9.')}
-            {@render range('botArrivalMs', 'Between bots (s)', 'Gap before the next bot joins the same player. A solo wait is about the first delay plus three gaps. Default 2–8.')}
+            {@render range(
+              'summonAfterMs',
+              'First bot after (s)',
+              'How long a player waits before the first bot joins. Gives other players time to be matched with them first. Default 3–9.',
+            )}
+            {@render range(
+              'botArrivalMs',
+              'Between bots (s)',
+              'Gap before the next bot joins the same player. A solo wait is about the first delay plus three gaps. Default 2–8.',
+            )}
             <label class="field">
               Grow after (s) <input name="growAfterMs" type="number" min="0" step="0.1" value={sec(s.growAfterMs)} />
-              <small class="hint">If no idle bot is close enough in rating after this long, a new bot is created near the player's rating. An offline bot that is close enough logs on first. Default 30.</small>
+              <small class="hint"
+                >If no idle bot is close enough in rating after this long, a new bot is created near the player's
+                rating. An offline bot that is close enough logs on first. Default 30.</small
+              >
             </label>
-            {@render range('botRestMs', 'Rest after a game (s)', "A bot isn't picked again right after a game, so the same opponents don't reappear instantly. Default 10–90.")}
+            {@render range(
+              'botRestMs',
+              'Rest after a game (s)',
+              "A bot isn't picked again right after a game, so the same opponents don't reappear instantly. Default 10–90.",
+            )}
           </div>
         </section>
 
         <section>
           <h3>Background games</h3>
           <p class="intro">
-            Idle online bots play each other so their ratings and game counts keep moving. These are normal games at human
-            pace, just without people.{#if !pool?.backgroundAllowed} They are switched off on this server (<code>BOTS=off</code>).{/if}
+            Idle online bots play each other so their ratings and game counts keep moving. These are normal games at
+            human pace, just without people.{#if !pool?.backgroundAllowed}
+              They are switched off on this server (<code>BOTS=off</code>).{/if}
           </p>
           <div class="grid">
             <label class="field check">
-              <span><input name="backgroundEnabled" type="checkbox" checked={s.backgroundEnabled} /> Background games</span>
-              <small class="hint">Off: no new bot-only games start; running ones finish. Bots still join for waiting players.</small>
+              <span
+                ><input name="backgroundEnabled" type="checkbox" checked={s.backgroundEnabled} /> Background games</span
+              >
+              <small class="hint"
+                >Off: no new bot-only games start; running ones finish. Bots still join for waiting players.</small
+              >
             </label>
             <label class="field">
-              Start one every (s) <input name="backgroundEveryMs" type="number" min="1" step="0.1" value={sec(s.backgroundEveryMs)} />
-              <small class="hint">Average time between new bot-only games (each gap is 50–150 % of this). Default 45.</small>
+              Start one every (s) <input
+                name="backgroundEveryMs"
+                type="number"
+                min="1"
+                step="0.1"
+                value={sec(s.backgroundEveryMs)}
+              />
+              <small class="hint"
+                >Average time between new bot-only games (each gap is 50–150 % of this). Default 45.</small
+              >
             </label>
             <label class="field">
               Idle reserve <input name="idleReserve" type="number" min="0" value={s.idleReserve} />
-              <small class="hint">A bot-only game only starts if at least this many idle online bots are left over for players. Default 30.</small>
+              <small class="hint"
+                >A bot-only game only starts if at least this many idle online bots are left over for players. Default
+                30.</small
+              >
             </label>
           </div>
         </section>
@@ -255,21 +330,34 @@
         <section>
           <h3>Active hours</h3>
           <p class="intro">
-            Each bot lives in a time zone and has free time on weekdays and (longer) on weekends. It plays only in online
-            sessions, most likely mid-window, sometimes a little before or after, almost never at night. Changing the
-            regions or play per day only affects new bots.
+            Each bot lives in a time zone and has free time on weekdays and (longer) on weekends. It plays only in
+            online sessions, most likely mid-window, sometimes a little before or after, almost never at night. Changing
+            the regions or play per day only affects new bots.
           </p>
           <div class="grid">
             <label class="field check">
               <span><input name="schedulesEnabled" type="checkbox" checked={s.schedulesEnabled} /> Active hours</span>
               <small class="hint">Off: every bot is online all the time.</small>
             </label>
-            {@render minutes('appetiteMin', 'Play per day (min)', 'Average time a new bot spends online per day; most get the low end. Default 90–240.')}
-            {@render minutes('sessionMin', 'Session (min)', 'Length of one online session, usually a few games. Most are short. Default 20–150.')}
+            {@render minutes(
+              'appetiteMin',
+              'Play per day (min)',
+              'Average time a new bot spends online per day; most get the low end. Default 90–240.',
+            )}
+            {@render minutes(
+              'sessionMin',
+              'Session (min)',
+              'Length of one online session, usually a few games. Most are short. Default 20–150.',
+            )}
             <label class="field">
               Regions
-              <textarea name="regions" rows={Math.min(s.regions.length, 8)}>{s.regions.map((r) => `${r.tz} ${r.weight}`).join('\n')}</textarea>
-              <small class="hint">One time zone and weight per line. New bots get a zone in proportion to its weight. Default mostly Asia/Tokyo.</small>
+              <textarea name="regions" rows={Math.min(s.regions.length, 8)}
+                >{s.regions.map((r) => `${r.tz} ${r.weight}`).join('\n')}</textarea
+              >
+              <small class="hint"
+                >One time zone and weight per line. New bots get a zone in proportion to its weight. Default mostly
+                Asia/Tokyo.</small
+              >
             </label>
           </div>
         </section>
@@ -282,12 +370,20 @@
           </p>
           <div class="grid">
             <label class="field">
-              Start one every (s) <input name="warmupEveryMs" type="number" min="0.1" step="0.1" value={sec(s.warmupEveryMs)} />
+              Start one every (s) <input
+                name="warmupEveryMs"
+                type="number"
+                min="0.1"
+                step="0.1"
+                value={sec(s.warmupEveryMs)}
+              />
               <small class="hint">Time between new warm-up games. Default 2.</small>
             </label>
             <label class="field">
               Tables at once <input name="warmupTables" type="number" min="0" value={s.warmupTables} />
-              <small class="hint">Most warm-up games running at the same time. Each uses 4 bots and some server CPU. Default 8.</small>
+              <small class="hint"
+                >Most warm-up games running at the same time. Each uses 4 bots and some server CPU. Default 8.</small
+              >
             </label>
           </div>
         </section>
@@ -302,33 +398,91 @@
           <div class="grid">
             <label class="field">
               Think time × <input name="thinkScale" type="number" min="0" max="5" step="0.05" value={s.thinkScale} />
-              <small class="hint">Multiplies every delay below: 1 = as set, 0.5 = twice as fast, 0 = instant. Default 1.</small>
+              <small class="hint"
+                >Multiplies every delay below: 1 = as set, 0.5 = twice as fast, 0 = instant. Default 1.</small
+              >
             </label>
-            {@render range('thinkForcedMs', 'Only one move (s)', 'Draws with nothing to decide and other forced moves. Default 0.3–0.8.')}
-            {@render range('thinkCallMs', 'Call or pass (s)', 'Deciding on a pon, chii, kan or ron after a discard. Default 0.8–2.5.')}
+            {@render range(
+              'thinkForcedMs',
+              'Only one move (s)',
+              'Draws with nothing to decide and other forced moves. Default 0.3–0.8.',
+            )}
+            {@render range(
+              'thinkCallMs',
+              'Call or pass (s)',
+              'Deciding on a pon, chii, kan or ron after a discard. Default 0.8–2.5.',
+            )}
             <label class="field">
               Own turn (s) <input name="thinkTurnMs" type="number" min="0" step="0.01" value={sec(s.thinkTurnMs)} />
               <small class="hint">Typical time to pick a discard. Default 0.9.</small>
             </label>
             <label class="field">
-              + per tile choice (s) <input name="thinkPerTileMs" type="number" min="0" step="0.01" value={sec(s.thinkPerTileMs)} />
-              <small class="hint">Added to the own-turn time for every different tile it could discard (usually 6–13). Default 0.06.</small>
+              + per tile choice (s) <input
+                name="thinkPerTileMs"
+                type="number"
+                min="0"
+                step="0.01"
+                value={sec(s.thinkPerTileMs)}
+              />
+              <small class="hint"
+                >Added to the own-turn time for every different tile it could discard (usually 6–13). Default 0.06.</small
+              >
             </label>
             <label class="field">
-              Big decision × <input name="thinkSpecialScale" type="number" min="0" max="5" step="0.05" value={s.thinkSpecialScale} />
-              <small class="hint">Own-turn time when riichi, kan, tsumo or an abortive draw is possible. Default 1.6.</small>
+              Big decision × <input
+                name="thinkSpecialScale"
+                type="number"
+                min="0"
+                max="5"
+                step="0.05"
+                value={s.thinkSpecialScale}
+              />
+              <small class="hint"
+                >Own-turn time when riichi, kan, tsumo or an abortive draw is possible. Default 1.6.</small
+              >
             </label>
             <label class="field">
-              First move × <input name="thinkOpeningScale" type="number" min="0" max="5" step="0.05" value={s.thinkOpeningScale} />
-              <small class="hint">The dealer's first decision of a hand, looking over the fresh hand. Default 1.8.</small>
+              First move × <input
+                name="thinkOpeningScale"
+                type="number"
+                min="0"
+                max="5"
+                step="0.05"
+                value={s.thinkOpeningScale}
+              />
+              <small class="hint"
+                >The dealer's first decision of a hand, looking over the fresh hand. Default 1.8.</small
+              >
             </label>
             <label class="field">
-              Long think (%) <input name="longThinkPercent" type="number" min="0" max="100" step="0.5" value={s.longThinkPercent} />
-              <small class="hint">Chance per own turn with a choice to take 60–100 % of the base time plus up to 60 % of the time bank. Default 5.</small>
+              Long think (%) <input
+                name="longThinkPercent"
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                value={s.longThinkPercent}
+              />
+              <small class="hint"
+                >Chance per own turn with a choice to take 60–100 % of the base time plus up to 60 % of the time bank.
+                Default 5.</small
+              >
             </label>
             <label class="field">
-              Timeout chance (%) <input name="timeoutPercent" type="number" min="0" max="10" step="0.1" value={s.timeoutPercent} />
-              <small class="hint">Chance per decision that a bot lets its timer run out, like a distracted player: it waits the full time plus its time bank, then the automatic move is played and its bank is empty for the rest of the hand. Only in games with players. Three bots make about 180 decisions a game, so 0.5 means roughly one timeout per game. Default 0.5.</small>
+              Timeout chance (%) <input
+                name="timeoutPercent"
+                type="number"
+                min="0"
+                max="10"
+                step="0.1"
+                value={s.timeoutPercent}
+              />
+              <small class="hint"
+                >Chance per decision that a bot lets its timer run out, like a distracted player: it waits the full time
+                plus its time bank, then the automatic move is played and its bank is empty for the rest of the hand.
+                Only in games with players. Three bots make about 180 decisions a game, so 0.5 means roughly one timeout
+                per game. Default 0.5.</small
+              >
             </label>
           </div>
         </section>
@@ -342,26 +496,57 @@
           <div class="grid">
             <label class="field">
               Join a game (s) <input name="joinMedianMs" type="number" min="0" step="0.1" value={sec(s.joinMedianMs)} />
-              <small class="hint">Typical time for a bot to join a new game. Never more than the server's join wait (JOIN_MAX_MS, 10 s). Default 1.5.</small>
+              <small class="hint"
+                >Typical time for a bot to join a new game. Never more than the server's join wait (JOIN_MAX_MS, 10 s).
+                Default 1.5.</small
+              >
             </label>
             <label class="field">
               Join at least (s) <input name="joinMinMs" type="number" min="0" step="0.1" value={sec(s.joinMinMs)} />
               <small class="hint">No bot joins faster. Default 0.4.</small>
             </label>
             <label class="field">
-              Confirm result (s) <input name="readyMedianMs" type="number" min="0" step="0.1" value={sec(s.readyMedianMs)} />
-              <small class="hint">Typical time for a bot to confirm a hand result. Never more than the server's ready wait (READY_MS, 12 s). Default 2.5.</small>
+              Confirm result (s) <input
+                name="readyMedianMs"
+                type="number"
+                min="0"
+                step="0.1"
+                value={sec(s.readyMedianMs)}
+              />
+              <small class="hint"
+                >Typical time for a bot to confirm a hand result. Never more than the server's ready wait (READY_MS, 12
+                s). Default 2.5.</small
+              >
             </label>
             <label class="field">
-              Confirm at least (s) <input name="readyMinMs" type="number" min="0" step="0.1" value={sec(s.readyMinMs)} />
+              Confirm at least (s) <input
+                name="readyMinMs"
+                type="number"
+                min="0"
+                step="0.1"
+                value={sec(s.readyMinMs)}
+              />
               <small class="hint">No bot confirms faster. Default 0.8.</small>
             </label>
             <label class="field">
-              Slow confirm (%) <input name="readySlowPercent" type="number" min="0" max="100" step="0.5" value={s.readySlowPercent} />
+              Slow confirm (%) <input
+                name="readySlowPercent"
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                value={s.readySlowPercent}
+              />
               <small class="hint">Chance a bot looks at the result for a while instead. Default 8.</small>
             </label>
             <label class="field">
-              Slow confirm from (s) <input name="readySlowFromMs" type="number" min="0" step="0.1" value={sec(s.readySlowFromMs)} />
+              Slow confirm from (s) <input
+                name="readySlowFromMs"
+                type="number"
+                min="0"
+                step="0.1"
+                value={sec(s.readySlowFromMs)}
+              />
               <small class="hint">A slow confirm takes between this and the ready wait. Default 6.</small>
             </label>
           </div>

@@ -9,9 +9,9 @@
     9 comes 1 again.
   </p>
   <p>
-    Each dora in a winning hand adds 1 han, and so does each <Term id="red-five">red five</Term> (akadora). They are
-    not a yaku: they raise the score of a hand that can already win, nothing more. In a game, dora and red fives glow
-    gold, and your panel shows indicator → dora.
+    Each dora in a winning hand adds 1 han, and so does each <Term id="red-five">red five</Term> (akadora). They are not a
+    yaku: they raise the score of a hand that can already win, nothing more. In a game, dora and red fives glow gold, and
+    your panel shows indicator → dora.
   </p>
   <Tiles t="234p 406s" dora="4p" caption="Gold: the dora, and a red five" />
   <Exercise id="wrap" />
@@ -29,8 +29,8 @@
 
 <Part title="More dora">
   <p>
-    Every kan turns over another indicator. A riichi winner also gets <Term id="ura-dora">ura dora</Term>, and on
-    Riichi Arena each <Term id="red-five">red five</Term> is a dora.
+    Every kan turns over another indicator. A riichi winner also gets <Term id="ura-dora">ura dora</Term>, and on Riichi
+    Arena each <Term id="red-five">red five</Term> is a dora.
   </p>
   <Exercise id="kan" />
   <Callout kind="ema"><p>EMA tournament rules have no red fives.</p></Callout>
@@ -39,7 +39,9 @@
 <Part title="Counting han with dora">
   <Tiles t="234m 456p 678s 0m5m 23s" caption="All simples with a red five" />
   <p>
-    Dora add han to a hand that already has a yaku, but never replace it. Here: 1 han for <Yaku id="tanyao">all simples</Yaku>, 1 for the red
+    Dora add han to a hand that already has a yaku, but never replace it. Here: 1 han for <Yaku id="tanyao"
+      >all simples</Yaku
+    >, 1 for the red
     <T t="0m" />.
   </p>
   <Exercise id="han" />

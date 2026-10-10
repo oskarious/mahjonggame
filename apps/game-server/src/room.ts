@@ -699,7 +699,12 @@ export class Room {
     const final = this.state.final!;
     const bySeat = new Map(final.map((f) => [f.seat, f]));
     const deltas = ratingChanges(
-      this.seats.map((s, i) => ({ rating: s.rating, games: s.games, fixed: s.userId === null, points: bySeat.get(i)!.points })),
+      this.seats.map((s, i) => ({
+        rating: s.rating,
+        games: s.games,
+        fixed: s.userId === null,
+        points: bySeat.get(i)!.points,
+      })),
       this.#config,
     );
     const changes: RatingChange[] = [];

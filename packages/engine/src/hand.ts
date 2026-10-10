@@ -53,11 +53,15 @@ function extractSets(c: Counts, i: number, groups: ConcealedGroup[], emit: () =>
     c[i] += 3;
   }
   if (i < 27 && i % 9 <= 6 && c[i + 1] > 0 && c[i + 2] > 0) {
-    c[i]--, c[i + 1]--, c[i + 2]--;
+    c[i]--;
+    c[i + 1]--;
+    c[i + 2]--;
     groups.push({ type: 'seq', kind: i });
     extractSets(c, i, groups, emit);
     groups.pop();
-    c[i]++, c[i + 1]++, c[i + 2]++;
+    c[i]++;
+    c[i + 1]++;
+    c[i + 2]++;
   }
 }
 
@@ -84,9 +88,13 @@ function canExtract(c: Counts, i: number): boolean {
     if (ok) return true;
   }
   if (i < 27 && i % 9 <= 6 && c[i + 1] > 0 && c[i + 2] > 0) {
-    c[i]--, c[i + 1]--, c[i + 2]--;
+    c[i]--;
+    c[i + 1]--;
+    c[i + 2]--;
     const ok = canExtract(c, i);
-    c[i]++, c[i + 1]++, c[i + 2]++;
+    c[i]++;
+    c[i + 1]++;
+    c[i + 2]++;
     if (ok) return true;
   }
   return false;

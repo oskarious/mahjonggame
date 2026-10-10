@@ -18,3 +18,12 @@ Read when running dev servers, doing browser checks, or when the dev setup misbe
 - **Vite dev server can serve stale/half-written modules on Windows** after rapid successive edits (symptoms: old UI,
   "does not provide an export named …", 500 Internal Error). `touch` the files or restart the dev server.
 - Screenshots in the browser pane can render as 2× crops; use a `scale` < 1 or measure via JS.
+- **Lint and format:** ESLint (flat config in `packages/eslint-config`, re-exported by the root `eslint.config.js`)
+  and Prettier (`.prettierrc.json`). Claude Code runs both on every file it edits (`.claude/hooks/format.mjs`, a
+  PostToolUse hook in `.claude/settings.json`); other agents run `npm run format` and `npm run lint` after changes.
+  Disable a rule inline only with a `-- reason`.
+- **typescript-eslint needs TypeScript 6:** it uses the TS JS API, which TypeScript 7 (our compiler) no longer ships.
+  So `packages/eslint-config` depends on `typescript@~6.0`, and npm nests typescript-eslint and `ts-api-utils` there.
+  `ts-api-utils`'s peer range has no upper bound, so npm may hoist it to the root, where it loads TS 7 and ESLint
+  crashes with "Cannot read properties of undefined (reading 'Intrinsic')": move its lockfile entry back to
+  `packages/eslint-config/node_modules/ts-api-utils` and reinstall.

@@ -27,9 +27,13 @@
 
 <div class="wrap">
   <table>
-    <caption>{dealer ? 'Dealer' : 'Non-dealer'}, {tsumo ? 'tsumo (each player pays)' : 'ron (the discarder pays)'}</caption>
+    <caption
+      >{dealer ? 'Dealer' : 'Non-dealer'}, {tsumo ? 'tsumo (each player pays)' : 'ron (the discarder pays)'}</caption
+    >
     <thead>
-      <tr><th scope="col">Fu</th>{#each HAN as h (h)}<th scope="col">{h} han</th>{/each}</tr>
+      <tr
+        ><th scope="col">Fu</th>{#each HAN as h (h)}<th scope="col">{h} han</th>{/each}</tr
+      >
     </thead>
     <tbody>
       {#each FU as f (f)}

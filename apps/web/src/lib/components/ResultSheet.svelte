@@ -81,7 +81,9 @@
         {#if hand}
           <div class="tenpai">
             <strong>{names[seat]}</strong> <span class="chip good">Tenpai</span>
-            <span class="row">{#each sortTiles(hand) as t (t)}<Tile tile={t} {red} />{/each}</span>
+            <span class="row"
+              >{#each sortTiles(hand) as t (t)}<Tile tile={t} {red} />{/each}</span
+            >
           </div>
         {/if}
       {/each}
@@ -103,7 +105,9 @@
       </tbody>
     </table>
 
-    <button class="btn primary next" class:waiting disabled={waiting} onclick={onnext}>{waiting ? 'Waiting…' : nextLabel}</button>
+    <button class="btn primary next" class:waiting disabled={waiting} onclick={onnext}
+      >{waiting ? 'Waiting…' : nextLabel}</button
+    >
   </div>
 </div>
 

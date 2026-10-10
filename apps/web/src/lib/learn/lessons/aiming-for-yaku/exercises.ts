@@ -67,7 +67,8 @@ export const exercises: Record<string, ExerciseSet> = {
     },
     {
       kind: 'choice',
-      prompt: 'Your closed hand has a dragon triplet and one dora, and could become a half flush. Is it worth the lost speed?',
+      prompt:
+        'Your closed hand has a dragon triplet and one dora, and could become a half flush. Is it worth the lost speed?',
       options: ['No, it already has a yaku', 'Yes, it reaches mangan'],
       answer: 1,
       why: 'Dragon, dora and a closed half flush make 5 han: a mangan instead of 2 han.',

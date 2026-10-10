@@ -4,17 +4,17 @@
 
 <Part title="Three reasons to riichi">
   <p>
-    Declare <Term id="riichi">riichi</Term> when at least one of these is true: the hand has another han (dora count),
-    the wait is good, or you are the dealer. A cheap, non-dealer hand with no other han and a bad wait is the one to
-    think twice about.
+    Declare <Term id="riichi">riichi</Term> when at least one of these is true: the hand has another han (dora count), the
+    wait is good, or you are the dealer. A cheap, non-dealer hand with no other han and a bad wait is the one to think twice
+    about.
   </p>
   <Exercise id="reasons" />
 </Part>
 
 <Part title="Riichi right away">
   <p>
-    Waiting for a better shape rarely pays: one specific tile comes about once in 30 draws. If you are going to
-    riichi, do it as soon as you are in tenpai.
+    Waiting for a better shape rarely pays: one specific tile comes about once in 30 draws. If you are going to riichi,
+    do it as soon as you are in tenpai.
   </p>
   <Exercise id="now" />
 </Part>

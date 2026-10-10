@@ -26,4 +26,3 @@
   </p>
   <Exercise id="four" />
 </Part>
-

@@ -5,7 +5,13 @@ export const exercises: Record<string, ExerciseSet> = {
     {
       kind: 'choice',
       prompt: 'The player across declared riichi. You are in tenpai on a closed wait, for 1300: push or fold?',
-      position: { hands: ['345m678p234s66p57s'], discards: [undefined, undefined, '9m1z'], riichi: [2], dealer: 3, turn: 1 },
+      position: {
+        hands: ['345m678p234s66p57s'],
+        discards: [undefined, undefined, '9m1z'],
+        riichi: [2],
+        dealer: 3,
+        turn: 1,
+      },
       options: ['Push', 'Fold'],
       answer: 1,
       claim: { tenpai: true, goodWait: false, minRon: 1300 },
@@ -29,7 +35,8 @@ export const exercises: Record<string, ExerciseSet> = {
     },
     {
       kind: 'choice',
-      prompt: 'The player across declared riichi. You are in tenpai for 1300, with one winning tile left: push or fold?',
+      prompt:
+        'The player across declared riichi. You are in tenpai for 1300, with one winning tile left: push or fold?',
       position: {
         hands: ['234m567m345p678s2s'],
         discards: [undefined, '2s', '9m1z', '2s'],
@@ -48,7 +55,13 @@ export const exercises: Record<string, ExerciseSet> = {
     {
       kind: 'choice',
       prompt: 'The player across declared riichi. You are in tenpai on a two-sided wait, for 2000: push or fold?',
-      position: { hands: ['234m567m45p678s22s'], discards: [undefined, undefined, '9m1z'], riichi: [2], dealer: 3, turn: 1 },
+      position: {
+        hands: ['234m567m45p678s22s'],
+        discards: [undefined, undefined, '9m1z'],
+        riichi: [2],
+        dealer: 3,
+        turn: 1,
+      },
       options: ['Push', 'Fold'],
       answer: 0,
       claim: { tenpai: true, goodWait: true, minRon: 2000 },
@@ -72,8 +85,15 @@ export const exercises: Record<string, ExerciseSet> = {
     },
     {
       kind: 'choice',
-      prompt: 'The player across declared riichi. You are one tile from tenpai, with a closed and an edge shape: push or fold?',
-      position: { hands: ['234m678p55s13p89s1z'], discards: [undefined, undefined, '9m2z'], riichi: [2], dealer: 3, turn: 1 },
+      prompt:
+        'The player across declared riichi. You are one tile from tenpai, with a closed and an edge shape: push or fold?',
+      position: {
+        hands: ['234m678p55s13p89s1z'],
+        discards: [undefined, undefined, '9m2z'],
+        riichi: [2],
+        dealer: 3,
+        turn: 1,
+      },
       options: ['Push', 'Fold'],
       answer: 1,
       claim: { tenpai: false, shanten: 1, liveWaits: 8 },

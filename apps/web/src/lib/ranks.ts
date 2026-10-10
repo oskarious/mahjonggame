@@ -22,9 +22,7 @@ const lightness = (rgb: string) => {
 
 /** Swaps an SVG's fill colours for the rank colour variables: darkest → dark, lightest → light, a single fill → mid. */
 export function tintable(svg: string): string {
-  const fills = [...new Set([...svg.matchAll(FILL)].map((m) => key(m[2])))].sort(
-    (a, b) => lightness(a) - lightness(b),
-  );
+  const fills = [...new Set([...svg.matchAll(FILL)].map((m) => key(m[2])))].sort((a, b) => lightness(a) - lightness(b));
   const role = (colour: string) => {
     if (fills.length === 1) return 'mid';
     return ROLES[Math.round((fills.indexOf(key(colour)) * 2) / (fills.length - 1))];

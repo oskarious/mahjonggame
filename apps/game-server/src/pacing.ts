@@ -55,9 +55,13 @@ export function thinkDelay(g: GameState, seat: Seat, o: ThinkOptions, p: Pace, r
     ms = between(p.thinkCallMs, random);
   } else {
     const kinds = new Set(legal.flatMap((a) => (a.type === 'discard' ? [kindOf(a.tile)] : []))).size;
-    const special = legal.some((a) => a.type === 'kan' || a.type === 'tsumo' || a.type === 'kyuushu' || (a.type === 'discard' && a.riichi));
+    const special = legal.some(
+      (a) => a.type === 'kan' || a.type === 'tsumo' || a.type === 'kyuushu' || (a.type === 'discard' && a.riichi),
+    );
     const median =
-      (p.thinkTurnMs + p.thinkPerTileMs * kinds) * (special ? p.thinkSpecialScale : 1) * (o.opening ? p.thinkOpeningScale : 1);
+      (p.thinkTurnMs + p.thinkPerTileMs * kinds) *
+      (special ? p.thinkSpecialScale : 1) *
+      (o.opening ? p.thinkOpeningScale : 1);
     ms = median * Math.exp(0.45 * normal(random));
     if (random() > 1 - p.longThinkPercent / 100) ms = base * (0.6 + 0.4 * random()) + 0.6 * o.bank * random();
   }

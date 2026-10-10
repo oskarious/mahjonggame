@@ -12,8 +12,15 @@
   {#each seats as s (s)}
     {@const p = state.hand.players[s]}
     <div class="pond">
-      <span class="who">{NAMES[s]}{#if p.riichi}<span class="chip bad">Riichi</span>{/if}</span>
-      <Pond discards={p.discards} red={RED} perLine={12} last={state.hand.lastDiscard?.seat === s ? state.hand.lastDiscard.tile : null} />
+      <span class="who"
+        >{NAMES[s]}{#if p.riichi}<span class="chip bad">Riichi</span>{/if}</span
+      >
+      <Pond
+        discards={p.discards}
+        red={RED}
+        perLine={12}
+        last={state.hand.lastDiscard?.seat === s ? state.hand.lastDiscard.tile : null}
+      />
     </div>
   {/each}
 </div>

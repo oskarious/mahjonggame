@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { page } from "$app/state";
-  import BotGameSheet from "$lib/components/BotGameSheet.svelte";
-  import ContentShell from "$lib/components/ContentShell.svelte";
-  import RankBadge from "$lib/components/RankBadge.svelte";
-  import Seo from "$lib/components/Seo.svelte";
-  import { type SavedGame, loadSave } from "$lib/game/saved";
-  import ContinueLearning from "$lib/home/ContinueLearning.svelte";
-  import LiveNow from "$lib/home/LiveNow.svelte";
-  import PlayerStats from "$lib/home/PlayerStats.svelte";
-  import RecentGames from "$lib/home/RecentGames.svelte";
-  import { trackOwner } from "$lib/progress/client.svelte";
-  import { SITE_NAME, siteOrganization } from "$lib/site";
-  import DailyDiscard from "$lib/train/components/DailyDiscard.svelte";
-  import { DAILY, utcDate } from "$lib/train/daily";
-  import { dailyOf, dailyStreak, statsLoaded } from "$lib/train/stats.svelte";
-  import { WINDS } from "@mahjong/drills/labels";
-  import { onMount } from "svelte";
+  import { page } from '$app/state';
+  import BotGameSheet from '$lib/components/BotGameSheet.svelte';
+  import ContentShell from '$lib/components/ContentShell.svelte';
+  import RankBadge from '$lib/components/RankBadge.svelte';
+  import Seo from '$lib/components/Seo.svelte';
+  import { type SavedGame, loadSave } from '$lib/game/saved';
+  import ContinueLearning from '$lib/home/ContinueLearning.svelte';
+  import LiveNow from '$lib/home/LiveNow.svelte';
+  import PlayerStats from '$lib/home/PlayerStats.svelte';
+  import RecentGames from '$lib/home/RecentGames.svelte';
+  import { trackOwner } from '$lib/progress/client.svelte';
+  import { SITE_NAME, siteOrganization } from '$lib/site';
+  import DailyDiscard from '$lib/train/components/DailyDiscard.svelte';
+  import { DAILY, utcDate } from '$lib/train/daily';
+  import { dailyOf, dailyStreak, statsLoaded } from '$lib/train/stats.svelte';
+  import { WINDS } from '@mahjong/drills/labels';
+  import { onMount } from 'svelte';
 
   let { data } = $props();
 
@@ -24,25 +24,23 @@
   let botSheet = $state(false);
   /** Read on mount: the page is server-rendered and the save, the date and the daily set's progress live in the browser. */
   let saved: SavedGame | null = $state(null);
-  let today = $state("");
+  let today = $state('');
   onMount(() => {
     saved = loadSave();
     today = utcDate();
   });
   const daily = $derived(statsLoaded() && today ? dailyOf(today) : null);
-  const streak = $derived(
-    statsLoaded() && today ? dailyStreak(today, DAILY.length) : 0,
-  );
+  const streak = $derived(statsLoaded() && today ? dailyStreak(today, DAILY.length) : 0);
 
   const origin = $derived(page.url.origin);
   const jsonld = $derived([
     {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
       name: SITE_NAME,
       url: origin,
     },
-    { "@context": "https://schema.org", ...siteOrganization(origin) },
+    { '@context': 'https://schema.org', ...siteOrganization(origin) },
   ]);
 </script>
 
@@ -68,11 +66,7 @@
     </a>
   {:else}
     <!-- The game server is down: bots are the game on offer. -->
-    <button
-      class="btn primary play"
-      type="button"
-      onclick={() => (botSheet = true)}>Play vs bots</button
-    >
+    <button class="btn primary play" type="button" onclick={() => (botSheet = true)}>Play vs bots</button>
   {/if}
   <LiveNow players={data.playing} />
 

@@ -60,7 +60,9 @@ describe('thinkDelay', () => {
     expect(slow).toBe(Math.min(2 * normal, PACE.base + PACE.bank - 1_000));
     // A long think with no bank left still ends a second before the base time runs out.
     expect(thinkDelay(g, seat, { ...PACE, bank: 0 }, scaled(5), () => 0.99)).toBe(PACE.base - 1_000);
-    expect(thinkDelay(g, seat, { ...PACE, base: OPENING, opening: true, bank: 0 }, scaled(5), () => 0.99)).toBe(OPENING - 1_000);
+    expect(thinkDelay(g, seat, { ...PACE, base: OPENING, opening: true, bank: 0 }, scaled(5), () => 0.99)).toBe(
+      OPENING - 1_000,
+    );
   });
 });
 
@@ -71,14 +73,24 @@ describe('pace settings', () => {
     const random = seeded('pace-settings');
     const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
     const turn = (thinkTurnMs: number) =>
-      median(Array.from({ length: 500 }, () => thinkDelay(g, seat, { base: 60_000, bank: 0 }, { ...P, thinkTurnMs, longThinkPercent: 0 }, random)));
+      median(
+        Array.from({ length: 500 }, () =>
+          thinkDelay(g, seat, { base: 60_000, bank: 0 }, { ...P, thinkTurnMs, longThinkPercent: 0 }, random),
+        ),
+      );
     expect(turn(5_000)).toBeGreaterThan(turn(900) + 3_000);
-    const joins = Array.from({ length: 500 }, () => joinDelay(random, 60_000, { ...P, joinMedianMs: 5_000, joinMinMs: 4_000 }));
+    const joins = Array.from({ length: 500 }, () =>
+      joinDelay(random, 60_000, { ...P, joinMedianMs: 5_000, joinMinMs: 4_000 }),
+    );
     expect(Math.min(...joins)).toBeGreaterThanOrEqual(4_000);
     expect(median(joins)).toBeGreaterThan(4_500);
-    const readies = Array.from({ length: 500 }, () => readyDelay(random, 12_000, { ...P, readySlowPercent: 0, readyMinMs: 2_000 }));
+    const readies = Array.from({ length: 500 }, () =>
+      readyDelay(random, 12_000, { ...P, readySlowPercent: 0, readyMinMs: 2_000 }),
+    );
     expect(Math.min(...readies)).toBeGreaterThanOrEqual(2_000);
-    const slow = Array.from({ length: 500 }, () => readyDelay(random, 12_000, { ...P, readySlowPercent: 100, readySlowFromMs: 9_000 }));
+    const slow = Array.from({ length: 500 }, () =>
+      readyDelay(random, 12_000, { ...P, readySlowPercent: 100, readySlowFromMs: 9_000 }),
+    );
     expect(Math.min(...slow)).toBeGreaterThanOrEqual(9_000);
   });
 });

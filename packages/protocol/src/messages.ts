@@ -61,14 +61,7 @@ export interface RatingChange {
 }
 
 export type ErrorCode =
-  | 'badVersion'
-  | 'badMessage'
-  | 'notInGame'
-  | 'wrongGame'
-  | 'staleSeq'
-  | 'illegal'
-  | 'inGame'
-  | 'rateLimited';
+  'badVersion' | 'badMessage' | 'notInGame' | 'wrongGame' | 'staleSeq' | 'illegal' | 'inGame' | 'rateLimited';
 
 export type ServerMessage =
   | {

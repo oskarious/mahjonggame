@@ -180,7 +180,9 @@
       <div class="seg levels" style:--n={levels.length} role="radiogroup" aria-label="Level">
         {#each levels as l (l)}
           <label class:on={level === l}
-            ><input type="radio" name="level" checked={level === l} onchange={() => setLevel(l)} />{meta.levels[l]}</label
+            ><input type="radio" name="level" checked={level === l} onchange={() => setLevel(l)} />{meta.levels[
+              l
+            ]}</label
           >
         {/each}
       </div>
@@ -216,7 +218,9 @@
   {:else}
     <section class="rush-start">
       <p class="score"><b>{score}</b></p>
-      <p class="best">{#if newBest}<span class="chip gold">Best</span>{:else}<b>{stats?.rushBest ?? 0}</b> best{/if}</p>
+      <p class="best">
+        {#if newBest}<span class="chip gold">Best</span>{:else}<b>{stats?.rushBest ?? 0}</b> best{/if}
+      </p>
       <button class="btn primary big" onclick={startRush}>Again</button>
       <ProgressNudge />
     </section>

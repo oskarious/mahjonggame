@@ -19,9 +19,7 @@
 </Part>
 
 <Part title="Only from the left">
-  <p>
-    The player on your left plays just before you, so chii takes "your" turn's tile. Pon can take anyone's discard.
-  </p>
+  <p>The player on your left plays just before you, so chii takes "your" turn's tile. Pon can take anyone's discard.</p>
   <Exercise id="who" />
 </Part>
 
@@ -46,13 +44,14 @@
 
 <Part title="The cost: you lose riichi">
   <p>
-    A closed hand that reaches tenpai can always declare <Term id="riichi">riichi</Term>, and <Yaku id="riichi">riichi</Yaku> is a yaku by
-    itself: it makes almost any closed hand winnable.
+    A closed hand that reaches tenpai can always declare <Term id="riichi">riichi</Term>, and <Yaku id="riichi"
+      >riichi</Yaku
+    > is a yaku by itself: it makes almost any closed hand winnable.
   </p>
   <p>
     <strong>Call once and riichi is gone for the rest of the hand.</strong> Your hand is now an
-    <Term id="open-hand">open hand</Term>, and it needs a yaku from its tiles. A careless call can leave a complete
-    hand that can never win.
+    <Term id="open-hand">open hand</Term>, and it needs a yaku from its tiles. A careless call can leave a complete hand
+    that can never win.
   </p>
   <Exercise id="trap" />
   <Callout kind="mistake">

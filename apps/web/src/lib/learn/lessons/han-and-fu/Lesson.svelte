@@ -4,10 +4,11 @@
 
 <Part title="Han and fu">
   <p>
-    A hand's value has two parts. <Term id="han">Han</Term> come from yaku and dora; each one roughly doubles the
-    score. <Term id="fu">Fu</Term> fine-tune it: most hands have 30 or 40. Counting fu is the <a href="/learn/counting-fu">next lesson</a>;
-    until then the exercises tell you the fu. The game scores for you, but knowing roughly what a hand is worth helps
-    you decide how to play it.
+    A hand's value has two parts. <Term id="han">Han</Term> come from yaku and dora; each one roughly doubles the score. <Term
+      id="fu">Fu</Term
+    > fine-tune it: most hands have 30 or 40. Counting fu is the <a href="/learn/counting-fu">next lesson</a>; until
+    then the exercises tell you the fu. The game scores for you, but knowing roughly what a hand is worth helps you
+    decide how to play it.
   </p>
   <Exercise id="count" />
 </Part>
@@ -20,8 +21,8 @@
 
 <Part title="The dealer and self-draw">
   <p>
-    The <Term id="dealer">dealer</Term> wins 1.5 times as much. On a self-draw everyone pays a share: when the dealer
-    wins, all pay the same ("1300 all").
+    The <Term id="dealer">dealer</Term> wins 1.5 times as much. On a self-draw everyone pays a share: when the dealer wins,
+    all pay the same ("1300 all").
   </p>
   <ScoreTable dealer tsumo />
   <Exercise id="dealer" />

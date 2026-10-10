@@ -104,7 +104,11 @@ describe('/internal', () => {
     expect(res.status).toBe(400);
     res = await call('PUT', '/internal/settings', { idleReserve: 12, thinkScale: 1.5, botArrivalMs: [1000, 4000] });
     expect(res.status).toBe(200);
-    expect(((await res.json()) as { settings: BotSettings }).settings).toMatchObject({ idleReserve: 12, thinkScale: 1.5, botArrivalMs: [1000, 4000] });
+    expect(((await res.json()) as { settings: BotSettings }).settings).toMatchObject({
+      idleReserve: 12,
+      thinkScale: 1.5,
+      botArrivalMs: [1000, 4000],
+    });
     expect(store.settings.get('bots')).toMatchObject({ idleReserve: 12 });
     expect((await call('GET', '/internal/nothing')).status).toBe(404);
   });

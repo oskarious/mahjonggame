@@ -12,8 +12,14 @@ const seat = (rating: number, points: number, o: { games?: number; fixed?: boole
 
 describe('ratingChanges', () => {
   it('rewards a win against stronger opponents more', () => {
-    const vsStrong = ratingChanges([seat(1000, 40000), seat(1200, 20000), seat(1200, 20000), seat(1200, 20000)], TEST_CONFIG);
-    const vsEqual = ratingChanges([seat(1000, 40000), seat(1000, 20000), seat(1000, 20000), seat(1000, 20000)], TEST_CONFIG);
+    const vsStrong = ratingChanges(
+      [seat(1000, 40000), seat(1200, 20000), seat(1200, 20000), seat(1200, 20000)],
+      TEST_CONFIG,
+    );
+    const vsEqual = ratingChanges(
+      [seat(1000, 40000), seat(1000, 20000), seat(1000, 20000), seat(1000, 20000)],
+      TEST_CONFIG,
+    );
     expect(vsStrong[0]).toBeGreaterThan(vsEqual[0]);
     expect(vsEqual[0]).toBeGreaterThan(0);
   });
@@ -35,8 +41,14 @@ describe('ratingChanges', () => {
   });
 
   it('moves new players faster', () => {
-    const [fresh] = ratingChanges([seat(1000, 40000, { games: 0 }), seat(1000, 20000), seat(1000, 20000), seat(1000, 20000)], TEST_CONFIG);
-    const [old] = ratingChanges([seat(1000, 40000, { games: 20 }), seat(1000, 20000), seat(1000, 20000), seat(1000, 20000)], TEST_CONFIG);
+    const [fresh] = ratingChanges(
+      [seat(1000, 40000, { games: 0 }), seat(1000, 20000), seat(1000, 20000), seat(1000, 20000)],
+      TEST_CONFIG,
+    );
+    const [old] = ratingChanges(
+      [seat(1000, 40000, { games: 20 }), seat(1000, 20000), seat(1000, 20000), seat(1000, 20000)],
+      TEST_CONFIG,
+    );
     // Three wins at even odds: K/3 × 3 × 0.5 = K/2.
     expect(old).toBe(10);
     expect(fresh).toBe(20);
@@ -51,7 +63,15 @@ describe('ratingChanges', () => {
 
   it('leaves fixed (anonymous, pre-bot-player) bots unchanged and rates the others against them', () => {
     const bot = botElo(0.3);
-    const d = ratingChanges([seat(1000, 40000), seat(bot, 20000, { fixed: true }), seat(bot, 20000, { fixed: true }), seat(bot, 20000, { fixed: true })], TEST_CONFIG);
+    const d = ratingChanges(
+      [
+        seat(1000, 40000),
+        seat(bot, 20000, { fixed: true }),
+        seat(bot, 20000, { fixed: true }),
+        seat(bot, 20000, { fixed: true }),
+      ],
+      TEST_CONFIG,
+    );
     expect(d[1]).toBe(0);
     expect(d[2]).toBe(0);
     expect(d[3]).toBe(0);

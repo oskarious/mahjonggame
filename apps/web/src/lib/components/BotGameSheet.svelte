@@ -38,14 +38,17 @@
         <legend>Length</legend>
         <div class="seg">
           <label class:on={length === 'east'}><input type="radio" bind:group={length} value="east" />East only</label>
-          <label class:on={length === 'south'}><input type="radio" bind:group={length} value="south" />East + South</label>
+          <label class:on={length === 'south'}
+            ><input type="radio" bind:group={length} value="south" />East + South</label
+          >
         </div>
       </fieldset>
 
       <fieldset>
         <legend>Rules</legend>
         <div class="seg">
-          <label class:on={preset === 'default'}><input type="radio" bind:group={preset} value="default" />Online</label>
+          <label class:on={preset === 'default'}><input type="radio" bind:group={preset} value="default" />Online</label
+          >
           <label class:on={preset === 'ema'}><input type="radio" bind:group={preset} value="ema" />EMA 2025</label>
         </div>
       </fieldset>

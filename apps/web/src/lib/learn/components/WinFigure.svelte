@@ -35,7 +35,9 @@
     {#if show.round}<span class="chip">Round {WINDS[state.roundWind]}</span>{/if}
     {#if me.riichi}<span class="chip">Riichi</span>{/if}
     {#if show.counters}
-      <span class="chip">{state.honba} honba · {state.riichiSticks} riichi {state.riichiSticks === 1 ? 'stick' : 'sticks'}</span>
+      <span class="chip"
+        >{state.honba} honba · {state.riichiSticks} riichi {state.riichiSticks === 1 ? 'stick' : 'sticks'}</span
+      >
     {/if}
     {#if show.dora}
       <span class="chip dora">

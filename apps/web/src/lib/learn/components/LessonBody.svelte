@@ -95,6 +95,7 @@
 </script>
 
 <Seo title={meta.seoTitle} description={meta.description} {path} {jsonld} />
+<!-- eslint-disable-next-line svelte/no-at-html-tags -- a constant -->
 <svelte:head>{@html noscript}</svelte:head>
 
 <article>
@@ -105,7 +106,12 @@
   <div class="steps" role="progressbar" aria-valuemin={1} aria-valuemax={total} aria-valuenow={current + 1}>
     <span class="label">Step {current + 1} of {total}</span>
     <span class="bar">
-      {#each { length: total } as _, i (i)}<a class="seg" class:on={i <= current} href="?step={i + 1}" aria-label="Step {i + 1}"></a>{/each}
+      {#each { length: total } as _, i (i)}<a
+          class="seg"
+          class:on={i <= current}
+          href="?step={i + 1}"
+          aria-label="Step {i + 1}"
+        ></a>{/each}
     </span>
   </div>
 
@@ -127,7 +133,9 @@
     <Cta />
 
     <nav class="pager" aria-label="Lessons">
-      {#if total > 1}<a class="btn" href="?step={total - 1}">Back</a>{:else if prev}<a class="btn" href="/learn/{prev.slug}"
+      {#if total > 1}<a class="btn" href="?step={total - 1}">Back</a>{:else if prev}<a
+          class="btn"
+          href="/learn/{prev.slug}"
           rel="prev">← {prev.title}</a
         >{:else}<span></span>{/if}
       {#if next}<a class="btn primary" href="/learn/{next.slug}" rel="next">Next lesson: {next.title}</a>{/if}

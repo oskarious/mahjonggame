@@ -118,7 +118,8 @@ export interface AdminPoolSnapshot {
 }
 
 /** POST /internal/bots: `count` bots spread over a rating range, or one bot with an optional name and skill. */
-export type AdminCreateBots = { count: number; minRating: number; maxRating: number } | { name?: string; skill?: number };
+export type AdminCreateBots =
+  { count: number; minRating: number; maxRating: number } | { name?: string; skill?: number };
 
 /** PATCH /internal/bots/:id */
 export interface AdminBotPatch {

@@ -105,13 +105,17 @@
     {:else if game.status === 'idle' || game.status === 'ended'}
       {#if game.aborted}<p class="note" role="status">Game cancelled · unrated</p>{/if}
       {#if game.rating}
-        <p class="me"><strong>{game.user?.name}</strong><span class="elo"><RankBadge rating={game.rating.rating} /></span></p>
+        <p class="me">
+          <strong>{game.user?.name}</strong><span class="elo"><RankBadge rating={game.rating.rating} /></span>
+        </p>
       {/if}
       <fieldset>
         <legend>Length</legend>
         <div class="seg">
           <label class:on={format === 'east'}><input type="radio" bind:group={format} value="east" />East only</label>
-          <label class:on={format === 'south'}><input type="radio" bind:group={format} value="south" />East + South</label>
+          <label class:on={format === 'south'}
+            ><input type="radio" bind:group={format} value="south" />East + South</label
+          >
         </div>
       </fieldset>
       <button class="btn primary big" onclick={() => game.joinQueue(format)}>Play</button>

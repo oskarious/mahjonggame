@@ -5,7 +5,9 @@
 <Part title="Value tiles (yakuhai)">
   <Tiles t="555z 666z 777z" caption="Any dragon triplet is a yaku" />
   <p>
-    A triplet of any dragon is a yaku worth 1 han, open or closed: <Yaku id="yakuhai">yakuhai</Yaku>. <Yaku id="menzenTsumo">Self-draw with a closed hand</Yaku>
+    A triplet of any dragon is a yaku worth 1 han, open or closed: <Yaku id="yakuhai">yakuhai</Yaku>. <Yaku
+      id="menzenTsumo">Self-draw with a closed hand</Yaku
+    >
     (menzen tsumo) is another 1 han.
   </p>
   <Exercise id="haku" />
@@ -13,8 +15,9 @@
 
 <Part title="Your seat wind and the round wind">
   <p>
-    A triplet of your <Yaku id="seatWind">seat wind</Yaku> or of the <Yaku id="roundWind">round wind</Yaku> is also <Yaku id="yakuhai">yakuhai</Yaku>. In an East-only game the round wind is always
-    East.
+    A triplet of your <Yaku id="seatWind">seat wind</Yaku> or of the <Yaku id="roundWind">round wind</Yaku> is also <Yaku
+      id="yakuhai">yakuhai</Yaku
+    >. In an East-only game the round wind is always East.
   </p>
   <Exercise id="wind" />
 </Part>
@@ -44,7 +47,8 @@
 
 <Part title="Open hands: all simples still counts">
   <p>
-    <Yaku id="riichi">Riichi</Yaku>, <Yaku id="menzenTsumo">self-draw</Yaku> and <Yaku id="pinfu">pinfu</Yaku> need a closed hand.
+    <Yaku id="riichi">Riichi</Yaku>, <Yaku id="menzenTsumo">self-draw</Yaku> and <Yaku id="pinfu">pinfu</Yaku> need a closed
+    hand.
     <Yaku id="tanyao">All simples</Yaku> and <Yaku id="yakuhai">value triplets</Yaku> also work after calling.
   </p>
   <Exercise id="opentan" />

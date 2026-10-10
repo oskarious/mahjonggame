@@ -1,10 +1,5 @@
 <script lang="ts">
-  import {
-    type Meld,
-    type PlayerView,
-    type RedFives,
-    type Tile as TileId,
-  } from '@mahjong/engine';
+  import { type Meld, type PlayerView, type RedFives, type Tile as TileId } from '@mahjong/engine';
   import type { PlayerInfo } from '@mahjong/protocol';
   import { WIND_SHORT } from '@mahjong/drills/labels';
   import { sortTiles } from '$lib/tiles';

@@ -90,4 +90,3 @@ describe('EMA 2025 scoring examples (section 4.3)', () => {
     expect(tsumoPoints(v!.basePoints, false)).toEqual({ fromDealer: 4000, fromOthers: 2000 });
   });
 });
-

@@ -14,6 +14,7 @@
 
   // A riichi tile claimed by someone else passes the sideways marker to the next discard.
   const sideways = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and returned by the derived, never mutated after
     const set = new Set<number>();
     let carry = false;
     discards.forEach((d, i) => {

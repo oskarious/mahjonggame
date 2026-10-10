@@ -37,7 +37,10 @@ for (const f of files()) {
   const shared = [...counts].filter(([, n]) => n > 1).map(([d]) => d);
   if (!shared.length) continue;
   shared.forEach((d, i) => {
-    svg = svg.replaceAll(new RegExp(`<path ([^>]*?)d="${d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'g'), `<use $1href="#s${i}"`);
+    svg = svg.replaceAll(
+      new RegExp(`<path ([^>]*?)d="${d.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'g'),
+      `<use $1href="#s${i}"`,
+    );
   });
   const defs = `<defs>${shared.map((d, i) => `<path id="s${i}" d="${d}"/>`).join('')}</defs>`;
   svg = svg.replace(/(<svg[^>]*>)/, `$1${defs}`);

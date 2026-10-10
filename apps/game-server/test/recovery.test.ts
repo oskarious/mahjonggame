@@ -21,7 +21,10 @@ describe('records and recovery', () => {
   it('replaying a finished game reproduces its standings', async () => {
     const store = new MemoryStore();
     await store.createGame({ id: 'g', format: 'east', rules: DEFAULT_RULES, seed: 'replay', seats });
-    const room = new Room({ store, config: { ...TEST_CONFIG, abandonMs: 0 }, random: () => 0.3, onEnd: () => {} }, { id: 'g', format: 'east', rules: DEFAULT_RULES, seed: 'replay', seats });
+    const room = new Room(
+      { store, config: { ...TEST_CONFIG, abandonMs: 0 }, random: () => 0.3, onEnd: () => {} },
+      { id: 'g', format: 'east', rules: DEFAULT_RULES, seed: 'replay', seats },
+    );
     room.start();
     await vi.runAllTimersAsync();
     await room.idle();
@@ -113,7 +116,13 @@ describe('records and recovery', () => {
     store.ratings.set('a', { rating: 1000, games: 0 });
     await store.createGame({ id: 'old', format: 'east', rules: DEFAULT_RULES, seed: 'old', seats });
     store.games.get('old')!.engineVersion = ENGINE_VERSION - 1;
-    await store.createGame({ id: 'now', format: 'east', rules: DEFAULT_RULES, seed: 'now', seats: [...seats].reverse() });
+    await store.createGame({
+      id: 'now',
+      format: 'east',
+      rules: DEFAULT_RULES,
+      seed: 'now',
+      seats: [...seats].reverse(),
+    });
     const hub = new Hub({ store, config: TEST_CONFIG, log: () => {} });
     await hub.bots.load();
     const replayed: string[] = [];

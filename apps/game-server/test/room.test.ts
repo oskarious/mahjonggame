@@ -150,9 +150,15 @@ describe('Room timers', () => {
 
   it('waits for ready between hands, at most the ready time', async () => {
     // One live-wall tile: the dealer draws it, discards, and the hand ends in an exhaustive draw.
-    const built = await build([human('a'), bot, bot, bot], scenario({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 }), { readyMs: 12_000 }, true, {
-      random: () => 0.5,
-    });
+    const built = await build(
+      [human('a'), bot, bot, bot],
+      scenario({ hands: ['123m456p789s11z2z', undefined, undefined, undefined], wallSize: 1 }),
+      { readyMs: 12_000 },
+      true,
+      {
+        random: () => 0.5,
+      },
+    );
     const { room, clients } = built;
     const c = clients[0]!;
     room.act(0, 0, discardOf(c), c);
@@ -212,7 +218,9 @@ describe('Room timers', () => {
 
   it('varies the deal time from hand to hand', async () => {
     const seats = [human('a'), botSeat('x'), botSeat('y'), botSeat('z')];
-    const b = await build(seats, undefined, { turnMs: 50, callMs: 50, openingTurnMs: 50, bankMs: 0 }, true, { random: seeded('deal-times') });
+    const b = await build(seats, undefined, { turnMs: 50, callMs: 50, openingTurnMs: 50, bankMs: 0 }, true, {
+      random: seeded('deal-times'),
+    });
     const waits: number[] = [];
     let overAt: number | null = null;
     // The human never acts (every decision times out) but confirms every result at once.
@@ -394,7 +402,9 @@ describe('Room joining', () => {
 
   it('waits at most the join cap', async () => {
     // Slow bots: every draw near 1 gives the longest delays; the cap decides.
-    const { clients } = await build([human('a'), bot, bot, bot], undefined, { ...JOIN, joinMaxMs: 2_000 }, true, { random: () => 0.999 });
+    const { clients } = await build([human('a'), bot, bot, bot], undefined, { ...JOIN, joinMaxMs: 2_000 }, true, {
+      random: () => 0.999,
+    });
     const a = clients[0]!;
     await vi.advanceTimersByTimeAsync(1_999);
     expect(a.last('update')!.countdown).toBeUndefined();
@@ -525,7 +535,16 @@ describe('Room authority', () => {
     await vi.runAllTimersAsync();
     await room.idle();
     expect(room.state.phase).toBe('gameOver');
-    const forbidden = ['"wall":', '"rinshan":[', '"uraIndicators"', '"options"', '"responses"', '"deadExtra"', '"rng"', '"tempFuriten"'];
+    const forbidden = [
+      '"wall":',
+      '"rinshan":[',
+      '"uraIndicators"',
+      '"options"',
+      '"responses"',
+      '"deadExtra"',
+      '"rng"',
+      '"tempFuriten"',
+    ];
     for (const [seat, client] of clients.entries()) {
       if (!client) continue;
       let updates = 0;
@@ -629,7 +648,9 @@ describe('Room hidden information', () => {
       }
       for (const seat of pendingSeats(g)) {
         const hidden = scrambleHidden(g, seat, scramble);
-        expect(thinkDelay(hidden, seat, pace, PACE, seeded(`t${i}`))).toBe(thinkDelay(g, seat, pace, PACE, seeded(`t${i}`)));
+        expect(thinkDelay(hidden, seat, pace, PACE, seeded(`t${i}`))).toBe(
+          thinkDelay(g, seat, pace, PACE, seeded(`t${i}`)),
+        );
       }
       g = applyAction(g, botAction(g, pendingSeats(g)[0], { random })!).state;
     }
@@ -682,7 +703,10 @@ describe('Room bot players', () => {
 
   it('a bot player sometimes lets its timer run out, like a human, but only with humans at the table', async () => {
     const seats = [human('a'), botSeat('x'), botSeat('y'), botSeat('z')];
-    const { room, store, clients } = await build(seats, turnState(), {}, true, { random: () => 0.5, timeoutPercent: 100 });
+    const { room, store, clients } = await build(seats, turnState(), {}, true, {
+      random: () => 0.5,
+      timeoutPercent: 100,
+    });
     const c = clients[0]!;
     room.act(0, 0, discardOf(c), c);
     await room.idle();

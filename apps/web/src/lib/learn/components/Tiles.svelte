@@ -41,14 +41,18 @@
 {#if inline}
   <span class="inline" role="img" aria-label={label}>
     {#each groups as g, i (i)}
-      <span class="group">{#each g as tile (tile)}<Tile {tile} red={RED} plain />{/each}</span>
+      <span class="group"
+        >{#each g as tile (tile)}<Tile {tile} red={RED} plain />{/each}</span
+      >
     {/each}
   </span>
 {:else}
   <figure class="figure" class:center style:--n={slots} style:--max="{max}px">
     <span class="row" role="img" aria-label={label}>
       {#each groups as g, i (i)}
-        <span class="group">{#each g as tile (tile)}<Tile {tile} red={RED} {plain} />{/each}</span>
+        <span class="group"
+          >{#each g as tile (tile)}<Tile {tile} red={RED} {plain} />{/each}</span
+        >
       {/each}
       {#if winTile !== null}
         <span class="group win"><Tile tile={winTile} red={RED} plain mark="win" /></span>

@@ -77,8 +77,18 @@ describe('client message guards', () => {
   it('isUuid accepts only canonical UUIDs', () => {
     expect(isUuid(G)).toBe(true);
     expect(isUuid(G.toUpperCase())).toBe(true);
-    for (const v of ['', 'g1', G.replaceAll('-', ''), G + '0', '0' + G, G.replace('1', 'g'), `${G}
-`, 42, null]) {
+    for (const v of [
+      '',
+      'g1',
+      G.replaceAll('-', ''),
+      G + '0',
+      '0' + G,
+      G.replace('1', 'g'),
+      `${G}
+`,
+      42,
+      null,
+    ]) {
       expect(isUuid(v), String(v)).toBe(false);
     }
   });

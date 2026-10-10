@@ -4,8 +4,8 @@
 
 <Part title="Seats and turn order">
   <p>
-    Each seat has a wind: East, South, West, North. East is the <Term id="dealer">dealer</Term>, who wins and pays
-    more. Play goes counter-clockwise. On Riichi Arena the other players are shown above your hand in turn order.
+    Each seat has a wind: East, South, West, North. East is the <Term id="dealer">dealer</Term>, who wins and pays more.
+    Play goes counter-clockwise. On Riichi Arena the other players are shown above your hand in turn order.
   </p>
   <Exercise id="next" />
 </Part>
@@ -18,8 +18,8 @@
   </p>
   <p>
     Each dora in a winning hand raises its score, and so does each <Term id="red-five">red five</Term>
-    (akadora). They are not a yaku: they make a winning hand worth more, but never make a hand winnable. In a game they
-    glow gold:
+    (akadora). They are not a yaku: they make a winning hand worth more, but never make a hand winnable. In a game they glow
+    gold:
   </p>
   <Tiles t="234p 406s" dora="4p" caption="Gold: the dora, and a red five" />
   <Exercise id="indicator" />

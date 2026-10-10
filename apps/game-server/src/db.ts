@@ -119,7 +119,7 @@ export function createDb(connectionString: string): Kysely<DB> {
 
 /** Throws unless the web app has applied the migration this server depends on. */
 export async function checkMigration(db: Kysely<DB>): Promise<void> {
-  let applied = false;
+  let applied: boolean;
   try {
     const row = await db
       .selectFrom('kysely_migration')

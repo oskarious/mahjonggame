@@ -30,7 +30,12 @@ export async function ensureHands(db: Kysely<DB>, now = Date.now()): Promise<num
 /**
  * The bots that vote now: each candidate with `chance`, at most `need`. Pure (for tests); `random` in [0, 1).
  */
-export function pickVoters(candidates: readonly string[], need: number, chance: number, random: () => number): string[] {
+export function pickVoters(
+  candidates: readonly string[],
+  need: number,
+  chance: number,
+  random: () => number,
+): string[] {
   const out: string[] = [];
   for (const id of candidates) {
     if (out.length >= need) break;
@@ -63,7 +68,11 @@ export async function botVotes(
   now = Date.now(),
 ) {
   const date = utcDate(now);
-  const day = await db.selectFrom('daily_discard').select(['exercise', 'botShare']).where('date', '=', date).executeTakeFirst();
+  const day = await db
+    .selectFrom('daily_discard')
+    .select(['exercise', 'botShare'])
+    .where('date', '=', date)
+    .executeTakeFirst();
   if (!day || !online.length) return 0;
 
   const cast = await db
@@ -76,11 +85,24 @@ export async function botVotes(
   if (need <= 0) return 0;
 
   const voted = new Set(
-    (await db.selectFrom('daily_discard_vote').select('userId').where('date', '=', date).where('userId', 'in', online).execute()).map(
-      (r) => r.userId,
-    ),
+    (
+      await db
+        .selectFrom('daily_discard_vote')
+        .select('userId')
+        .where('date', '=', date)
+        .where('userId', 'in', online)
+        .execute()
+    ).map((r) => r.userId),
   );
-  const voters = pickVoters(shuffle(online.filter((id) => !voted.has(id)), random), need, VOTE_CHANCE, random);
+  const voters = pickVoters(
+    shuffle(
+      online.filter((id) => !voted.has(id)),
+      random,
+    ),
+    need,
+    VOTE_CHANCE,
+    random,
+  );
   if (!voters.length) return 0;
 
   if (weightsCache?.date !== date) weightsCache = { date, weights: botWeights(day.exercise, date) };

@@ -85,7 +85,12 @@ describe('Hub', () => {
     expect(room.format).toBe('south');
     expect(room.rules.length).toBe('south');
     for (const c of [clients[0], b2, clients[2], clients[3]]) {
-      expect(c.last('game.start')!.game.players.map((p) => p.name).sort()).toEqual(['a', 'b', 'c', 'd']);
+      expect(
+        c
+          .last('game.start')!
+          .game.players.map((p) => p.name)
+          .sort(),
+      ).toEqual(['a', 'b', 'c', 'd']);
       expect(c.last('update')).toBeDefined();
     }
   });

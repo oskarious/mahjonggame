@@ -25,8 +25,9 @@
 
 <Part title="Winning: tsumo and ron">
   <p>
-    One tile from a complete hand, you are in <Term id="tenpai">tenpai</Term>. You win by drawing that tile
-    (<Term id="tsumo">tsumo</Term>, everyone pays) or when someone discards it (<Term id="ron">ron</Term>, they pay).
+    One tile from a complete hand, you are in <Term id="tenpai">tenpai</Term>. You win by drawing that tile (<Term
+      id="tsumo">tsumo</Term
+    >, everyone pays) or when someone discards it (<Term id="ron">ron</Term>, they pay).
   </p>
   <Exercise id="win" />
   <Callout kind="mistake">

@@ -6,7 +6,9 @@ import type { Actions, PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals }) => {
   requireAdmin(locals);
   const r = await internalApi<AdminPoolSnapshot>('GET', '/bots');
-  return r.ok ? { pool: r.data, error: null, loadedAt: Date.now() } : { pool: null, error: r.error, loadedAt: Date.now() };
+  return r.ok
+    ? { pool: r.data, error: null, loadedAt: Date.now() }
+    : { pool: null, error: r.error, loadedAt: Date.now() };
 };
 
 const num = (v: FormDataEntryValue | null): number | undefined => {
@@ -50,7 +52,14 @@ function regions(v: FormDataEntryValue | null): BotSettings['regions'] | undefin
 }
 const COUNTS = ['botPoolMin', 'botPoolMax', 'idleReserve', 'warmupTables'] as const;
 /** Plain numbers (multipliers, percents). */
-const NUMBERS = ['thinkScale', 'thinkSpecialScale', 'thinkOpeningScale', 'longThinkPercent', 'readySlowPercent', 'timeoutPercent'] as const;
+const NUMBERS = [
+  'thinkScale',
+  'thinkSpecialScale',
+  'thinkOpeningScale',
+  'longThinkPercent',
+  'readySlowPercent',
+  'timeoutPercent',
+] as const;
 
 export const actions: Actions = {
   settings: async ({ locals, request }) => {

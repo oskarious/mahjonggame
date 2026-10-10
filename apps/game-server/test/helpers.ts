@@ -24,10 +24,20 @@ export function seeded(seed: string): () => number {
 }
 
 /** A Tokyo evening player (18:00–24:00 every day). */
-export const TEST_SCHEDULE: BotSchedule = { tz: 'Asia/Tokyo', weekday: [1080, 1440], weekend: [1080, 1440], appetiteMin: 120 };
+export const TEST_SCHEDULE: BotSchedule = {
+  tz: 'Asia/Tokyo',
+  weekday: [1080, 1440],
+  weekend: [1080, 1440],
+  appetiteMin: 120,
+};
 
 /** Bot players in the store, named mockbot1, mockbot2, … with the given ratings. */
-export async function addBots(store: MemoryStore, ratings: number[], games = 30, schedule = TEST_SCHEDULE): Promise<BotRow[]> {
+export async function addBots(
+  store: MemoryStore,
+  ratings: number[],
+  games = 30,
+  schedule = TEST_SCHEDULE,
+): Promise<BotRow[]> {
   const out: BotRow[] = [];
   for (const rating of ratings) {
     const row = (await store.createBot({ name: `mockbot${store.bots.size + 1}`, skill: 0.3, rating, schedule }))!;
