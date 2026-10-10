@@ -75,7 +75,7 @@ when the game ends (all-last dealer stop, West-round sudden death, bankruptcy) a
 - Bulk (opt-in, not in `npm test`): download logs (ids from https://tenhou.net/sc/raw/ `scc*.html.gz`, files from
   `https://tenhou.net/0/log/?<id>`; be polite, ~1 request/s) into a directory and run
   `npm run tenhou-replay --workspace @mahjong/engine -- <dir>`. Last run (Oct 2026): 4,082 Houou games / 41,558
-  hands, no differences (single core, ~2 min).
+  hands, no differences (~1.5 min on worker threads, 16 cores).
 - Limit: logs only show what players did, so the oracle catches an engine that is too strict (forbids a legal call,
   scores differently), never one that is too permissive (missing furiten, riichi with too few tiles left): unit tests
   cover those.
