@@ -33,11 +33,9 @@
         'A free, interactive riichi mahjong course from the tiles to scoring and strategy, based on the EMA 2025 rules.',
       url: `${origin}/learn`,
       inLanguage: 'en',
-      isAccessibleForFree: true,
       provider: siteOrganization(origin),
       offers: { '@type': 'Offer', category: 'Free', price: 0, priceCurrency: 'EUR' },
       hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'Online', courseWorkload: workload },
-      hasPart: lessons.map((l) => ({ '@type': 'LearningResource', name: l.title, url: `${origin}/learn/${l.slug}` })),
     },
   ]);
 </script>
