@@ -33,6 +33,7 @@ apps/game-server/       @mahjong/game-server: Node 22 + ws, no build step; rooms
                         scheduled jobs (node-cron)
 apps/web/               SvelteKit (Svelte 5 runes, adapter-node): UI, offline play, accounts, /admin, DB migrations
 docs/agents/            topic guides for agents (index below)
+design-kit/             on-disk export of the design system for outside designers (DESIGN.md + tokens, assets)
 openspec/               OpenSpec (spec-driven changes/specs); use it for larger features
 ```
 
@@ -83,7 +84,9 @@ Calibration: engine.md. Docker images: deployment.md.
 - **UI:** portrait one-handed; minimal text, visual cues with one meaning each; never hard-code the 4/3 tile ratio.
 - **Follow the design system** ([Riichi Arena Design System](https://claude.ai/artifact/DwEQduBX3mYVKbfkuYhnvp): tokens,
   type, components, brand marks; read its README first) by default. Deviate only when explicitly decided, and then
-  update the design system or note the deviation.
+  update the design system or note the deviation. **Every change to the design system also updates `design-kit/`**
+  (its on-disk export for designers: `DESIGN.md`, `tokens.json`/`tokens.css`, `components/`, and the logos, tiles,
+  pattern and font copied from the app) in the same change, so the two never drift.
 - **Keep DB types in sync:** a migration touching game-server tables also updates `apps/game-server/src/db.ts`.
 - **Stop the dev servers you started** once your browser check is done; reuse the existing launch configs.
 - **Leave no dead code behind.** When a change makes something unused or redundant (a function, field, setting,

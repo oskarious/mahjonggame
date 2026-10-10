@@ -1,0 +1,30 @@
+<!doctype html>
+<link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css">
+<html><body style="padding:16px;background:var(--bg)">
+<div style="max-width:400px;display:flex;flex-direction:column;gap:14px">
+  <div>
+    <div class="legend">Length</div>
+    <div class="seg">
+      <label class="on"><input type="radio" name="len" checked>East only</label>
+      <label><input type="radio" name="len">East + South</label>
+    </div>
+  </div>
+  <div>
+    <div class="legend">Opponents</div>
+    <div class="seg" style="grid-template-columns:repeat(5,1fr);font-variant-numeric:tabular-nums">
+      <label><input type="radio" name="elo">1200</label>
+      <label class="on"><input type="radio" name="elo" checked>1400</label>
+      <label><input type="radio" name="elo">1600</label>
+      <label><input type="radio" name="elo">1800</label>
+      <label><input type="radio" name="elo">2000</label>
+    </div>
+  </div>
+</div>
+<script>
+document.querySelectorAll('.seg').forEach(function (seg) {
+  seg.addEventListener('change', function () {
+    seg.querySelectorAll('label').forEach(function (l) { l.classList.toggle('on', l.querySelector('input').checked); });
+  });
+});
+</script>
+</body></html>

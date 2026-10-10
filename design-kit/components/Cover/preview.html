@@ -1,0 +1,66 @@
+<!doctype html>
+<link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css">
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Riichi Arena</title>
+<style>
+  html, body { margin:0; height:100%; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--font-sans); overflow:hidden; }
+  .cover { position:relative; width:960px; height:320px; overflow:hidden; }
+  .art { position:absolute; top:0; left:480px; width:480px; height:320px; overflow:hidden; }
+  .art svg { display:block; width:480px; height:320px; }
+  .face { fill:var(--tile-face); }
+  .you { fill:var(--accent); }
+  .down { fill:var(--tile-back); }
+  .edge { fill:var(--tile-edge); }
+  .seat { rx:var(--radius-sheet); }
+  .t { rx:var(--radius-sm); }
+  .words { position:absolute; left:var(--space-24); bottom:var(--space-24); max-width:440px; }
+  .name { margin:0; font-size:112px; line-height:.95; font-weight:800; letter-spacing:-.03em; color:var(--ink); }
+  .tag { margin:var(--space-8) 0 0 4px; font-size:14px; line-height:20px; color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 320" width="480" height="320">
+<!--
+  blocks      the mark's pinwheel at 6×: three tile-face seats 168×84 / 84×168 and the accent seat (you) at the bottom — ≈18% of 960×320; with the pond ≈24%
+  arrangement one large pinwheel (the table from above, as in icon.svg) left in the box, a pond of small tiles to its right bleeding off the right and bottom edges
+  pattern     literal motif — the tiles themselves: 15 slim tiles 24×48 (the 119/60 ratio) at a space-6 gap, three rows, as a discard pond; four face-down in tile-back, one gold, one raised as the last discard
+  scales      pinwheel corners radius-sheet; pond tiles radius-sm (14% of 24px); tile ledge = tile-edge at 0.08 × width (2px); gutters space-6 / space-12
+-->
+<!-- pinwheel -->
+<rect class="face seat" x="44" y="16" width="168" height="84" rx="18"/>
+<rect class="face seat" x="224" y="40" width="84" height="168" rx="18"/>
+<rect class="you seat" x="116" y="220" width="168" height="84" rx="18"/>
+<rect class="face seat" x="20" y="112" width="84" height="168" rx="18"/>
+<!-- pond: row 1 -->
+<rect class="edge t" x="336" y="138" width="24" height="48" rx="3"/><rect class="face t" x="336" y="136" width="24" height="48" rx="3"/>
+<rect class="edge t" x="366" y="138" width="24" height="48" rx="3"/><rect class="face t" x="366" y="136" width="24" height="48" rx="3"/>
+<rect class="down t" x="396" y="136" width="24" height="48" rx="3"/>
+<rect class="edge t" x="426" y="138" width="24" height="48" rx="3"/><rect class="face t" x="426" y="136" width="24" height="48" rx="3"/>
+<rect class="edge t" x="456" y="138" width="24" height="48" rx="3"/><rect class="face t" x="456" y="136" width="24" height="48" rx="3"/>
+<!-- row 2 -->
+<rect class="edge t" x="336" y="198" width="24" height="48" rx="3"/><rect class="face t" x="336" y="196" width="24" height="48" rx="3"/>
+<rect class="you t" x="366" y="196" width="24" height="48" rx="3"/>
+<rect class="edge t" x="396" y="198" width="24" height="48" rx="3"/><rect class="face t" x="396" y="196" width="24" height="48" rx="3"/>
+<rect class="down t" x="426" y="196" width="24" height="48" rx="3"/>
+<rect class="edge t" x="456" y="198" width="24" height="48" rx="3"/><rect class="face t" x="456" y="196" width="24" height="48" rx="3"/>
+<!-- row 3 (the last discard raised) -->
+<rect class="down t" x="336" y="256" width="24" height="48" rx="3"/>
+<rect class="edge t" x="366" y="258" width="24" height="48" rx="3"/><rect class="face t" x="366" y="256" width="24" height="48" rx="3"/>
+<rect class="edge t" x="396" y="250" width="24" height="48" rx="3"/><rect class="face t" x="396" y="248" width="24" height="48" rx="3"/>
+<rect class="down t" x="426" y="256" width="24" height="48" rx="3"/>
+<rect class="edge t" x="456" y="258" width="24" height="48" rx="3"/><rect class="face t" x="456" y="256" width="24" height="48" rx="3"/>
+</svg>
+</div>
+<div class="words">
+<h1 class="name">Riichi<br>Arena</h1>
+<p class="tag">Rated riichi mahjong, one-handed, in portrait.</p>
+</div>
+</div>
+<script></script>
+</body>
+</html>

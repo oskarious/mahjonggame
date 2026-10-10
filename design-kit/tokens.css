@@ -1,0 +1,48 @@
+/* Riichi Arena tokens as CSS custom properties (same names as apps/web/src/app.css; surfaces resolved for the
+   default bg — in the app they are color-mix() of bg and tint). Used by the component previews. */
+@font-face {
+  font-family: 'Bricolage Grotesque Variable';
+  src: url('fonts/bricolage-grotesque-latin-opsz-normal.woff2') format('woff2-variations');
+  font-weight: 200 800;
+  font-style: normal;
+}
+:root {
+  --bg: #48754d;
+  --tint: #c4ddff;
+  --surface: rgba(79, 123, 88, 0.82);
+  --surface-me: rgba(86, 129, 97, 0.82);
+  --panel: #4d7a55;
+  --panel-2: #588364;
+  --line: rgba(255, 255, 255, 0.08);
+  --ink: #ecebe6;
+  --ink-dim: rgba(236, 235, 230, 0.6);
+  --accent: #f2c14e;
+  --accent-ink: #2b2104;
+  --brand-gold-on-light: #b07d0e;
+  --danger: #e76f51;
+  --danger-ink: #1f0c05;
+  --ok: #7bd389;
+  --ok-ink: #0d2a14;
+  --backdrop: rgba(0, 0, 0, 0.45);
+  --tile-face: #fbfaf4;
+  --tile-edge: #d8d0b8;
+  --tile-back: #2c6e8f;
+  --tile-back-light: #3a86ab;
+  --suit-man: #b3261e;
+  --suit-pin: #1f4fa3;
+  --suit-sou: #1d7a3a;
+  --suit-honor: #1b1b1b;
+  --red-five: #d0342c;
+  --tile-index-bg: rgba(251, 250, 244, 0.88);
+  --haku-frame: #3d6fb3;
+  --glow-gold: rgba(242, 183, 5, 0.95);
+  --glow-gold-tint: rgba(242, 183, 5, 0.38);
+  --glow-gold-edge: #e0c46a;
+  --glow-blue: rgba(76, 195, 255, 0.95);
+  --glow-blue-tint: rgba(76, 195, 255, 0.38);
+  --glow-blue-edge: #8fcde8;
+  --hint-dot: #3aa85a;
+  --radius: 12px;
+  --band-max: 560px;
+  --font-sans: 'Bricolage Grotesque Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
