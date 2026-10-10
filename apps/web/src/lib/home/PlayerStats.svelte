@@ -6,8 +6,8 @@
   import { dailyStreak, statsLoaded, statsOf } from '$lib/train/stats.svelte';
 
   /**
-   * A signed-in player's numbers in one row: rating with its change this week, games this week, the daily set's day
-   * streak and the best trainer streak. The page calls `trackOwner()` and passes the browser's UTC date.
+   * A signed-in player's numbers in four tiles, two by two: rating with its change this week, games this week, the
+   * daily set's day streak and the best trainer streak. The page calls `trackOwner()` and passes the browser's UTC date.
    */
   let { rating, week, today }: { rating: number; week: Week; today: string } = $props();
 
@@ -41,16 +41,10 @@
 <style>
   .stats {
     display: grid;
-    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    /* Two by two: four in a row would wrap the numbers on phones ("1176 ◆ +26", "2 streak"). */
+    grid-template-columns: 1fr 1fr;
     gap: 6px;
     margin: 8px 0;
-  }
-  /* Four in a row leave too little room on phones ("1176 ◆ +26", "2 streak" wrap): two by two there. The page column
-     is the container. */
-  @container (max-width: 440px) {
-    .stats {
-      grid-template-columns: 1fr 1fr;
-    }
   }
   .stats div {
     padding: 10px;

@@ -347,7 +347,7 @@ Each has a README and an HTML preview in `components/`.
   up) and the account icon. Fits 360px on one line.
 - **Card** — a tappable `panel` that leads somewhere: bold name, dimmed summary, facts on the right; `surface-me` for
   today's. Progress variant: label line with the count on its right, a 3px gold bar. Never static.
-- **Stats** — a row of up to four read-only tiles: label over a bold tabular number with a dimmed unit.
+- **Stats** — four read-only tiles, two by two: label over a bold tabular number with a dimmed unit.
 - **Tile** — ivory face, edge ledge, artwork, corner index on a light plate; states: gold glow (dora), blue glow
   (matching), raised (last/winning), green dot (hint), dimmed (not usable now), sideways (called / riichi), back.
 - **Timer bar** — 3px bar above the own panel; dim while in the turn allowance, gold with seconds when bank time runs.

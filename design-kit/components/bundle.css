@@ -511,17 +511,12 @@ input {
   gap: 8px;
 }
 
-/* Stat tiles (PlayerStats.svelte): a row of read-only numbers about the player. */
+/* Stat tiles (PlayerStats.svelte): four read-only numbers about the player, two by two. */
 .stats {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 6px;
   margin: 0;
-}
-@container (max-width: 440px) {
-  .stats {
-    grid-template-columns: 1fr 1fr;
-  }
 }
 .stats div {
   padding: 10px;
