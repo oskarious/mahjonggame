@@ -87,6 +87,8 @@ The sections in `lib/home/` (the ones below the discard hide themselves when the
 - **PlayerStats** (signed in): four tiles: rating with its 7-day change, games in 7 days, daily-set day streak, best
   trainer streak.
 - **RecentGames** (signed in): the last three finished games: placement, length, points, rating change, age.
+- **Sign-up box** (guests, in place of the stats and recent games): a `panel` with a one-line pitch, a big gold
+  Sign up and a quiet "Have an account? Sign in" link.
 - **LiveNow** (right under Play online): a green dot and the number of players seated in running games (no table
   count: a table is always four).
 

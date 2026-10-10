@@ -109,6 +109,12 @@
   {#if data.me}
     <PlayerStats rating={data.me.rating} week={data.me.week} {today} />
     <RecentGames games={data.me.recent} />
+  {:else}
+    <section class="join" aria-label="Sign up">
+      <p class="pitch">Free account: rated games against players at your level, your progress kept.</p>
+      <a class="btn primary play" href="/signup">Sign up</a>
+      <a class="signin" href="/login">Have an account? <strong>Sign in</strong></a>
+    </section>
   {/if}
 </ContentShell>
 
@@ -138,6 +144,32 @@
     font-weight: 600;
     opacity: 0.75;
     font-variant-numeric: tabular-nums;
+  }
+  .join {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 18px 0 8px;
+    padding: 16px 14px;
+    border-radius: var(--radius);
+    background: var(--panel);
+  }
+  .pitch {
+    margin: 0 0 4px !important;
+    font-weight: 600;
+  }
+  .join .play {
+    margin-top: 0;
+  }
+  .signin {
+    padding: 6px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--ink-dim) !important;
+    text-decoration: none;
+  }
+  .signin strong {
+    color: var(--ink);
   }
   .pair {
     display: grid;
