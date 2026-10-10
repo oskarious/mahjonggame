@@ -1,12 +1,13 @@
 // Every public page must stay strong for search: it renders `Seo` (title, description, canonical, link previews,
-// JSON-LD) and is in the sitemap, or lib/seo.ts disallows it in robots.txt or names why it is left out. A new page that
+// JSON-LD) with a title search engines show in full, and is in the sitemap, or lib/seo.ts disallows it in robots.txt or names why it is left out. A new page that
 // forgets any of this fails here, named by its route.
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { LESSONS } from '../lib/learn/registry';
+import { LESSONS, REFERENCE } from '../lib/learn/registry';
 import { UNLISTED, disallowed, sitemapPages } from '../lib/seo';
+import { MAX_TITLE_LENGTH, seoTitle } from '../lib/site';
 import { TRAINERS } from '../lib/train/registry';
 
 const routes = fileURLToPath(new URL('.', import.meta.url));
@@ -35,6 +36,9 @@ function sources(file: string): string[] {
 }
 
 const rendersSeo = (file: string) => sources(file).some((s) => /<Seo[\s/>]/.test(s));
+/** Literal `<Seo title="…">` values; the rest come from the registries (checked below). */
+const literalTitles = (file: string) =>
+  sources(file).flatMap((s) => [...s.matchAll(/<Seo[^>]*\stitle="([^"]*)"/g)].map((m) => m[1]));
 const noindex = (file: string) => sources(file).some((s) => /<Seo[^>]*\snoindex[\s/>]/.test(s));
 
 /** `/learn/[slug]` → a pattern matching its concrete paths. */
@@ -46,6 +50,7 @@ describe('route SEO', () => {
   it('finds the public pages', () => {
     expect(publicPages.map((p) => p.path)).toContain('/');
     expect(publicPages.map((p) => p.path)).toContain('/learn/[slug]');
+    expect(literalTitles(publicPages.find((p) => p.path === '/train')!.file)).toHaveLength(1);
   });
 
   describe.each(publicPages.map((p) => [p.path, p.file] as const))('%s', (path, file) => {
@@ -53,6 +58,11 @@ describe('route SEO', () => {
       expect(rendersSeo(file), `${path}: render <Seo> in the page or a component it renders, or disallow it`).toBe(
         true,
       );
+    });
+
+    it(`has a title of at most ${MAX_TITLE_LENGTH} characters`, () => {
+      for (const title of literalTitles(file))
+        expect(seoTitle(title).length, title).toBeLessThanOrEqual(MAX_TITLE_LENGTH);
     });
 
     it('is in the sitemap, or left out with a reason', () => {
@@ -78,6 +88,11 @@ describe('route SEO', () => {
   it('lists every published lesson and trainer', () => {
     for (const l of LESSONS.filter((l) => !l.draft)) expect(listed, l.slug).toContain(`/learn/${l.slug}`);
     for (const t of TRAINERS) expect(listed, t.id).toContain(`/train/${t.id}`);
+  });
+
+  it(`keeps lesson, reference and trainer titles to ${MAX_TITLE_LENGTH} characters`, () => {
+    const titles = [...LESSONS, ...Object.values(REFERENCE), ...TRAINERS].map((p) => p.seoTitle);
+    for (const title of titles) expect(seoTitle(title).length, title).toBeLessThanOrEqual(MAX_TITLE_LENGTH);
   });
 
   it('keeps UNLISTED to public pages', () => {

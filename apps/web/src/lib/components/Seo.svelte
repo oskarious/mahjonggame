@@ -1,9 +1,9 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { OG_IMAGE, SITE_NAME } from '$lib/site';
+  import { OG_IMAGE, SITE_NAME, seoTitle } from '$lib/site';
 
   interface Props {
-    /** Page title; the site name is appended. */
+    /** Page title; the site name is appended (at most `MAX_TITLE_LENGTH` in all). */
     title: string;
     description: string;
     /** Absolute path of this page (canonical). */
@@ -19,7 +19,7 @@
   // With adapter-node, the origin is ORIGIN in production.
   const origin = $derived(page.url.origin);
   const url = $derived(origin + path);
-  const full = $derived(`${title} · ${SITE_NAME}`);
+  const full = $derived(seoTitle(title));
   const image = $derived(origin + OG_IMAGE);
   // JSON-LD blocks. "<" is escaped so no string can close the tag, and the tag itself is assembled so this file
   // never contains a literal script tag (the Svelte preprocessor would take it for the component's own).

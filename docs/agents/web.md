@@ -82,15 +82,17 @@ user id: Better Auth finds the password by both, so anything that rewrites user 
 
 Public pages are marketing: every route that robots.txt does not disallow must be strong for search.
 
-- **`Seo`** (`lib/components/Seo.svelte`): title (`<page> · Riichi Arena`), description, canonical, Open Graph/Twitter,
-  JSON-LD, optional `noindex`. Every public page renders it, in the page or in a component the page renders directly
-  (`LessonBody`, `Trainer`). App pages (play, online, account, admin) use `Title`: a title plus default preview tags.
+- **`Seo`** (`lib/components/Seo.svelte`): title (`<page> · Riichi Arena`, at most `MAX_TITLE_LENGTH` = 70 characters
+  in all, or Bing flags it), description, canonical, Open Graph/Twitter, JSON-LD, optional `noindex`. Every public
+  page renders it, in the page or in a component the page renders directly (`LessonBody`, `Trainer`). App
+  pages (play, online, account, admin) use `Title`: a title plus default preview tags.
 - **`lib/site.ts`**: `SITE_NAME` ("Riichi Arena", the one spelling in titles and metadata; the lowercase wordmark is
   only visual), the default description, the preview image and `siteOrganization` for JSON-LD.
 - **`lib/seo.ts`**: `DISALLOW` (robots.txt), `sitemapPages` (sitemap.xml, from the registries) and `UNLISTED` (public
   pages left out of the sitemap, with the reason). A new page is listed, or unlisted with a reason, or disallowed.
-- **`routes/seo.test.ts`** enforces this: a public page without `Seo` or a sitemap decision fails `npm test`, named by
-  route. It reads sources one component level deep, so keep `Seo` in the page or the component it renders.
+- **`routes/seo.test.ts`** enforces this: a public page without `Seo` or a sitemap decision, or with a too-long title
+  (a literal one, or a lesson, reference or trainer `seoTitle`), fails `npm test`, named by route. It reads
+  sources one component level deep, so keep `Seo` in the page or the component it renders.
 - Icons: `brand/icon.svg` plus PNG renders (`icon-48`, `icon-512`, `apple-touch-icon` with square corners) and
   `manifest.webmanifest`, linked in `app.html`. Re-render the PNGs if the mark changes (and copy them to `design-kit/`).
 

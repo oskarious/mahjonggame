@@ -18,7 +18,7 @@
 </script>
 
 <Seo
-  title="Riichi Mahjong Trainers: Efficiency, Waits, Yaku and Scoring"
+  title="Riichi Mahjong Trainers: Discards, Waits, Yaku, Scoring"
   description="Free riichi mahjong drills: what to discard, every winning tile, the yaku in a hand, han, fu and points. Endless real hands, a daily set."
   path="/train"
   type="website"

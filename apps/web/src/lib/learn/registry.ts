@@ -71,7 +71,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'sets-and-winning-hands',
     unit: 'basics',
     title: 'Sets and a winning hand',
-    seoTitle: 'Mahjong sets: sequences, triplets, pairs and winning hands',
+    seoTitle: 'Mahjong sets: sequences, triplets, pairs, winning hands',
     description:
       'What makes a winning hand in riichi mahjong: four sets and a pair, sequences, triplets, quads, plus seven pairs and thirteen orphans.',
     summary: 'Four sets and a pair: sequences, triplets, quads.',
@@ -107,7 +107,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'winning',
     unit: 'basics',
     title: 'Winning: tsumo, ron and yaku',
-    seoTitle: 'How to win in riichi mahjong: tsumo, ron and why you need a yaku',
+    seoTitle: 'How to win in riichi mahjong: tsumo, ron and yaku',
     description:
       'Win by tsumo or ron, and learn the rule that trips up every beginner: a complete hand needs at least one yaku to win.',
     summary: 'Tsumo, ron, and the one-yaku rule.',
@@ -131,7 +131,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'waits',
     unit: 'reading',
     title: 'Wait shapes',
-    seoTitle: 'Riichi mahjong waits: ryanmen, kanchan, penchan, shanpon, tanki',
+    seoTitle: 'Riichi mahjong waits: ryanmen, kanchan, shanpon, tanki',
     description:
       'Learn every wait shape in riichi mahjong, from the two-sided ryanmen to the single tanki, and find all the tiles a hand is waiting on.',
     summary: 'Ryanmen, kanchan, penchan, shanpon, tanki and multi-sided waits.',
@@ -155,7 +155,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'first-yaku',
     unit: 'yaku',
     title: 'Your first yaku',
-    seoTitle: 'The first five yaku: riichi, tsumo, tanyao, yakuhai and pinfu',
+    seoTitle: 'The first yaku: riichi, tsumo, tanyao, yakuhai, pinfu',
     description:
       'The five yaku that win most hands: riichi, menzen tsumo, tanyao (all simples), yakuhai (value tiles) and pinfu, with practice hands.',
     summary: 'Riichi, tsumo, all simples, value tiles and pinfu.',
@@ -179,7 +179,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'dora',
     unit: 'yaku',
     title: 'Dora',
-    seoTitle: 'Dora in riichi mahjong: indicators, ura, kan and red fives',
+    seoTitle: 'Dora in riichi mahjong: indicators, ura and red fives',
     description:
       'How dora work: read the indicator, find the dora (with wrap-around), kan dora, ura dora and red fives, and why dora are not yaku.',
     summary: 'Bonus tiles: the indicator, wrap-around, ura and red fives.',
@@ -191,7 +191,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'more-yaku',
     unit: 'yaku',
     title: 'More yaku',
-    seoTitle: 'Common riichi mahjong yaku: honitsu, toitoi, chiitoitsu and more',
+    seoTitle: 'Common riichi mahjong yaku: honitsu, toitoi, chiitoitsu',
     description:
       'The next yaku to learn: half flush, all triplets, seven pairs, pure straight, mixed triple sequence and more, open and closed values.',
     summary: 'Flushes, triplets, straights and closed-only yaku.',
@@ -203,7 +203,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'han-and-fu',
     unit: 'scoring',
     title: 'Scoring: han and fu',
-    seoTitle: 'How to score riichi mahjong: han, fu and the score table',
+    seoTitle: 'Riichi mahjong scoring: han, fu and the score table',
     description:
       'How a riichi mahjong hand is scored: han from yaku and dora, fu, base points, mangan and other limits, dealer bonus, ron and tsumo payments.',
     summary: 'From han and fu to points: the score table and limits.',
@@ -227,7 +227,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'payments-and-draws',
     unit: 'scoring',
     title: 'Payments, counters and draws',
-    seoTitle: 'Riichi mahjong payments: honba, riichi sticks and draws',
+    seoTitle: 'Riichi mahjong payments: honba, riichi sticks, draws',
     description:
       'Who pays what: ron and tsumo payments, honba counters, riichi sticks, exhaustive draws and noten payments, and dealer repeats.',
     summary: 'Honba, riichi sticks, draws and noten payments.',
@@ -239,7 +239,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'ending-a-game',
     unit: 'scoring',
     title: 'How a game ends',
-    seoTitle: 'How a riichi mahjong game ends: rounds, placement and uma',
+    seoTitle: 'How a riichi mahjong game ends: placement and uma',
     description: 'Rounds and game length, the dealer passing, when the game ends, final placement, uma and going bust.',
     summary: 'Rounds, placement, uma and going bust.',
     related: ['payments-and-draws', 'table-and-turns', 'defense'],
@@ -262,7 +262,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'shapes',
     unit: 'hand',
     title: 'Good and bad shapes',
-    seoTitle: 'Riichi mahjong shapes: two-sided, closed, edge and complex shapes',
+    seoTitle: 'Riichi mahjong shapes: two-sided, closed and edge',
     description:
       'Which partial sets are worth keeping: two-sided beats closed beats edge, middle tiles, complex shapes, how many pairs to keep.',
     summary: 'Rank partial sets, keep the shapes that make good waits.',
@@ -274,7 +274,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'five-blocks',
     unit: 'hand',
     title: 'The five-block method',
-    seoTitle: 'The five-block method in riichi mahjong: what to discard',
+    seoTitle: 'Five-block method in riichi mahjong: what to discard',
     description:
       'Count your hand in five blocks (four sets and a pair) to know what to discard: with six blocks drop the weakest, with four build one.',
     summary: 'Four sets and a pair: count blocks to find the discard.',
@@ -286,7 +286,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'aiming-for-yaku',
     unit: 'hand',
     title: 'Aiming for yaku',
-    seoTitle: 'Building toward yaku in riichi mahjong: straights, flushes, pairs',
+    seoTitle: 'Riichi mahjong hand building: straights, flushes, pairs',
     description:
       'When to bend your hand toward a yaku: pure straight, mixed triple sequence, pinfu, half flush, and seven pairs or all triplets.',
     summary: 'Which yaku are worth a few tiles of speed.',
@@ -345,7 +345,7 @@ export const LESSONS: LessonMeta[] = [
     slug: 'last-hand',
     unit: 'attack-defense',
     title: 'The last hand',
-    seoTitle: 'Riichi mahjong endgame: placement, uma and the last hand',
+    seoTitle: 'Riichi mahjong endgame: placement and the last hand',
     description:
       'Play the last hand for placement: what uma is worth, the hand you need to move up, and how much a tsumo swings against the dealer.',
     summary: 'Play for placement: the value you need to move up.',
@@ -360,7 +360,7 @@ export const REFERENCE = {
   yaku: {
     path: '/learn/yaku',
     title: 'Yaku list',
-    seoTitle: 'Riichi mahjong yaku list: every yaku with example hands',
+    seoTitle: 'Riichi mahjong yaku list: every yaku with examples',
     description:
       'Every riichi mahjong yaku and yakuman with its han (closed and open), the rule in one line and an example hand.',
   },
