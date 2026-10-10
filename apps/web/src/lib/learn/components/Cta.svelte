@@ -21,7 +21,7 @@
   <aside class="inline" aria-label="Play">
     <span>Try it in a game</span>
     <a class="btn" href={primary.href}>{primary.text}</a>
-    <a class="btn" href={BEGINNER_PLAY}>Play a bot</a>
+    <a class="btn" href={BEGINNER_PLAY} rel="nofollow">Play a bot</a>
   </aside>
 {:else}
   <section class="cta" aria-label="Play">
@@ -30,7 +30,7 @@
         account, rated games, no downloads.{/if}
     </p>
     <a class="btn primary big" href={primary.href}>{primary.text}</a>
-    <a class="btn big" href={BEGINNER_PLAY}>{user ? 'Play a bot' : 'Play a bot now'}</a>
+    <a class="btn big" href={BEGINNER_PLAY} rel="nofollow">{user ? 'Play a bot' : 'Play a bot now'}</a>
   </section>
 {/if}
 

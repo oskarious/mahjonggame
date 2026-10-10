@@ -18,7 +18,7 @@
 
 <div class="content" style:--tile-ratio={tileset().ratio}>
   <header>
-    <a class="home" href="/" aria-label="Riichi Arena home"><img src="/brand/wordmark.svg" alt="" /></a>
+    <a class="home" href="/"><img src="/brand/wordmark.svg" alt="Riichi Arena home" /></a>
     {#each SECTIONS as s (s.href)}
       <a class="section" class:here={here(s.href)} href={s.href} aria-current={here(s.href) ? 'page' : undefined}
         >{s.label}</a

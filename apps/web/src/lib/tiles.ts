@@ -15,8 +15,13 @@ export interface Tileset {
 }
 export type TilesetId = 'classic' | 'slim';
 
-// Tile artwork is bundled by Vite: content-hashed, immutable URLs (small files inlined as data URIs).
-const FILES = import.meta.glob<string>('./assets/tiles/**/*.svg', { query: '?url', import: 'default', eager: true });
+// Tile artwork is bundled by Vite: content-hashed, immutable URLs. Never inlined as data URIs: a server-rendered lesson
+// shows hundreds of tiles, and inlining repeated each SVG in the HTML (over 1 MB on /learn/yaku).
+const FILES = import.meta.glob<string>('./assets/tiles/**/*.svg', {
+  query: '?url&no-inline',
+  import: 'default',
+  eager: true,
+});
 
 /** The URL of a file under assets/tiles/. */
 function file(path: string): string {

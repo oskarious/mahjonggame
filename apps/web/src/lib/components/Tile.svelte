@@ -54,7 +54,8 @@
   {#if back || tile === null}
     <span class="back"></span>
   {:else}
-    <img src={tileImage(tile, red, set)} alt="" draggable="false" />
+    <!-- alt for crawlers; assistive tech reads the wrapper's aria-label (role="img" / button) instead. -->
+    <img src={tileImage(tile, red, set)} alt={label} draggable="false" />
     {#if glow}<span class="tint {glow}" aria-hidden="true"></span>{/if}
     <span class="index {index!.suit}" class:red-five={redFive} class:wide={index!.text.length > 1} aria-hidden="true"
       >{index!.text}</span
