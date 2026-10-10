@@ -10,3 +10,4 @@ export * from './view.ts';
 export * from './bot.ts';
 export * from './hidden.ts';
 export * from './scenario.ts';
+export * from './version.ts';

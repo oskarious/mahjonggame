@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_RULES } from '@mahjong/engine';
+import { DEFAULT_RULES, ENGINE_VERSION } from '@mahjong/engine';
 import { Hub } from '../src/hub.ts';
 import { anonymousBot, type SeatInit } from '../src/matchmaking.ts';
 import { replayGame } from '../src/recovery.ts';
@@ -106,5 +106,49 @@ describe('records and recovery', () => {
     expect(await hub.recover((g) => replayGame(g.rules, g.seed, g.actions))).toBe(0);
     expect(store.games.get('old')!.status).toBe('aborted');
     expect(await store.loadRunningGames()).toEqual([]);
+  });
+
+  it('aborts a game from another engine version without replaying it, and tells its players once', async () => {
+    const store = new MemoryStore();
+    store.ratings.set('a', { rating: 1000, games: 0 });
+    await store.createGame({ id: 'old', format: 'east', rules: DEFAULT_RULES, seed: 'old', seats });
+    store.games.get('old')!.engineVersion = ENGINE_VERSION - 1;
+    await store.createGame({ id: 'now', format: 'east', rules: DEFAULT_RULES, seed: 'now', seats: [...seats].reverse() });
+    const hub = new Hub({ store, config: TEST_CONFIG, log: () => {} });
+    await hub.bots.load();
+    const replayed: string[] = [];
+    const n = await hub.recover((g) => {
+      replayed.push(g.id);
+      return replayGame(g.rules, g.seed, g.actions);
+    });
+    expect(n).toBe(1);
+    expect(replayed).toEqual(['now']);
+    expect(store.games.get('old')!.status).toBe('aborted');
+    expect(store.games.get('now')!.status).toBe('running');
+    expect(store.ratings.get('a')).toEqual({ rating: 1000, games: 0 });
+
+    // Both humans sat in both games: the one still running wins `activeGame`, the aborted one is reported once.
+    const a = new FakeClient('a');
+    await hub.attach(a);
+    expect(a.last('welcome')).toMatchObject({ abortedGame: 'old', activeGame: { gameId: 'now' } });
+    hub.detach(a);
+    const again = new FakeClient('a');
+    await hub.attach(again);
+    expect(again.last('welcome')!.abortedGame).toBeUndefined();
+    const d = new FakeClient('d');
+    await hub.attach(d);
+    expect(d.last('welcome')!.abortedGame).toBe('old');
+  });
+
+  it('a game from the current engine version is resumed', async () => {
+    const store = new MemoryStore();
+    await store.createGame({ id: 'g', format: 'east', rules: DEFAULT_RULES, seed: 'g', seats });
+    expect(store.games.get('g')!.engineVersion).toBe(ENGINE_VERSION);
+    const hub = new Hub({ store, config: TEST_CONFIG, log: () => {} });
+    await hub.bots.load();
+    expect(await hub.recover((g) => replayGame(g.rules, g.seed, g.actions))).toBe(1);
+    const a = new FakeClient('a');
+    await hub.attach(a);
+    expect(a.last('welcome')!.abortedGame).toBeUndefined();
   });
 });

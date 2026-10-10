@@ -1,6 +1,6 @@
 // Everything that is not one game: connected users, the queue, the bot players, the rooms, and routing of client
 // messages.
-import { DEFAULT_RULES, makeRules } from '@mahjong/engine';
+import { DEFAULT_RULES, ENGINE_VERSION, makeRules } from '@mahjong/engine';
 import type { ClientMessage, Format, GameInfo, RatingInfo, ServerMessage } from '@mahjong/protocol';
 import { randomUUID } from 'node:crypto';
 import { BotPool } from './bots.ts';
@@ -36,6 +36,8 @@ export class Hub {
   #clients = new Map<string, HubClient>();
   #rooms = new Map<string, Room>();
   #seatOf = new Map<string, { room: Room; seat: number }>();
+  /** User id → the game aborted on recovery that they sat in, told once on their next `welcome`. Memory only. */
+  #aborted = new Map<string, string>();
   #stopped = false;
 
   constructor(deps: HubDeps) {
@@ -82,7 +84,9 @@ export class Hub {
       rating: client.rating,
       activeGame: active ? active.room.info(active.seat) : null,
       queued: this.matchmaker.formatOf(id),
+      abortedGame: this.#aborted.get(id),
     });
+    this.#aborted.delete(id);
     if (active) active.room.attach(active.seat, client);
     if (old && old !== client) {
       old.send({ type: 'takenOver' });
@@ -183,6 +187,12 @@ export class Hub {
     const games = await this.#store.loadRunningGames();
     let n = 0;
     for (const g of games) {
+      if (g.engineVersion !== ENGINE_VERSION) {
+        // Replaying it could succeed and still finish it under different rules than it started with.
+        this.#log(`game ${g.id} is from engine version ${g.engineVersion}; marking it aborted`);
+        await this.#abort(g);
+        continue;
+      }
       try {
         const state = replay(g);
         const room = this.#makeRoom({ id: g.id, format: g.format, rules: g.rules, seed: g.seed, seats: g.seats, state });
@@ -191,10 +201,16 @@ export class Hub {
       } catch (e) {
         // Its log no longer replays (e.g. the wall generation changed): end it unrated instead of retrying forever.
         this.#log(`could not recover game ${g.id}; marking it aborted`, e);
-        await this.#store.abortGame(g.id).catch((err) => this.#log(`could not abort game ${g.id}`, err));
+        await this.#abort(g);
       }
     }
     return n;
+  }
+
+  /** Ends an unrecoverable game unrated and remembers to tell its players. */
+  async #abort(g: StoredGame): Promise<void> {
+    await this.#store.abortGame(g.id).catch((err) => this.#log(`could not abort game ${g.id}`, err));
+    for (const s of g.seats) if (s.kind === 'human') this.#aborted.set(s.userId, g.id);
   }
 
   /** Stops matchmaking, tells clients to reconnect later and stops the rooms' timers. */

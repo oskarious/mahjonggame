@@ -77,7 +77,9 @@ export interface GameTable {
   format: 'east' | 'south';
   rules: JSONColumnType<RuleSet>;
   seed: string;
-  /** 'aborted': could not be resumed (e.g. its log no longer replays after an engine change); unrated. */
+  /** `ENGINE_VERSION` the game was created under; recovery aborts other versions. */
+  engineVersion: number;
+  /** 'aborted': could not be resumed (another engine version, or its log no longer replays); unrated. */
   status: 'running' | 'finished' | 'aborted';
   createdAt: Timestamp;
   endedAt: Timestamp | null;

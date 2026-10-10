@@ -24,8 +24,8 @@ A client is assumed to be modified: it reads every byte and every timing it gets
 - **Wall RNG is cryptographic** (ChaCha20 keyed with SHA-256 of the secret `randomUUID` seed, `src/rng.ts`): revealed
   tiles don't let anyone reconstruct the generator and predict later walls. Never send the seed or the RNG state to a
   client, and don't serve `game_action` / the seed of a running game (future replay UI: finished games only).
-  Changing wall generation breaks replay of stored games: running ones are marked `aborted` on recovery (unrated);
-  bump `SAVE_VERSION` for offline saves.
+  Changing wall generation breaks replay of stored games: bump `ENGINE_VERSION`, and running ones are marked
+  `aborted` on recovery (unrated) and offline saves discarded.
 - **Debug features** (show bots' hands, autoplay) exist only in offline play; online games never expose them.
 - **Accepted, documented tells** (like Tenhou / Mahjong Soul): a discard nobody can call is followed by the next draw
   at once; if someone can, the window stays open until they answer, so the table sees that *someone* could call

@@ -79,6 +79,8 @@ export type ServerMessage =
       activeGame: GameInfo | null;
       /** Set when the player is still queued (queue state survives only while the server runs). */
       queued: Format | null;
+      /** Set once after a restart that aborted (unrated) the game the player sat in. */
+      abortedGame?: string;
     }
   | { type: 'queue.status'; format: Format; waitedMs: number }
   | { type: 'game.start'; game: GameInfo }

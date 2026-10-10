@@ -8,7 +8,9 @@ import {
   type RatingInfo,
   type ServerMessage,
 } from '@mahjong/protocol';
+import { updated } from '$app/state';
 import { sound } from '$lib/audio/player';
+import { reloadForUpdate } from './reload';
 import { type GameSource, type StepListener, StepListeners } from './source';
 
 /** Ask the server for a sign of life after this long without a message, ms. */
@@ -28,7 +30,9 @@ export type RemoteStatus =
   /** Another tab or device took the seat; this instance stays quiet. */
   | 'takenOver'
   /** Server shutting down or unreachable; reconnecting with backoff. */
-  | 'offline';
+  | 'offline'
+  /** The server no longer speaks this page's protocol and a reload was just tried: reload by hand. */
+  | 'outdated';
 
 /**
  * A game played on the game server over the same-origin /ws socket. The server holds the state; this client only
@@ -51,6 +55,8 @@ export class RemoteGame implements GameSource {
   waitingNext = $state(false);
   end: { final: FinalStanding[]; ratings: RatingChange[] } | null = $state.raw(null);
   error: string | null = $state(null);
+  /** The game the player sat in was cancelled (unrated) by a server restart; shown once in the lobby. */
+  aborted = $state(false);
   /** In riichi, discard the drawn tile automatically when nothing else is possible (as offline). */
   autoRiichiDiscard = $state(true);
   /** Pass on pon/chii/kan automatically (still asked for ron). */
@@ -70,6 +76,8 @@ export class RemoteGame implements GameSource {
   /** Date.now of the last message on the current socket. */
   #lastMessageAt = 0;
   #destroyed = false;
+  /** A `welcome` arrived on an earlier socket: later ones are reconnects, when a new build may be live. */
+  #welcomed = false;
   #url: string;
   #listeners = new StepListeners();
 
@@ -119,7 +127,7 @@ export class RemoteGame implements GameSource {
     ws.onclose = () => {
       if (this.#ws !== ws) return;
       this.#ws = null;
-      if (this.#destroyed || this.status === 'takenOver') return;
+      if (this.#destroyed || this.status === 'takenOver' || this.status === 'outdated') return;
       this.status = 'offline';
       this.#scheduleReconnect();
     };
@@ -152,6 +160,7 @@ export class RemoteGame implements GameSource {
   }
 
   joinQueue(format: Format): void {
+    this.aborted = false;
     this.#send({ type: 'queue.join', format });
   }
 
@@ -211,6 +220,12 @@ export class RemoteGame implements GameSource {
     }, 350);
   }
 
+  /** After a reconnect (a deploy restarts the game server), reload if a new web build is live too. */
+  async #reloadIfUpdated(): Promise<void> {
+    // false in dev, and when web is unreachable (restarting too): the next reconnect or navigation catches up.
+    if (await updated.check()) reloadForUpdate();
+  }
+
   #send(msg: ClientMessage): void {
     if (this.#ws?.readyState === WebSocket.OPEN) this.#ws.send(JSON.stringify(msg));
   }
@@ -246,6 +261,12 @@ export class RemoteGame implements GameSource {
   #handle(msg: ServerMessage): void {
     switch (msg.type) {
       case 'welcome':
+        if (this.#welcomed) void this.#reloadIfUpdated();
+        this.#welcomed = true;
+        if (msg.abortedGame) {
+          if (this.info?.gameId === msg.abortedGame) this.clearGame();
+          this.aborted = true;
+        }
         this.user = msg.user;
         this.rating = msg.rating;
         this.error = null;
@@ -300,6 +321,12 @@ export class RemoteGame implements GameSource {
       case 'error':
         if (msg.code === 'staleSeq' || msg.code === 'rateLimited') return; // an update follows
         if (msg.code === 'inGame') return; // game.start follows
+        if (msg.code === 'badVersion') {
+          // The server closes the socket next; reconnecting with this page's code can never succeed.
+          if (!reloadForUpdate()) this.status = 'outdated';
+          else this.#destroyed = true;
+          return;
+        }
         this.error = msg.message ?? msg.code;
         return;
       case 'takenOver':

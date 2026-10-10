@@ -76,8 +76,8 @@ Calibration: engine.md. Docker images: deployment.md.
   RNG) through views, messages, their timing, hints or bot behaviour. `scrambleHidden` + the fairness tests enforce
   it; don't weaken them. Details: fair-play.md.
 - **The engine is pure and deterministic**: a game is `(rules, seed, actions[])`. Rule differences are `RuleSet`
-  flags. Changes that make old logs replay differently: bump `SAVE_VERSION` (offline saves); stored running games
-  get aborted on recovery.
+  flags. Changes that make old logs replay differently (rules, scoring, wall, action shapes): bump the engine's
+  `ENGINE_VERSION`; offline saves are then discarded and running online games aborted (unrated) on recovery.
 - **Game server: persist before send**, one serialized pipeline per room.
 - **Re-run bot calibration after any bot change** and commit the generated `bot-ratings.ts`.
 - **The `user` table contains bot players**: anything that counts, lists or emails users must join `bot`.

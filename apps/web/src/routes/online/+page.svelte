@@ -94,6 +94,8 @@
     {#if game.status === 'takenOver'}
       <p class="note">Playing in another tab or device.</p>
       <button class="btn primary big" onclick={() => game.reconnect()}>Play here</button>
+    {:else if game.status === 'outdated'}
+      <button class="btn primary big" onclick={() => location.reload()}>Reload</button>
     {:else if game.status === 'queued'}
       <div class="waiting" role="status">
         <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -101,6 +103,7 @@
       </div>
       <button class="btn ghost big" onclick={() => game.leaveQueue()}>Cancel</button>
     {:else if game.status === 'idle' || game.status === 'ended'}
+      {#if game.aborted}<p class="note" role="status">Game cancelled · unrated</p>{/if}
       {#if game.rating}
         <p class="me"><strong>{game.user?.name}</strong><span class="elo"><RankBadge rating={game.rating.rating} /></span></p>
       {/if}

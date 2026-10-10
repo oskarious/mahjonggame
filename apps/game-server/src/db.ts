@@ -33,7 +33,9 @@ export interface GameTable {
   format: 'east' | 'south';
   rules: JSONColumnType<RuleSet>;
   seed: string;
-  /** 'aborted': could not be resumed (e.g. its log no longer replays after an engine change); unrated. */
+  /** `ENGINE_VERSION` the game was created under; recovery aborts other versions. */
+  engineVersion: number;
+  /** 'aborted': could not be resumed (another engine version, or its log no longer replays); unrated. */
   status: 'running' | 'finished' | 'aborted';
   createdAt: Timestamp;
   endedAt: Timestamp | null;
@@ -108,7 +110,7 @@ export interface DB {
 }
 
 /** The latest migration (in apps/web/migrations) this server needs: it adds the last of the columns above. */
-export const REQUIRED_MIGRATION = '0006_uuid_ids';
+export const REQUIRED_MIGRATION = '0008_engine_version';
 
 export function createDb(connectionString: string): Kysely<DB> {
   const pool = new pg.Pool({ connectionString, max: 10 });

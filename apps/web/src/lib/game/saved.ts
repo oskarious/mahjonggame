@@ -1,15 +1,11 @@
-import type { Action, RuleSet, Seat } from '@mahjong/engine';
+import { ENGINE_VERSION, type Action, type RuleSet, type Seat } from '@mahjong/engine';
 import type { LocalSettings } from './local.svelte';
 
-/**
- * Bump when an engine change makes old logs replay differently (wall generation, action shapes, RuleSet fields):
- * a save with another version is discarded instead of replayed.
- */
-export const SAVE_VERSION = 2; // 2: ChaCha20 wall RNG
 const KEY = 'riichi.localGame';
 
 /** The offline game in progress: enough to rebuild it by replaying `actions`. */
 export interface SavedGame {
+  /** The ENGINE_VERSION it was saved under; any other is discarded instead of replayed. */
   v: number;
   rules: RuleSet;
   seed: string;
@@ -26,7 +22,7 @@ export function loadSave(): SavedGame | null {
     if (!raw) return null;
     const s = JSON.parse(raw) as SavedGame;
     const ok =
-      s?.v === SAVE_VERSION &&
+      s?.v === ENGINE_VERSION &&
       typeof s.rules === 'object' &&
       typeof s.seed === 'string' &&
       typeof s.human === 'number' &&
@@ -42,7 +38,7 @@ export function loadSave(): SavedGame | null {
 
 export function writeSave(s: Omit<SavedGame, 'v'>): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ v: SAVE_VERSION, ...s }));
+    localStorage.setItem(KEY, JSON.stringify({ v: ENGINE_VERSION, ...s }));
   } catch {
     // Storage blocked or full: play on unsaved.
   }

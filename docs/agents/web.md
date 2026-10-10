@@ -11,6 +11,7 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
   src/lib/game/local.svelte.ts   LocalGame: engine + bots in the browser (offline play, debug controls)
   src/lib/game/saved.ts          the offline game in localStorage (rules, seed, seat, settings, action log)
   src/lib/game/remote.svelte.ts  RemoteGame: same-origin /ws client, auto-reconnect (+ ping watchdog: a socket silent 3 s is replaced), takeover, deadline state
+  src/lib/game/reload.ts         reloadForUpdate: reload for a new deploy, at most once a minute per tab (sessionStorage)
   src/lib/server/       db.ts (Kysely + pg pool), schema.ts (table types incl. rating/game tables), auth.ts, migrate.ts,
                         admin.ts (calls the game server's /internal API), game-server.ts (is the game server up? →
                         "Play online" on the home page), daily-discard.ts (the home page poll: the stored hand, voters, tally),
@@ -41,7 +42,8 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
                         0001_auth = Better Auth tables; 0002_game_server = rating, game, game_seat, game_action
                         (written by the game server); 0003_bot_players = bot, setting, user.role;
                         0004_bot_schedules = bot.schedule; 0005_daily_discard = daily_discard, daily_discard_vote;
-                        0006_uuid_ids = every id column and reference becomes `uuid`; 0007_user_progress = user_progress
+                        0006_uuid_ids = every id column and reference becomes `uuid`; 0007_user_progress = user_progress;
+                        0008_engine_version = game.engineVersion
   src/lib/tiles.ts      TILESETS (ratio, artwork margin, image paths); tileset.svelte.ts: the chosen one (`riichi:tileset`)
   src/lib/components/   Table (the whole play screen, takes a GameSource), Board (4 seat rows), Pond, Melds, PlayerArea
                         (hand/actions/magnifier), Tile, TimerBar, Countdown (online, after a deal),
@@ -188,9 +190,17 @@ A vote from a page left open past midnight UTC gets 409 and the page reloads to 
 
 Offline games autosave after every action (one slot, `saved.ts`) and resume by replaying the log: bare `/play`
 resumes, `/play?…` starts a new game and then replaces the URL with `/play`; the home page shows Continue next to
-New game. The save is cleared at game over; unreadable or non-replaying saves are dropped silently. **Bump
-`SAVE_VERSION`** after engine changes that make old logs replay differently (wall generation, action shapes,
-RuleSet fields) — a legal-but-different replay is not detected otherwise.
+New game. The save is cleared at game over; unreadable or non-replaying saves are dropped silently. A save
+stores the engine's `ENGINE_VERSION` and is discarded under any other (bump rule: engine.md).
+
+## Deploys and open pages
+
+Open pages move to a new deploy by reloading when it costs nothing. `badVersion` from the game server reloads (then
+`outdated`: a Reload button, if this tab already reloaded within a minute). A reconnect after a drop (every
+game-server restart) checks `updated.check()` and reloads when a new web build is live; a plain network blip does not
+reload. `kit.version.pollInterval` (5 min) makes the next navigation of any page a full load after a deploy. A
+reload mid-game is safe: the server keeps the seat. `welcome.abortedGame` (a restart aborted the player's game, see
+game-server.md → Recovery) shows "Game cancelled · unrated" in the lobby until they queue again.
 
 ## Gotchas
 

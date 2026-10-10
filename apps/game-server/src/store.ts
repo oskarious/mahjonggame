@@ -1,5 +1,5 @@
 // Persistence of games and ratings. `PgStore` is the real one; `MemoryStore` backs the tests.
-import type { Action, FinalStanding, RuleSet } from '@mahjong/engine';
+import { ENGINE_VERSION, type Action, type FinalStanding, type RuleSet } from '@mahjong/engine';
 import type { BotSchedule, Format } from '@mahjong/protocol';
 import { randomUUID } from 'node:crypto';
 import { type Kysely, sql } from 'kysely';
@@ -62,6 +62,8 @@ export interface NewBot {
 }
 
 export interface StoredGame extends GameRecord {
+  /** `ENGINE_VERSION` it was created under. */
+  engineVersion: number;
   actions: Action[];
 }
 
@@ -109,7 +111,7 @@ export class PgStore implements Store {
     await this.#db.transaction().execute(async (trx) => {
       await trx
         .insertInto('game')
-        .values({ id: game.id, format: game.format, rules: JSON.stringify(game.rules), seed: game.seed, status: 'running' })
+        .values({ id: game.id, format: game.format, rules: JSON.stringify(game.rules), seed: game.seed, engineVersion: ENGINE_VERSION, status: 'running' })
         .execute();
       await trx
         .insertInto('game_seat')
@@ -202,7 +204,7 @@ export class PgStore implements Store {
         return r.botSkill !== null ? { kind: 'bot', skill: r.botSkill, ...player } : { kind: 'human', ...player };
       });
       if (seats.length !== 4) continue;
-      out.push({ id: g.id, format: g.format, rules: g.rules, seed: g.seed, seats, actions: actions.map((a) => a.action) });
+      out.push({ id: g.id, format: g.format, rules: g.rules, seed: g.seed, engineVersion: g.engineVersion, seats, actions: actions.map((a) => a.action) });
     }
     return out;
   }
@@ -318,7 +320,7 @@ export class MemoryStore implements Store {
 
   async createGame(game: GameRecord): Promise<void> {
     await this.beforeWrite?.();
-    this.games.set(game.id, { ...game, actions: [], status: 'running', final: null, results: [] });
+    this.games.set(game.id, { ...game, engineVersion: ENGINE_VERSION, actions: [], status: 'running', final: null, results: [] });
   }
 
   async appendAction(gameId: string, seq: number, action: Action): Promise<void> {
@@ -348,7 +350,15 @@ export class MemoryStore implements Store {
   async loadRunningGames(): Promise<StoredGame[]> {
     return [...this.games.values()]
       .filter((g) => g.status === 'running')
-      .map((g) => ({ id: g.id, format: g.format, rules: g.rules, seed: g.seed, seats: g.seats, actions: [...g.actions] }));
+      .map((g) => ({
+        id: g.id,
+        format: g.format,
+        rules: g.rules,
+        seed: g.seed,
+        engineVersion: g.engineVersion,
+        seats: g.seats,
+        actions: [...g.actions],
+      }));
   }
 
   /** Bot players by id; ratings live in `ratings` like everyone's. */

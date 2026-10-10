@@ -21,8 +21,9 @@ apps/game-server/       @mahjong/game-server: Node 22 + ws, no build step (type 
 
 The DB schema is owned by apps/web (migrations there): `0002_game_server` = rating, game, game_seat, game_action
 (written by this server); `0003_bot_players` = bot, setting, user.role; `0004_bot_schedules` = bot.schedule; `0005_daily_discard` =
-daily_discard, daily_discard_vote; `0006_uuid_ids` = ids are `uuid` (see web.md). The server refuses to start until
-`REQUIRED_MIGRATION` (`src/db.ts`, the latest one it needs) is applied.
+daily_discard, daily_discard_vote; `0006_uuid_ids` = ids are `uuid` (see web.md); `0008_engine_version` =
+game.engineVersion. The server refuses to start until `REQUIRED_MIGRATION` (`src/db.ts`, the latest one it needs) is
+applied.
 
 ## Scheduled jobs
 
@@ -115,8 +116,9 @@ them; a deploy overlap may briefly run two). A failing run is logged and the nex
 - **Auth:** the upgrade needs an allowed `Origin` (exact `ORIGIN`, or localhost/LAN in dev) and forwards the cookie
   to `{WEB_INTERNAL_URL}/api/auth/get-session`; the web app is the only thing that understands Better Auth cookies.
 - **Recovery:** on start, `status = 'running'` games are replayed from `game_action` and rebuilt with all humans
-  disconnected (grace runs); their bot players are marked busy. A game whose log no longer replays is marked
-  `aborted` (unrated) instead of being retried every start. SIGTERM: stop matchmaking and bots,
+  disconnected (grace runs); their bot players are marked busy. A game created under another `ENGINE_VERSION`
+  (`game.engineVersion`) is marked `aborted` (unrated) without replaying it, and so is one whose log no longer
+  replays; its humans get `welcome.abortedGame` once on their next connection (kept in memory only). SIGTERM: stop matchmaking and bots,
   `server.restarting`, close sockets, exit — no draining.
 - **Admin API** (admin.ts): `GET/POST /internal/bots`, `PATCH /internal/bots/:id` (name, skill, active),
   `PUT /internal/settings`; `Authorization: Bearer $INTERNAL_TOKEN` (disabled when unset). Only `/ws` is routed
