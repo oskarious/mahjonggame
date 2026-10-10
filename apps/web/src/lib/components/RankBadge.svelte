@@ -3,6 +3,7 @@
   // lib/ranks.ts) is tinted with the rank's colours; without one, a chip with the label. The number takes the
   // surrounding text style.
   import { rankForRating } from '@mahjong/protocol';
+  import type { Snippet } from 'svelte';
   import { RANK_ICONS } from '$lib/ranks';
 
   interface Props {
@@ -11,8 +12,10 @@
     size?: string;
     /** On a dark pill, for light backgrounds (e.g. a primary button) where the pale ranks would vanish. */
     pill?: boolean;
+    /** Stacked above the number (e.g. the rating change), with the icon centred beside both. */
+    above?: Snippet;
   }
-  let { rating, size = '1.6em', pill = false }: Props = $props();
+  let { rating, size = '1.6em', pill = false, above }: Props = $props();
 
   const info = $derived(rankForRating(rating));
   const icon = $derived(RANK_ICONS[info.sub]);
@@ -28,7 +31,11 @@
   style:--rank-mid={info.rank.colors.mid}
   style:--rank-dark={info.rank.colors.dark}
 >
-  <span class="num">{rating}</span>
+  {#if above}
+    <span class="stack">{@render above()}<span class="num">{rating}</span></span>
+  {:else}
+    <span class="num">{rating}</span>
+  {/if}
   {#if icon}
     <!-- eslint-disable-next-line svelte/no-at-html-tags -- build-time asset from lib/assets/ranks, not user input -->
     <span class="icon" role="img" aria-label={info.label}>{@html icon}</span>
@@ -65,6 +72,12 @@
   .icon :global(svg) {
     width: 100%;
     height: 100%;
+  }
+  .stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2em;
   }
   .num {
     font-variant-numeric: tabular-nums;

@@ -17,6 +17,8 @@
   const change = (seat: number) => ratings?.find((r) => r.seat === seat) ?? null;
   const mine = $derived(final.find((f) => f.seat === me)!);
   const ORD = ['1st', '2nd', '3rd', '4th'];
+  /** 42300 → `42.3k`: points are multiples of 100, so this is exact and keeps the column narrow. */
+  const kilo = (points: number) => `${(points / 1000).toFixed(1)}k`;
 </script>
 
 <div class="backdrop">
@@ -34,16 +36,17 @@
         {#each final as f (f.seat)}
           <tr class:me={f.seat === me}>
             <td>{ORD[f.rank - 1]}</td>
-            <td>{names[f.seat]}</td>
-            <td class="num">{f.points}</td>
+            <td class="name" title={names[f.seat]}>{names[f.seat]}</td>
+            <td class="num" title={String(f.points)}>{kilo(f.points)}</td>
             <td class="num" class:up={f.score > 0} class:down={f.score < 0}>{signed(f.score)}</td>
             {#if ratings}
               {@const r = change(f.seat)}
-              <td class="num rating">
-                {#if r}<span class:up={r.after > r.before} class:down={r.after < r.before}
-                    >{signed(r.after - r.before)}</span
-                  >
-                  → <RankBadge rating={r.after} />{/if}
+              <td class="num">
+                {#if r}<RankBadge rating={r.after}
+                    >{#snippet above()}<span class:up={r.after > r.before} class:down={r.after < r.before}
+                        >{signed(r.after - r.before)}</span
+                      >{/snippet}</RankBadge
+                  >{/if}
               </td>
             {/if}
           </tr>
@@ -109,7 +112,12 @@
   .down {
     color: var(--danger);
   }
-  .rating {
+  /* Takes the width the other columns leave; a long name ends in an ellipsis instead of widening the sheet. */
+  .name {
+    width: 100%;
+    max-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
   .buttons {
