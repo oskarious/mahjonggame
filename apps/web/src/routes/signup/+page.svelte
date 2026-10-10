@@ -3,7 +3,7 @@
   import { page } from '$app/state';
   import { authClient } from '$lib/auth-client';
   import { authError } from '$lib/auth-errors';
-  import Title from '$lib/components/Title.svelte';
+  import Seo from '$lib/components/Seo.svelte';
   import { safeNext } from '$lib/safe-next';
   import { isValidUsername, USERNAME_MAX, USERNAME_MIN } from '$lib/username';
 
@@ -36,7 +36,12 @@
   }
 </script>
 
-<Title page="Sign up" description="Create a free Riichi Arena account and play rated riichi mahjong online." />
+<Seo
+  title="Sign up"
+  description="Create a free Riichi Arena account and play rated riichi mahjong online."
+  path="/signup"
+  type="website"
+/>
 
 <main class="page">
   <a class="back" href="/" aria-label="Home">←</a>

@@ -20,7 +20,8 @@ apps/web/               SvelteKit (Svelte 5 runes, adapter-node); imports @mahjo
   src/routes/           play (offline), online (lobby → queue → table; signed-in only; guests → /signup), login (sign in
                         only), signup, account (rating), healthz, admin (bot pool; 404 unless `user.role = 'admin'`),
                         learn (public course, see below), train (trainers, see below), daily-discard (POST a vote), api/progress
-                        (the signed-in player's progress: GET, POST events or a merge), sitemap.xml, robots.txt
+                        (the signed-in player's progress: GET, POST events or a merge), sitemap.xml, robots.txt, +error (site
+                        error page, noindex), seo.test.ts (route SEO rules, see below)
   src/lib/learn/        the Learn course: registry.ts (units + lessons in order, SEO titles), lessons/<slug>/
                         (Lesson.svelte article + exercises.ts), components/ (ExerciseCard: one exercise, context-free;
                         Exercise: the lesson wrapper, plays its set's variants with progress; Tiles, T, Term, Callout, …),
@@ -72,13 +73,29 @@ value in a `uuid` column comparison is a Postgres error, so check ids from outsi
 `isUuid` from `@mahjong/protocol` first and treat a bad one as unknown. A credential `account.accountId` equals its
 user id: Better Auth finds the password by both, so anything that rewrites user ids must rewrite it too.
 
+## SEO (every public page)
+
+Public pages are marketing: every route that robots.txt does not disallow must be strong for search.
+
+- **`Seo`** (`lib/components/Seo.svelte`): title (`<page> · Riichi Arena`), description, canonical, Open Graph/Twitter,
+  JSON-LD, optional `noindex`. Every public page renders it, in the page or in a component the page renders directly
+  (`LessonBody`, `Trainer`). App pages (play, online, account, admin) use `Title`: a title plus default preview tags.
+- **`lib/site.ts`**: `SITE_NAME` ("Riichi Arena", the one spelling in titles and metadata; the lowercase wordmark is
+  only visual), the default description, the preview image and `siteOrganization` for JSON-LD.
+- **`lib/seo.ts`**: `DISALLOW` (robots.txt), `sitemapPages` (sitemap.xml, from the registries) and `UNLISTED` (public
+  pages left out of the sitemap, with the reason). A new page is listed, or unlisted with a reason, or disallowed.
+- **`routes/seo.test.ts`** enforces this: a public page without `Seo` or a sitemap decision fails `npm test`, named by
+  route. It reads sources one component level deep, so keep `Seo` in the page or the component it renders.
+- Icons: `brand/icon.svg` plus PNG renders (`icon-48`, `icon-512`, `apple-touch-icon` with square corners) and
+  `manifest.webmanifest`, linked in `app.html`. Re-render the PNGs if the mark changes (and copy them to `design-kit/`).
+
 ## Learn (public course)
 
 Free, public, server-rendered lessons (marketing: they must rank in search and lead to sign-up). One concept per URL
 (`/learn/<slug>`), plus `/learn/yaku` and `/learn/glossary`; `/sitemap.xml` is generated from the registry.
 
 - **SSR, not prerendered**: the root layout resolves the session, and the call to action differs for signed-in
-  players. The learn layout sets `contentPage` (the page sets its own meta via `Seo.svelte`; no fullscreen toggle).
+  players. The learn layout sets `contentPage` (no fullscreen toggle); each page sets its own meta via `Seo`.
 - **Every page has the CTA** (`Cta.svelte`): guests "Sign up and play" (`/signup?next=/online`) + "Play a bot now"
   (`BEGINNER_PLAY`: weakest bots, full hints); signed in "Play online". It is in the header and at the end of pages.
 - **Bite-sized parts**: a lesson is only `<Part title>` blocks, each a heading, short supporting text and exactly one

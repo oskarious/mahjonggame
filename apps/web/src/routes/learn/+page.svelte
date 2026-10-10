@@ -2,12 +2,13 @@
   import { dev } from '$app/environment';
   import { page } from '$app/state';
   import Cta from '$lib/learn/components/Cta.svelte';
-  import Seo from '$lib/learn/components/Seo.svelte';
+  import Seo from '$lib/components/Seo.svelte';
   import { exercisesOf } from '$lib/learn/content';
   import { completed } from '$lib/learn/progress.svelte';
   import { progressLoaded, trackOwner } from '$lib/progress/client.svelte';
   import ProgressNudge from '$lib/progress/ProgressNudge.svelte';
   import { REFERENCE, UNITS, published } from '$lib/learn/registry';
+  import { siteOrganization } from '$lib/site';
 
   const lessons = published(dev);
   trackOwner();
@@ -16,6 +17,11 @@
   const done = (slug: string) => progressLoaded() && completed(slug, variantCounts(slug));
   /** The first lesson not completed: where to continue. */
   const next = $derived(progressLoaded() ? lessons.find((l) => !done(l.slug))?.slug : undefined);
+
+  /** Rough time to work through the course: a few minutes per lesson part (ISO 8601 duration). */
+  const MINUTES_PER_PART = 4;
+  const parts = lessons.reduce((n, l) => n + Math.max(1, Object.keys(exercisesOf(l.slug)).length), 0);
+  const workload = `PT${Math.round((parts * MINUTES_PER_PART) / 60)}H`;
 
   const origin = $derived(page.url.origin);
   const jsonld = $derived([
@@ -28,7 +34,9 @@
       url: `${origin}/learn`,
       inLanguage: 'en',
       isAccessibleForFree: true,
-      provider: { '@type': 'Organization', name: 'Riichi Arena', url: origin },
+      provider: siteOrganization(origin),
+      offers: { '@type': 'Offer', category: 'Free', price: 0, priceCurrency: 'EUR' },
+      hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'Online', courseWorkload: workload },
       hasPart: lessons.map((l) => ({ '@type': 'LearningResource', name: l.title, url: `${origin}/learn/${l.slug}` })),
     },
   ]);

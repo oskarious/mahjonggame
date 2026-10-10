@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state';
-  import { SITE_NAME } from '$lib/components/Title.svelte';
+  import { OG_IMAGE, SITE_NAME } from '$lib/site';
 
   interface Props {
     /** Page title; the site name is appended. */
@@ -11,14 +11,16 @@
     type?: 'website' | 'article';
     /** JSON-LD objects (schema.org). */
     jsonld?: object[];
+    /** Keep the page out of search results (it still gets a title and link-preview tags). */
+    noindex?: boolean;
   }
-  let { title, description, path, type = 'article', jsonld = [] }: Props = $props();
+  let { title, description, path, type = 'article', jsonld = [], noindex = false }: Props = $props();
 
   // With adapter-node, the origin is ORIGIN in production.
   const origin = $derived(page.url.origin);
   const url = $derived(origin + path);
   const full = $derived(`${title} · ${SITE_NAME}`);
-  const image = $derived(`${origin}/brand/og.png`);
+  const image = $derived(origin + OG_IMAGE);
   // JSON-LD blocks. "<" is escaped so no string can close the tag, and the tag itself is assembled so this file
   // never contains a literal script tag (the Svelte preprocessor would take it for the component's own).
   const LT = String.fromCharCode(60);
@@ -30,9 +32,10 @@
 <svelte:head>
   <title>{full}</title>
   <meta name="description" content={description} />
+  {#if noindex}<meta name="robots" content="noindex" />{/if}
   <link rel="canonical" href={url} />
   <meta property="og:type" content={type} />
-  <meta property="og:site_name" content="Riichi Arena" />
+  <meta property="og:site_name" content={SITE_NAME} />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:url" content={url} />

@@ -5,7 +5,7 @@
   import { page } from '$app/state';
   import Cta from '$lib/learn/components/Cta.svelte';
   import ExerciseCard from '$lib/learn/components/ExerciseCard.svelte';
-  import Seo from '$lib/learn/components/Seo.svelte';
+  import Seo from '$lib/components/Seo.svelte';
   import { lessonBySlug } from '$lib/learn/registry';
   import type { Exercise, ExerciseOf } from '@mahjong/drills/types';
   import { Feed, type Problem } from '../feed';

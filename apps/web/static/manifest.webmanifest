@@ -1,0 +1,14 @@
+{
+  "name": "Riichi Arena",
+  "short_name": "Riichi Arena",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#48754d",
+  "background_color": "#48754d",
+  "icons": [
+    { "src": "/brand/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/brand/icon-48.png", "sizes": "48x48", "type": "image/png" },
+    { "src": "/brand/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

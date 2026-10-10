@@ -205,6 +205,11 @@ describe('lesson registry', () => {
       expect(l.slug, l.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
       expect(l.description.length, `${l.slug} description`).toBeLessThanOrEqual(165);
       expect(l.related.length, `${l.slug} related`).toBeGreaterThanOrEqual(2);
+      for (const d of [l.published, l.updated]) {
+        expect(d, `${l.slug} date`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect(Number.isNaN(Date.parse(d)), `${l.slug} date ${d}`).toBe(false);
+      }
+      expect(l.published <= l.updated, `${l.slug} published after updated`).toBe(true);
       for (const r of l.related)
         expect(
           LESSONS.some((x) => x.slug === r),

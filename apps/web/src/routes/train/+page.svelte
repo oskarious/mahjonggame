@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import Cta from '$lib/learn/components/Cta.svelte';
-  import Seo from '$lib/learn/components/Seo.svelte';
+  import Seo from '$lib/components/Seo.svelte';
   import { DAILY, utcDate } from '$lib/train/daily';
   import { TRAINERS } from '$lib/train/registry';
   import { dailyOf, dailyStreak, statsLoaded, statsOf } from '$lib/train/stats.svelte';

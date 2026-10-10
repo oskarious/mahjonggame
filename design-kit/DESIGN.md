@@ -224,7 +224,8 @@ components:
 
 # Riichi Arena
 
-Files next to this one: `logos/` (the brand marks, SVG and `og.png`), `tiles/` (Slim and Classic tile artwork),
+Files next to this one: `logos/` (the brand marks as SVG, `og.png`, and the mark as PNG app icons: `icon-48.png`,
+`icon-512.png`, `apple-touch-icon.png` with square corners for iOS), `tiles/` (Slim and Classic tile artwork),
 `patterns/pattern_044.svg` (the table pattern), `fonts/` (Bricolage Grotesque, OFL), `tokens.json` (every token with
 its usage), `tokens.css` and `components/` (a README and an HTML preview per component; open the previews in a browser).
 
@@ -244,7 +245,8 @@ terse, competitive but friendly. Density is low; every element carries informati
 - **Nothing that comes and goes may resize the board.**
 - **Cheat-proof by design.** Nothing on screen may hint at hidden information.
 
-**Voice.** Written *Riichi Arena* in prose; the wordmark and site title are lowercase: `riichi arena`. Sentence case
+**Voice.** Written *Riichi Arena* in prose, page titles, link previews and structured data; only the wordmark is
+lowercase (`riichi arena`, a visual treatment). Sentence case
 for buttons and headings ("Play online", "Next hand"). Mahjong terms in romaji, capitalised as actions: Ron, Tsumo,
 Riichi, Pon, Chii, Kan, Furiten, Tenpai. Tile names in English (East, Green, 5 circles). No emoji.
 

@@ -2,7 +2,7 @@
   import { page } from '$app/state';
   import Cta from '$lib/learn/components/Cta.svelte';
   import ExampleHand from '$lib/learn/components/ExampleHand.svelte';
-  import Seo from '$lib/learn/components/Seo.svelte';
+  import Seo from '$lib/components/Seo.svelte';
   import { REFERENCE } from '$lib/learn/registry';
   import { YAKU_LIST, yakuValue, type YakuEntry } from '$lib/learn/yaku';
 

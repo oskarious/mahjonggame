@@ -5,7 +5,7 @@
   import ExerciseCard from '$lib/learn/components/ExerciseCard.svelte';
   import type { ExerciseOf } from '@mahjong/drills/types';
   import DiscardTable from '$lib/train/components/DiscardTable.svelte';
-  import Seo from '$lib/learn/components/Seo.svelte';
+  import Seo from '$lib/components/Seo.svelte';
   import { shareLine } from '$lib/train/daily';
   import { trainerById } from '$lib/train/registry';
   import { dailyOf, dailyStreak, recordDaily, statsLoaded } from '$lib/train/stats.svelte';

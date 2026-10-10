@@ -8,7 +8,8 @@
   import type { LessonMeta, Unit } from '$lib/learn/registry';
   import { trainerForLesson } from '$lib/train/registry';
   import Cta from './Cta.svelte';
-  import Seo from './Seo.svelte';
+  import Seo from '$lib/components/Seo.svelte';
+  import { OG_IMAGE, siteOrganization } from '$lib/site';
 
   interface Props {
     meta: LessonMeta;
@@ -52,18 +53,22 @@
       headline: meta.seoTitle,
       description: meta.description,
       url: origin + path,
+      datePublished: meta.published,
       dateModified: meta.updated,
+      image: origin + OG_IMAGE,
       inLanguage: 'en',
       learningResourceType: 'Lesson',
       isPartOf: { '@type': 'Course', name: 'Learn riichi mahjong', url: `${origin}/learn` },
-      publisher: { '@type': 'Organization', name: 'Riichi Arena', url: origin },
+      author: siteOrganization(origin),
+      publisher: siteOrganization(origin),
     },
     {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Learn', item: `${origin}/learn` },
-        { '@type': 'ListItem', position: 2, name: meta.title, item: origin + path },
+        { '@type': 'ListItem', position: 2, name: unit.title, item: `${origin}/learn#${unit.id}` },
+        { '@type': 'ListItem', position: 3, name: meta.title, item: origin + path },
       ],
     },
   ]);

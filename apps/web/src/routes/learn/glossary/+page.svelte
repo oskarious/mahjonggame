@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from '$app/state';
   import Cta from '$lib/learn/components/Cta.svelte';
-  import Seo from '$lib/learn/components/Seo.svelte';
+  import Seo from '$lib/components/Seo.svelte';
   import { GLOSSARY } from '$lib/learn/glossary';
   import { LESSONS, REFERENCE } from '$lib/learn/registry';
 

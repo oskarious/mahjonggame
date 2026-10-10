@@ -2,7 +2,9 @@
   import { goto } from "$app/navigation";
   import { BOT_PRESETS, DEFAULT_BOT_ELO } from "$lib/bots";
   import RankBadge from "$lib/components/RankBadge.svelte";
-  import Title, { SITE_NAME } from "$lib/components/Title.svelte";
+  import { page } from "$app/state";
+  import Seo from "$lib/components/Seo.svelte";
+  import { SITE_NAME, siteOrganization } from "$lib/site";
   import { type SavedGame, loadSave } from "$lib/game/saved";
   import { WINDS } from "@mahjong/drills/labels";
   import DailyDiscard from "$lib/train/components/DailyDiscard.svelte";
@@ -28,9 +30,21 @@
     });
     goto(`/play?${params}`);
   }
+
+  const origin = $derived(page.url.origin);
+  const jsonld = $derived([
+    { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: origin },
+    { "@context": "https://schema.org", ...siteOrganization(origin) },
+  ]);
 </script>
 
-<Title />
+<Seo
+  title="Play riichi mahjong online"
+  description="Play riichi mahjong online for free: rated games against players at your level, bots, lessons and trainers. No downloads, made for your phone."
+  path="/"
+  type="website"
+  {jsonld}
+/>
 
 <main>
   <nav class="account">
@@ -43,6 +57,7 @@
   </nav>
 
   <h1><img src="/brand/logo-row.svg" alt={SITE_NAME} /></h1>
+  <p class="tag">Riichi mahjong online. Free, no downloads.</p>
 
   {#if data.online}
     <a class="btn primary big online" href="/online">

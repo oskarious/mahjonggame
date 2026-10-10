@@ -16,6 +16,10 @@ Read when touching Dockerfiles, `compose.production.yml`, env vars, migrations' 
   `WEB_INTERNAL_URL=http://web:3000` and `GAME_SERVER_URL=http://game-server:3001`, and passes `INTERNAL_TOKEN`
   (≥ 32 random chars; set it on the compose app) to both services for `/admin`. Migrations run when the web
   container starts (fail → container exits); the game server refuses to start until its `REQUIRED_MIGRATION` is applied.
+- **One canonical origin** (search): `ORIGIN` is the apex HTTPS origin, and canonical links, `og:url`, the sitemap and
+  robots.txt are built from it. `www.<domain>` → apex and `http` → `https` must redirect permanently (301/308) at
+  Traefik/Dokploy, not in the app.
+  Check with `curl -sI http://www.<domain>/learn`.
 - **A migration that rewrites ids** (e.g. `0006_uuid_ids` remapped human user ids to UUIDs): back up the database
   first and deploy while no rated human games run. Until it is replaced, the old game server still holds the old
   ids and its writes for human seats fail (bot-only games are unaffected).
